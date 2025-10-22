@@ -1,0 +1,202 @@
+$image-path: "../../images";
+
+:root {
+  --background: #4A4A4A;
+  --color: #fff;
+  --primary-color: #000000;
+}
+
+body {
+  &.login {
+    background: var(--background);
+    color: var(--color);
+  }
+}
+
+#login {
+  max-width: 380px;
+  width: 100%;
+}
+
+.login {
+  #backtoblog a,
+  #nav a {
+    color: var(--color);
+
+    &:hover {
+      color: #60ad80;
+      transition: all 0.4s ease-in-out;
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: none;
+    }
+  }
+
+  h1 a:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .wp-login-logo {
+    --size-login-logo: 150px;
+
+    a {
+      background-image: url("#{$image-path}/logo-login.png");
+      background-size: contain;
+      width: var(--size-login-logo);
+      height: var(--size-login-logo);
+    }
+  }
+
+  form {
+    border: 0;
+    box-shadow: none;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #000000;
+
+    .dashicons {
+      &:before {
+        color: #000000;
+      }
+    }
+
+    .input {
+      margin: 0;
+      padding: 0 20px;
+      min-height: 40px;
+      color: #000000;
+      font-size: 16px;
+      background: rgba(0, 0, 0, 0.05);
+      border: none;
+      border-radius: 50px;
+
+      &:focus {
+        background: rgba(0, 0, 0, 0.07);
+        box-shadow: none;
+      }
+    }
+
+    input[name="wp-submit"] {
+      &.button-large {
+        display: block;
+        width: 100%;
+        min-height: 40px;
+        float: none;
+        border: 0;
+        border-radius: 50px;
+        background: var(--primary-color);
+        transition: all 0.4s ease-in-out;
+      }
+    }
+
+    .forgetmenot {
+      position: relative;
+
+      input[type=checkbox] {
+        display: none;
+
+        + label {
+          margin: 0;
+          cursor: pointer;
+
+          &:before {
+            content: '';
+            border-radius: 5px;
+            padding: 10px;
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+            margin-right: 6px;
+            background: rgba(0, 0, 0, 0.1);
+            transform: translateY(6px);
+          }
+        }
+
+        &:checked {
+          + label {
+            &:before {
+              background: var(--primary-color);
+            }
+
+            &:after {
+              content: '';
+              display: block;
+              position: absolute;
+              top: 6px;
+              left: 6px;
+              width: 6px;
+              height: 14px;
+              border: solid #fff;
+              border-width: 0 2px 2px 0;
+              transform: rotate(45deg);
+            }
+          }
+        }
+      }
+    }
+
+    .button {
+      &.wp-hide-pw {
+        height: auto;
+        top: 0;
+        bottom: 0;
+
+        &:focus {
+          box-shadow: none;
+          border: none;
+          outline: none;
+        }
+      }
+    }
+
+    .submit {
+      text-align: center;
+    }
+  }
+
+  label {
+    margin-bottom: 6px;
+  }
+
+  .notice-error,
+  .message,
+  .notice,
+  .success {
+    background: #CC3333;
+    border-left-color: #FFD700;
+  }
+}
+
+#login {
+  form {
+    display: grid;
+    gap: .8rem;
+  }
+}
+
+#language-switcher {
+  select {
+    color: #ffffff;
+    background: #000000;
+    border: none;
+    border-radius: 5px;
+    backdrop-filter: blur(15px);
+
+    option {
+      color: #ffffff;
+    }
+  }
+
+  input {
+    &.button {
+      border: 0;
+      border-radius: 5px;
+      color: #ffffff;
+      background: var(--primary-color);
+      transition: all 0.4s ease-in-out;
+    }
+  }
+}

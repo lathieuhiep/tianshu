@@ -1,0 +1,30 @@
+.woocommerce-cart table.shop_table td.product-quantity .quantity .qty-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.woocommerce-cart table.shop_table td.product-quantity .quantity {
+  display: flex;
+  margin-right: 12px;
+}
+.woocommerce-cart table.shop_table td.product-quantity .quantity input {
+  padding: 0.5rem 0;
+  border: 0.1rem solid #eeeeee;
+}
+.woocommerce-cart table.shop_table td.product-quantity .quantity input.custom-qty-input {
+  -moz-appearance: textfield;
+}
+.woocommerce-cart table.shop_table td.product-quantity .quantity input.custom-qty-input::-webkit-outer-spin-button, .woocommerce-cart table.shop_table td.product-quantity .quantity input.custom-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.woocommerce-cart table.shop_table td.product-quantity .quantity .qty-btn {
+  padding: 0;
+  width: 3.2rem;
+  border: 0.1rem solid #eeeeee;
+}
+
+.woocommerce-cart table.shop_table td.actions .coupon .input-text {
+  width: auto;
+}

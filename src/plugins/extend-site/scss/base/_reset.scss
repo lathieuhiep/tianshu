@@ -1,0 +1,6 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+:root {
+  --#{$prefix-plugin-class}gutter-width: #{$gutter-width};
+}

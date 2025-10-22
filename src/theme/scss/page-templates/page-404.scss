@@ -1,0 +1,40 @@
+@import "shared/scss/abstracts/abstracts";;
+
+.site-error {
+  --#{$prefix-theme}page-error-color: #c9c9c9;
+
+  height: 100vh;
+  padding: var(--#{$prefix-theme}spacing-6);
+  background-color: $var-black-color;
+  @extend %flex-align-center;
+
+  &__content {
+    max-width: 46rem;
+    text-align: center;
+    color: $var-white-color;
+
+    .heading {
+      font-size: 16rem;
+      color: $var-error-color;
+      line-height: 1;
+      text-shadow: .2rem .2rem 0 var(--#{$prefix-theme}page-error-color), -0.2rem -0.2rem 0 var(--#{$prefix-theme}page-error-color);
+    }
+
+    p {
+      color: var(--#{$prefix-theme}page-error-color);
+    }
+
+    a {
+      display: inline-block;
+      padding: var(--#{$prefix-theme}spacing-2) var(--#{$prefix-theme}spacing-6);
+      color: var(--#{$prefix-theme}page-error-color);
+      text-transform: uppercase;
+      @include border(.2rem, var(--#{$prefix-theme}page-error-color));
+
+      &:hover {
+        color: $var-accent-color;
+        border-color: $var-accent-color;
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+@import "shared/scss/abstracts/abstracts";;
+
+:root {
+  //color
+  @include generate-css-variables($mt-colors, $prefix-theme);
+
+  // font-family
+  @include generate-css-variables($mt-fonts, "#{$prefix-theme}ff-");
+
+  // font-size
+  @include generate-css-variables($mt-font-sizes, "#{$prefix-theme}fs-");
+
+  // font-weight
+  @include generate-css-variables($mt-font-weights, "#{$prefix-theme}fw-");
+
+  // spacing
+  @include generate-css-variables($spacers, "#{$prefix-theme}spacing-");
+}

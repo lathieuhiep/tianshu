@@ -1,0 +1,54 @@
+@import "shared/scss/abstracts/abstracts";
+
+.woocommerce {
+  nav {
+    &.woocommerce-pagination {
+      margin-top: 3rem;
+
+      ul {
+        &.page-numbers {
+          margin: 0;
+          border: none;
+          @extend %flex-align-center;
+          gap: .8rem;
+
+          &::before,
+          &::after {
+            display: none;
+          }
+
+          li {
+            display: inline-block;
+            float: none;
+            border: none;
+
+            span,
+            a {
+              display: block;
+              cursor: pointer;
+              border: .1rem solid $var-primary-color;
+              padding: .4rem 1.2rem;
+              line-height: inherit;
+              min-width: inherit;
+              border-radius: .2rem;
+            }
+
+            a {
+              &:focus {
+                background-color: transparent;
+                color: $heading-color;
+              }
+            }
+
+            span.current,
+            a:hover {
+              color: $var-white-color;
+              background: $var-accent-color;
+              border-color: $var-accent-color;
+            }
+          }
+        }
+      }
+    }
+  }
+}

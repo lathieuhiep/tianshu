@@ -1,0 +1,13 @@
+@import "shared/scss/abstracts/abstracts";;
+
+@each $key, $value in $mt-colors {
+  // class text color
+  .#{$prefix-theme}text-#{$key} {
+    color: var(--#{$prefix-theme + $key});
+  }
+
+  // class background color
+  .#{$prefix-theme}bg-#{$key} {
+    background-color: var(--#{$prefix-theme + $key});
+  }
+}

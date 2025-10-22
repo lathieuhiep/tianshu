@@ -1,0 +1,7 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class}container {
+  max-width: 1200px;
+  margin: 0 auto;
+}

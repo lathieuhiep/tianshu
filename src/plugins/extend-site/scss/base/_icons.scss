@@ -1,0 +1,44 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class}icon {
+  --#{$prefix-plugin-class}icon-size: 5rem;
+
+  display: inline-block;
+  line-height: 1;
+  text-align: center;
+  font-size: var(--#{$prefix-plugin-class}icon-size);
+
+  svg {
+    width: 1em;
+    height: 1em;
+    fill: currentColor;
+  }
+}
+
+.#{$prefix-plugin-class}icon-mask {
+  --#{$prefix-plugin-class}icon-width: 1.6rem;
+  --#{$prefix-plugin-class}icon-height: 1.6rem;
+  --#{$prefix-plugin-class}icon-color: currentColor;
+
+  display: inline-block;
+  width: var(--#{$prefix-plugin-class}icon-width);
+  height: var(--#{$prefix-plugin-class}icon-height);
+  background-color: var(--#{$prefix-plugin-class}icon-color);
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+
+  &-angle {
+    &-left {
+      @include mask-image("#{$icon-path}/angle-left.svg");
+    }
+
+    &-right {
+      @include mask-image("#{$icon-path}/angle-right.svg");
+    }
+  }
+}

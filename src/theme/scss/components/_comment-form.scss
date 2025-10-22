@@ -1,0 +1,114 @@
+@import "shared/scss/abstracts/abstracts";;
+
+.comments-area {
+  display: grid;
+  gap: 2.4rem;
+
+  &__warp {
+    padding-top: var(--#{$prefix-theme}spacing-5);
+    border-top: 1px solid $border-color;
+  }
+
+  ul {
+    @extend %list-style-none;
+
+    li {
+      .children {
+        margin-top: var(--#{$prefix-theme}spacing-5);
+        margin-left: var(--#{$prefix-theme}spacing-5);
+      }
+
+      ~ li {
+        margin-top: var(--#{$prefix-theme}spacing-6);
+      }
+    }
+  }
+
+  &__list {
+    .comment {
+      &__body {
+        .avatar {
+          width: 6rem;
+          flex: 0 0 auto;
+
+          img {
+            width: 6rem;
+            height: 6rem;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 50%;
+          }
+        }
+
+        .name {
+          color: $var-primary-color;
+        }
+
+        .date {
+          color: $var-accent-color;
+        }
+      }
+    }
+  }
+
+  .comment-form {
+    @extend %flex-column;
+    gap: var(--#{$prefix-theme}spacing-5);
+
+    .comment-notes {
+      order: 1;
+    }
+
+    .comment-fields-row {
+      order: 2;
+    }
+
+    .form-comment-field,
+    .form-submit {
+      order: 3;
+    }
+
+    .comment-form-cookies-consent {
+      @extend %flex-align-center-vertical;
+      gap: var(--#{$prefix-theme}spacing-2);
+
+      input {
+        width: 2rem;
+        height: 2rem;
+      }
+    }
+
+    .form-submit {
+      margin: 0;
+
+      .submit {
+        padding: .8rem 1.2rem;
+        border: 1px solid $border-color;
+        border-radius: .4rem;
+        @include transition();
+
+        &:hover {
+          background-color: $var-primary-color;
+          color: $var-white-color;
+          border-color: $var-primary-color;
+        }
+      }
+    }
+  }
+}
+
+#cancel-comment-reply-link {
+  color: $var-accent-color;
+}
+
+#reply-title {
+  display: flex;
+  gap: var(--#{$prefix-theme}spacing-3);
+  align-items: center;
+  font-size: $var-fs-lg;
+  font-weight: $var-fw-medium;
+}
+
+.comment-respond {
+  @extend .comments-area__warp;
+}

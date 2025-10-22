@@ -1,0 +1,62 @@
+@import "shared/scss/abstracts/abstracts";;
+
+html {
+  min-height: 100%;
+  font-size: 62.5%;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  word-break: break-word;
+  @include flex-column;
+}
+
+:focus-visible {
+  outline: none;
+}
+
+a {
+  text-decoration: none;
+  @extend %outline-none;
+  @include transition();
+}
+
+p {
+  margin-bottom: 0;
+
+  + p {
+    margin-top: var(--#{$prefix-theme}spacing-3);
+  }
+}
+
+figure {
+  margin: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+iframe {
+  max-width: 100%;
+}
+
+blockquote {
+  border-left: .1rem solid $var-accent-color;
+  padding-left: 30px;
+}
+
+pre {
+  white-space: pre-wrap;
+  margin-bottom: var(--#{$prefix-theme}spacing-6);
+}
+
+button {
+  @extend %outline-none;
+}
+
+textarea {
+  padding: var(--#{$prefix-theme}spacing-3);
+}

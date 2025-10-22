@@ -1,0 +1,91 @@
+@import "shared/scss/abstracts/abstracts";;
+
+form {
+  &.wpcf7-form {
+    br {
+      display: none;
+    }
+
+    p {
+      position: relative;
+      margin: 0;
+
+      + p {
+        margin-top: var(--#{$prefix-theme}margin-top-p, var(--#{$prefix-theme}spacing-2));
+      }
+
+      &:has(.wpcf7-submit) {
+        @extend %flex-align-center-vertical;
+      }
+    }
+
+    .ajax-loader {
+      position: absolute;
+      top: .8rem;
+    }
+
+    label {
+      display: block;
+      font-weight: $var-fw-medium;
+
+      .wpcf7-form-control-wrap {
+        margin-top: var(--#{$prefix-theme}margin-top-control, var(--#{$prefix-theme}spacing-2));
+      }
+    }
+
+    span {
+      &.required {
+        color: $var-error-color;
+      }
+    }
+
+    .wpcf7-form-control-wrap {
+      display: block;
+
+      input,
+      textarea {
+        height: auto;
+        width: 100%;
+        display: block;
+        @include border();
+        @include border-radius();
+        background-color: $var-white-color;
+        color: $var-black-color;
+
+        &:focus {
+          border-color: $var-primary-color;
+        }
+      }
+
+      textarea {
+        height: var(--#{$prefix-theme}h-textarea, 10rem);
+      }
+    }
+
+    .wpcf7-submit {
+      color: $var-white-color;
+      border: none;
+      cursor: pointer;
+      text-transform: uppercase;
+      @include border-radius();
+      background: $var-black-color;
+      @include transition();
+
+      &:hover {
+        --#{$prefix-theme}black: var(--#{$prefix-theme}primary);
+      }
+    }
+
+    .wpcf7-not-valid-tip {
+      color: $var-error-color;
+    }
+
+    &.invalid {
+      .wpcf7-response-output {
+        margin: var(--#{$prefix-theme}margin-res, var(--#{$prefix-theme}spacing-3) 0 0);
+        padding: var(--#{$prefix-theme}padding-res, var(--#{$prefix-theme}spacing-2));
+        @include border(.1rem, $var-warning-color);
+      }
+    }
+  }
+}

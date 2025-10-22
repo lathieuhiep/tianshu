@@ -1,0 +1,20 @@
+$prefix-plugin-class: es-;
+$prefix-plugin-class-addon: es-addon-;
+
+$icon-path: "../../icons";
+
+// breakpoints
+$breakpoints: (
+        sm: 576px,
+        md: 768px,
+        lg: 992px,
+        xl: 1200px,
+        xxl: 1400px
+);
+
+// grid
+$gutter-width: 1.2rem;
+$grid-columns: 12;
+
+// spacing
+$spacing-base: 0.4rem;

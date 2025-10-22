@@ -1,0 +1,106 @@
+@import "shared/scss/abstracts/abstracts";;
+
+.content-archive-post {
+  .item {
+    padding: 2.4rem 1.2rem 1.2rem;
+    border: .1rem solid $var-primary-color;
+  }
+
+  .post-title {
+    margin: 0;
+    font-size: 2rem;
+
+    a {
+      color: $heading-color;
+
+      i {
+        margin-right: .4rem;
+        color: $var-accent-color;
+      }
+
+      &:hover {
+        color: $var-accent-color;
+      }
+    }
+  }
+
+  .post-desc {
+    ul {
+      li {
+        margin-bottom: .8rem;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    table {
+      margin-bottom: 3rem;
+      width: 100%;
+
+      tr {
+        border-bottom: .1rem solid $var-primary-color;
+
+        th {
+          padding: 1rem 2rem 1rem 0;
+        }
+      }
+    }
+
+    dd {
+      margin: 0 0 2rem;
+    }
+
+    &:after {
+      display: table;
+      clear: both;
+      content: '';
+    }
+  }
+
+  .post-meta {
+    font-size: var(--#{$prefix-theme}fs-xs);
+
+    &__item {
+      &:after {
+        display: inline-block;
+        content: '/';
+        margin-right: 0;
+      }
+
+      &:last-child {
+        &:after {
+          display: none;
+        }
+      }
+
+      a {
+        color: $var-accent-color;
+
+        &:hover {
+          color: $body-color;
+        }
+      }
+    }
+  }
+
+  .page-links {
+    a {
+      display: inline-block;
+
+      span {
+        display: inline-block;
+        padding: 0 .4rem;
+      }
+    }
+  }
+}
+
+.search-no-data-warp {
+  .search-form {
+    display: grid;
+    gap: .8rem;
+    grid-template-columns: 30rem 4rem;
+  }
+}

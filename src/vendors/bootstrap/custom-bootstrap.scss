@@ -1,0 +1,102 @@
+@use "sass:map";
+
+@import "shared/scss/abstracts/abstracts";
+
+// Include functions first (so you can manipulate colors, SVGs, calc, etc)
+@import "bootstrap/scss/functions";
+
+// Include any default variable overrides here
+$enable-rfs: false;
+
+// body
+$body-bg: map.get($mt-colors, "white");
+$body-color: map.get($mt-colors, "black");
+$body-text-align: inherit;
+
+// stylelint-enable value-keyword-case
+$font-family-sans-serif: $var-ff-base;
+$font-family-monospace: $var-ff-base;
+$font-family-base: $var-ff-base;
+
+$font-size-base: map.get($mt-font-sizes, sm);
+$line-height-base: $line-height-base;
+
+// Grid columns
+//
+// Set the number of columns and specify the width of the gutters.
+$grid-gutter-width: $grid-gutter-width;
+
+// Links
+//
+// Style anchor elements.
+$link-color: map.get($mt-colors, "primary");
+$link-hover-color: map.get($mt-colors, "accent");
+$link-decoration: none;
+
+// scss-docs-end caret-variables
+$transition-base: $transition-base;
+
+// font size
+$h1-font-size: $var-fs-3xl;
+$h2-font-size: $var-fs-xxl;
+$h3-font-size: $var-fs-xl;
+$h4-font-size: $var-fs-lg;
+$h5-font-size: $var-fs-md;
+$h6-font-size: $var-fs-sm;
+
+// headings-variables
+$headings-color: $heading-color;
+$headings-font-family: $var-ff-heading;
+$headings-margin-bottom: $headings-margin-bottom;
+$headings-font-weight: $headings-font-weight;
+$headings-line-height: $headings-line-height;
+
+// Paragraphs
+//
+// Style p element.
+$paragraph-margin-bottom: $paragraph-margin-bottom;
+
+// Navs
+// scss-docs-start nav-variables
+$nav-link-font-size: $var-fs-sm;
+$nav-link-font-weight: 400;
+$nav-link-color: $var-primary-color;
+
+// scss-docs-start container-max-widths
+$container-max-widths: (
+        xl: 1224px
+) !default;
+
+// Spacing
+// scss-docs-start spacer-variables-maps
+$spacer: $spacing-base !default;
+$spacers: $spacers !default;
+
+// Include remainder of required Bootstrap stylesheets
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+
+// Include any optional Bootstrap components as you like
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/reboot";
+@import "bootstrap/scss/type";
+@import "bootstrap/scss/images";
+@import "bootstrap/scss/containers";
+@import "bootstrap/scss/grid";
+@import "bootstrap/scss/forms";
+@import "bootstrap/scss/buttons";
+@import "bootstrap/scss/transitions";
+@import "bootstrap/scss/nav";
+@import "bootstrap/scss/navbar";
+@import "bootstrap/scss/close";
+@import "bootstrap/scss/modal";
+
+// Helpers
+@import "bootstrap/scss/helpers";
+
+// Utilities
+@import "bootstrap/scss/utilities/api";
+// scss-docs-end import-stack

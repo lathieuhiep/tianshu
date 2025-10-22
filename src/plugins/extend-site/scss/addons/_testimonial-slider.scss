@@ -1,0 +1,31 @@
+@use "sass:map";
+
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class-addon}addon-testimonial-slider {
+  --#{$prefix-plugin-class}fs-name: #{map.get($mt-font-sizes, md)};
+  --#{$prefix-plugin-class}fw-name: #{map.get($mt-font-weights, bold)};
+
+  .item {
+    text-align: center;
+
+    &__image {
+      width: 15rem;
+      margin: 0 auto 1.2rem;
+    }
+
+    &__content {
+      > div {
+        &:not(:last-child) {
+          margin-bottom: 1.2rem;
+        }
+      }
+
+      .name {
+        font-size: var(--#{$prefix-plugin-class}fs-name);
+        font-weight: var(--#{$prefix-plugin-class}fw-name);
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+%product-quantity {
+  display: flex;
+  margin-right: 12px;
+
+  input {
+    padding: .5rem 0;
+    border: .1rem solid #eeeeee;
+
+    &.custom-qty-input {
+      -moz-appearance: textfield;
+
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    }
+  }
+
+  .qty-btn {
+    padding: 0;
+    width: 3.2rem;
+    border: .1rem solid #eeeeee;
+    @extend %flex-align-center;
+  }
+}

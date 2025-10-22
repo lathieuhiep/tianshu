@@ -1,0 +1,22 @@
+@import "shared/scss/abstracts/abstracts";;
+
+@each $key, $value in $mt-fonts {
+  // class font-family
+  .#{$prefix-theme}ff-#{$key} {
+    font-family: var(--#{$prefix-theme + "ff-" + $key});
+  }
+}
+
+@each $key, $value in $mt-font-sizes {
+  // class font-size
+  .#{$prefix-theme}fs-#{$key} {
+    font-size: var(--#{$prefix-theme + "fs-" + $key});
+  }
+}
+
+@each $key, $value in $mt-font-weights {
+  // class font-weight
+  .#{$prefix-theme}fw-#{$key} {
+    font-weight: var(--#{$prefix-theme + "fw-" + $key});
+  }
+}

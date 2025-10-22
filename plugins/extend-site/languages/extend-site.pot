@@ -1,0 +1,330 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Extend Site\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-27 09:04+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.8.0; wp-6.8.2; php-8.3.16\n"
+"X-Domain: extend-site"
+
+#: includes/PostType/BasePostType.php:95
+#, php-format
+msgid "Cha của %s:"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:26
+msgid "Chính giữa"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:91 includes/PostType/BasePostType.php:126
+#, php-format
+msgid "Chỉnh sửa %s"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:76
+msgid "Chọn danh mục"
+msgstr ""
+
+#: includes/ElementorAddon/Widgets/ContactForm.php:45
+msgid "Chọn mẫu liên hệ"
+msgstr ""
+
+#: includes/ElementorAddon/Widgets/ContactForm.php:18
+msgid "Contact Form 7"
+msgstr ""
+
+#: functions/helpers.php:50
+msgid "Create a Form First"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:141
+#: includes/ElementorAddon/Traits/HasSliderControls.php:32
+#: includes/ElementorAddon/Traits/HasSliderControls.php:45
+#: includes/ElementorAddon/Traits/HasSliderControls.php:57
+msgid "Có"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:127
+#, php-format
+msgid "Cập nhật %s"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:122
+#, php-format
+msgid "Danh mục %s"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:105
+msgid "Dưới 480px"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:32
+msgid "Dưới giữa"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:34
+msgid "Dưới phải"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:33
+msgid "Dưới trái"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:85
+msgid "Dấu chấm"
+msgstr ""
+
+#. Description of the plugin
+msgid ""
+"Essential toolkit for WordPress: custom post types, widgets, and site "
+"extensions."
+msgstr ""
+
+#. Name of the plugin
+msgid "Extend Site"
+msgstr ""
+
+#: includes/ElementorAddon/ElementorAddon.php:60
+msgid "Extend Site Addons"
+msgstr ""
+
+#: includes/ElementorAddon/ElementorAddon.php:46
+msgid ""
+"Extend Site: Elementor is not active. Elementor-based widgets will be "
+"unavailable."
+msgstr ""
+
+#: includes/ElementorAddon/Widgets/ContactForm.php:37
+msgid "Form liên hệ"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:16
+msgid "Full size (original)"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:127
+msgid "Giảm dần"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:28
+msgid "Giữa bên phải"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:27
+msgid "Giữa bên trái"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:137
+msgid "Hiển thị"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:138
+msgid "Hiển thị tóm tắt"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:109
+msgid "ID"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:149
+msgid "Khoảng cách"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:142
+#: includes/ElementorAddon/Traits/HasSliderControls.php:33
+#: includes/ElementorAddon/Traits/HasSliderControls.php:46
+#: includes/ElementorAddon/Traits/HasSliderControls.php:58
+#: includes/ElementorAddon/Traits/HasSliderControls.php:86
+msgid "Không"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:97
+msgid "Không tìm thấy trong Thùng rác."
+msgstr ""
+
+#: includes/PostType/BasePostType.php:96
+msgid "Không tìm thấy."
+msgstr ""
+
+#. Author of the plugin
+msgid "La Thieu Hiep"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:15
+msgid "Large (1024 x 1024)"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:13
+msgid "Medium (300 x 300)"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:14
+msgid "Medium Large (768 x auto)"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:84
+msgid "Mũi tên"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:83
+msgid "Mũi tên và Dấu chấm"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:90
+#, php-format
+msgid "Mới %s"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:111
+msgid "Ngày đăng"
+msgstr ""
+
+#: functions/helpers.php:63
+msgid "Sau"
+msgstr ""
+
+#: functions/helpers.php:43
+msgid "Select a Contact Form"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:122
+msgid "Sắp xếp"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:105
+msgid "Sắp xếp theo"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:90
+msgid "Số bài lấy ra"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:151
+msgid "Số lượng từ hiển thị"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:79
+msgid "Thanh điều hướng"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:66
+msgid "Thiết lập bài viết"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:12
+msgid "Thumbnail (150 x 150)"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:89 includes/PostType/BasePostType.php:128
+#, php-format
+msgid "Thêm %s"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:88
+msgid "Thêm mới"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:110
+msgid "Tiêu đề"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:29
+msgid "Trên giữa"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:31
+msgid "Trên phải"
+msgstr ""
+
+#: includes/ElementorAddon/Base/ControlOptions.php:30
+msgid "Trên trái"
+msgstr ""
+
+#: functions/helpers.php:62
+msgid "Trước"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:129
+#, php-format
+msgid "Tên %s"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:94 includes/PostType/BasePostType.php:124
+#, php-format
+msgid "Tìm kiếm %s"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:21
+msgid "Tùy chọn bổ sung"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:117
+msgid "Tùy chọn Responsive"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasQueryControls.php:126
+msgid "Tăng dần"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:93 includes/PostType/BasePostType.php:125
+#, php-format
+msgid "Tất cả %s"
+msgstr ""
+
+#: functions/cpt-helpers.php:29
+msgid "Tất cả danh mục"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:67
+msgid "Tốc độ trượt (ms)"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:100
+msgid "Từ 1200px"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:104
+msgid "Từ 480px"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:103
+msgid "Từ 576px"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:102
+msgid "Từ 768px"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:101
+msgid "Từ 992px"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:55
+msgid "Tự động chạy"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:44
+msgid "Vòng lặp"
+msgstr ""
+
+#: includes/PostType/BasePostType.php:92
+#, php-format
+msgid "Xem %s"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasSliderControls.php:30
+msgid "Đồng bộ chiều cao slide"
+msgstr ""
+
+#: includes/ElementorAddon/Traits/HasImageSizeControl.php:21
+msgid "Độ phân giải ảnh"
+msgstr ""

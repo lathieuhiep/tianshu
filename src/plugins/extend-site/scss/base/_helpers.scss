@@ -1,0 +1,66 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class}grid-layout {
+  display: grid;
+}
+
+.#{$prefix-plugin-class}flex {
+  display: flex;
+}
+
+.#{$prefix-plugin-class}flex-column {
+  flex-direction: column;
+}
+
+.#{$prefix-plugin-class}flex-grow-1 {
+  flex-grow: 1;
+}
+
+.#{$prefix-plugin-class}custom-swiper-slider {
+  &.is-initializing {
+    visibility: hidden;
+    height: auto;
+  }
+
+  .swiper-pagination {
+    position: static;
+  }
+
+  .swiper-button-prev,
+  .swiper-button-next {
+    &:after {
+      display: none;
+    }
+  }
+}
+
+.#{$prefix-plugin-class}equal-height {
+  .swiper-slide {
+    @include flex-column;
+  }
+}
+
+// Utility to remove all margin from an element
+.#{$prefix-plugin-class}m-0 {
+  margin: 0 !important;
+}
+
+// Utility to maintain aspect ratios for thumbnails and other elements
+.#{$prefix-plugin-class}ratio {
+  @each $name, $value in $ratios {
+    &-#{$name} {
+      .#{$prefix-plugin-class}ratio-thumb {
+        aspect-ratio: #{$value};
+      }
+    }
+  }
+
+  &-thumb {
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+}

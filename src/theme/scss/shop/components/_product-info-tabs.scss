@@ -1,0 +1,75 @@
+@import "shared/scss/abstracts/abstracts";
+
+.woocommerce {
+  div {
+    &.product {
+      .woocommerce-tabs {
+        ul {
+          &.tabs {
+            margin: 0;
+            padding: 0;
+
+            &::before,
+            &::after {
+              display: none;
+            }
+
+            li {
+              border: none;
+              margin: 0;
+              padding: 1rem 1.6rem;
+              border-radius: 0;
+              background-color: #323232;
+
+              &::before,
+              &::after {
+                display: none;
+              }
+
+              &.active {
+                background-color: $var-accent-color;
+
+                a {
+                  color: $var-white-color;
+                }
+              }
+
+              a {
+                padding: 0;
+                font-size: 1.5rem;
+                font-weight: $var-fw-regular;
+                color: $var-white-color;
+              }
+            }
+          }
+        }
+
+        .panel {
+          border: .1rem solid #eeeeee;
+          padding: 1.6rem;
+
+          h2 {
+            font-size: $var-fs-md;
+            margin-bottom: 2.4rem;
+          }
+
+          &.woocommerce-Tabs-panel {
+            &--description {
+              p {
+                margin-bottom: 1rem;
+              }
+            }
+          }
+
+          .woocommerce-Reviews-title {
+            font-size: $var-fs-md;
+          }
+
+          .commentlist {
+            padding: 0;
+          }
+        }
+      }
+    }
+  }
+}

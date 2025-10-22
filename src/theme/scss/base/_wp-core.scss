@@ -1,0 +1,153 @@
+@import "shared/scss/abstracts/abstracts";;
+
+%margin-alignnone {
+  margin: .5rem 2rem 2rem 0;
+}
+
+%margin-aligncenter {
+  margin: .5rem auto;
+}
+
+%margin-alignright {
+  margin: .5rem 0 2rem 2rem;
+}
+
+%margin-alignleft {
+  margin: .5rem 2rem 2rem 0;
+}
+
+.alignnone {
+  @extend %margin-alignnone;
+}
+
+.aligncenter {
+  display: block;
+  @extend %margin-aligncenter;
+}
+
+.alignright {
+  float: right;
+  @extend %margin-alignright;
+}
+
+.alignleft {
+  float: left;
+  @extend %margin-alignleft;
+}
+
+a {
+  img {
+    &.alignright {
+      @extend .alignright;
+    }
+
+    &.alignnone {
+      @extend .alignnone;
+    }
+
+    &.alignleft {
+      @extend .alignleft;
+    }
+
+    &.aligncenter {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
+
+.wp-caption {
+  background-color: $var-white-color;
+  max-width: 96%;
+  padding: .4rem .2rem 1rem;
+  text-align: center;
+
+  &.alignnone {
+    @extend %margin-alignnone;
+  }
+
+  &.alignleft {
+    @extend %margin-alignleft;
+  }
+
+  &.alignright {
+    @extend %margin-alignright;
+  }
+
+  img {
+    border: 0 none;
+    height: auto;
+    margin: 0;
+    max-width: 98.5%;
+    padding: 0;
+    width: auto;
+  }
+
+  p {
+    &.wp-caption-text {
+      --#{$prefix-theme}padding-caption: 0 .4rem .5rem;
+
+      font-size: $var-fs-sm;
+      margin: 0;
+      padding: var(--#{$prefix-theme}padding-caption);
+    }
+  }
+}
+
+/* Text meant only for screen readers. */
+.screen-reader-text {
+  clip: rect(.1rem, .1rem, .1rem, .1rem);
+  position: absolute !important;
+  white-space: nowrap;
+  @include square(.1rem);
+  overflow: hidden;
+
+  &:focus {
+    background-color: #f1f1f1;
+    clip: auto !important;
+    color: $var-accent-color;
+    display: block;
+    height: auto;
+    width: auto;
+    top: .5rem;
+    left: .5rem;
+    line-height: normal;
+    padding: 1.5rem 2.3rem 1.4rem;
+    text-decoration: none;
+    z-index: 100000;
+    border-radius: .3rem;
+    box-shadow: 0 0 .2rem .2rem rgba(0, 0, 0, 0.6);
+  }
+}
+
+.bypostauthor,
+.sticky {
+  color: $var-accent-color;
+}
+
+form {
+  &.post-password-form {
+    p {
+      label {
+        margin: 0;
+      }
+
+      input {
+        @include border();
+        @include border-radius();
+        padding: .4rem 1rem;
+        margin-left: 1rem;
+
+        &[type='submit'] {
+          @include border-radius();
+          background-color: $var-primary-color;
+          border: none;
+          color: $var-white-color;
+          text-transform: uppercase;
+          padding: .5rem 1.5rem;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,88 @@
+.woocommerce-checkout .col2-set {
+  margin: 0 -1.2rem;
+  flex-flow: wrap;
+}
+.woocommerce-checkout .col2-set .col-1,
+.woocommerce-checkout .col2-set .col-2 {
+  padding: 0 1.2rem;
+  flex: 0 0 50%;
+  max-width: 50%;
+  width: 100%;
+}
+.woocommerce-checkout form .form-row label {
+  width: 100%;
+}
+.woocommerce-checkout form .form-row .input-text,
+.woocommerce-checkout form .form-row .select2-container {
+  border: 0.1rem solid #eeeeee;
+  padding: 1rem 1.5rem;
+}
+.woocommerce-checkout form .form-row span.woocommerce-input-wrapper {
+  display: block;
+  width: 100%;
+}
+.woocommerce-checkout form .form-row span.woocommerce-input-wrapper textarea.input-text {
+  height: 15rem;
+}
+.woocommerce-checkout form .form-row span.woocommerce-input-wrapper .select2-container--default .select2-selection--single {
+  border: none;
+  border-radius: 0;
+}
+.woocommerce-checkout form .form-row span.woocommerce-input-wrapper .select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: inherit;
+  padding: 0;
+}
+.woocommerce-checkout form .form-row span.woocommerce-input-wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.woocommerce-checkout form .form-row.place-order {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.woocommerce-checkout #payment #place_order {
+  background-color: var(--theme-black);
+}
+.woocommerce-checkout #payment #place_order:hover {
+  background-color: var(--theme-accent);
+}
+
+#order_review_heading {
+  margin: 1.5rem 0 1.5rem;
+}
+
+.woocommerce-info,
+.woocommerce-message {
+  border-top-color: var(--theme-accent);
+}
+.woocommerce-info::before,
+.woocommerce-message::before {
+  color: var(--theme-accent);
+}
+
+.woocommerce #respond input#submit,
+.woocommerce a.button,
+.woocommerce button.button,
+.woocommerce input.button {
+  display: inline-block;
+  width: auto;
+  padding: 0.9rem 2.2rem;
+  color: var(--theme-black);
+  background-color: #eeeeee;
+  border: none;
+  font-weight: var(--theme-fw-regular);
+  transition: all 0.4s ease-in-out;
+}
+.woocommerce #respond input#submit:hover,
+.woocommerce a.button:hover,
+.woocommerce button.button:hover,
+.woocommerce input.button:hover {
+  color: #ffffff;
+  background-color: var(--theme-accent);
+}
+.woocommerce #review_form #respond label {
+  display: block;
+}
+.woocommerce #review_form #respond p {
+  display: inline-block;
+}

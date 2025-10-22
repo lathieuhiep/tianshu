@@ -1,0 +1,303 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.woocommerce {
+  .site-shop {
+    ul {
+      &.products {
+        margin: 0;
+
+        &::before,
+        &::after {
+          display: none;
+        }
+
+        li {
+          &.product {
+            float: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+
+            .item {
+              position: relative;
+              text-align: center;
+              @include flex-column;
+              flex: 1;
+
+              a {
+                &.woocommerce-loop-product__link {
+                  display: block;
+                }
+              }
+
+              &__image {
+                position: relative;
+                overflow: hidden;
+
+                img {
+                  max-width: none;
+                  width: 100%;
+                }
+              }
+
+              &__content {
+                padding: 1rem .5rem;
+                flex: 1 auto;
+                @include flex-column;
+              }
+            }
+
+            .onsale {
+              top: 1.6rem;
+              left: 1.6rem;
+              right: unset;
+              margin: 0;
+              min-width: auto;
+              min-height: auto;
+              line-height: inherit;
+              padding: .4rem 1.8rem;
+              font-weight: $var-fw-regular;
+              border-radius: 3rem;
+              background-color: $var-accent-color;
+            }
+
+            .woocommerce-loop-product {
+              &__title {
+                padding: 0;
+                margin: 0 0 1rem;
+                overflow: hidden;
+
+                a {
+                  display: inline-block;
+                }
+              }
+            }
+
+            .price {
+              color: $var-accent-color;
+              font-size: $var-fs-xs;
+              line-height: normal;
+              font-weight: $var-fw-bold;
+              margin: 0;
+
+              del {
+                display: inline-block;
+                font-size: $var-fs-xs;
+              }
+
+              ins {
+                display: inline-block;
+                text-decoration: none;
+              }
+            }
+
+            .button {
+              display: inline-block;
+              padding: 0;
+              line-height: inherit;
+              border: none;
+              color: $body-color;
+              font-weight: $var-fw-bold;
+              background-color: transparent;
+
+              &.add_to_cart_button {
+                margin: 0;
+              }
+
+              &:hover {
+                color: $var-accent-color;
+              }
+
+              &.added {
+                display: none;
+              }
+
+              &.loading {
+                &:after {
+                  top: .1rem;
+                  right: -2em;
+                }
+              }
+            }
+
+            a {
+              &.added_to_cart {
+                padding: 0;
+                font-weight: $var-fw-bold;
+                color: $body-color;
+
+                &:hover {
+                  color: $var-accent-color;
+                }
+              }
+            }
+
+            .star-rating {
+              margin: 0 auto 1rem;
+              width: 7em;
+              font-size: $var-fs-xs;
+
+              > span {
+                color: $var-accent-color;
+              }
+
+              &:before,
+              > span:before {
+                letter-spacing: .32rem;
+              }
+            }
+
+            .btn-quick-view-product {
+              padding: .5rem;
+              position: absolute;
+              bottom: -4rem;
+              left: 0;
+              right: 0;
+              text-align: center;
+              color: $var-white-color;
+              background-color: $var-black-color;
+              visibility: hidden;
+              @include transition();
+
+              &:hover {
+                color: $var-white-color;
+                background-color: $var-accent-color;
+              }
+            }
+
+            &:hover {
+              .btn-quick-view-product {
+                bottom: 0;
+                visibility: visible;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .modal {
+    &.mode-quick-view-product {
+      .modal-dialog {
+        .modal-body {
+          min-height: 10rem;
+        }
+
+        @media (min-width: 992px) {
+          max-width: 85rem;
+        }
+      }
+
+      .item-rating {
+        .star-rating {
+          float: none;
+        }
+      }
+
+      .content_product_detail {
+        .title-product {
+          font-size: $var-fs-xl;
+        }
+
+        > div {
+          margin-bottom: var(--#{$prefix-theme}spacing-3);
+        }
+
+        .item-price {
+          .price {
+            font-weight: $var-fw-bold;
+            color: $var-accent-color;
+            font-size: $var-fs-sm;
+
+            del {
+              margin-right: var(--#{$prefix-theme}spacing-1);
+              font-size: $var-fs-xs;
+            }
+
+            ins {
+              text-decoration: none;
+            }
+          }
+        }
+
+        form {
+          .quantity {
+            margin: 0;
+            @extend %product-quantity;
+          }
+
+          button {
+            color: $var-white-color;
+            background-color: $var-black-color;
+
+            &:hover {
+              background-color: $var-accent-color;
+            }
+          }
+
+          table {
+            width: 100%;
+
+            tr {
+              td {
+                padding-bottom: 1rem;
+
+                .reset_variations {
+                  margin-left: var(--#{$prefix-theme}spacing-1);
+                }
+              }
+            }
+          }
+
+          .added_to_cart {
+            padding-left: 1rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+.loading-body {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  background-color: #ffffff;
+
+  .icon-loading {
+    margin-top: -1.5rem;
+    margin-left: -1.5rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    @include square(3rem);
+    border: .3rem solid #f3f3f3;
+    border-top: .3rem solid #3498db;
+    border-radius: 50%;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+  }
+}
+
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

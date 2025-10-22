@@ -1,0 +1,21 @@
+@use "sass:map";
+
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class-addon}post-carousel {
+  --#{$prefix-plugin-class}bc-content: #{map.get($mt-colors, "primary")};
+  --#{$prefix-plugin-class}fs-title: #{map.get($mt-font-sizes, md)};
+
+  .thumbnail {
+    margin-bottom: 2rem;
+  }
+
+  .body {
+    flex: 1;
+
+    .title {
+      font-size: var(--#{$prefix-plugin-class}fs-title);
+    }
+  }
+}

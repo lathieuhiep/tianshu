@@ -1,0 +1,239 @@
+@import "shared/scss/abstracts/abstracts";;
+
+.search-form {
+  --#{$prefix-theme}search-field-min-height: 4rem;
+  --#{$prefix-theme}search-field-padding: 0 1rem;
+
+  font-size: $var-fs-xs;
+
+  .search-field {
+    min-height: var(--#{$prefix-theme}search-field-min-height);
+    padding: var(--#{$prefix-theme}search-field-padding);
+    @include border();
+    @include border-radius();
+    box-shadow: none;
+  }
+
+  .search-submit {
+    padding: var(--#{$prefix-theme}search-field-padding);
+    background-color: $var-accent-color;
+    color: $var-white-color;
+    border: none;
+    cursor: pointer;
+    @include border-radius();
+    @include transition();
+  }
+}
+
+.widget {
+  ~ .widget {
+    margin-top: var(--#{$prefix-theme}spacing-6);
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .widget-title {
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    font-size: $var-fs-sm;
+  }
+
+  ul {
+    @include reset-list;
+
+    li {
+      &:not(:last-child) {
+        margin-bottom: 1rem;
+      }
+
+      a {
+        display: block;
+      }
+
+      ul {
+        &.children,
+        &.sub-menu {
+          padding-left: 1.2rem;
+          padding-top: .8rem;
+
+          li {
+            border-bottom: 0;
+            padding: 0 0 1rem;
+
+            &:last-child {
+              padding-bottom: 0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  select {
+    width: 100%;
+    padding: .9rem 1rem;
+    font-size: $var-fs-xs;
+  }
+
+  &.widget {
+    &_block {
+      .wp-block-heading {
+        @extend .widget-title;
+      }
+
+      ol, ul {
+        padding-left: 0;
+
+        li {
+          margin-bottom: 0;
+
+          ~ li {
+            margin-top: .8rem;
+          }
+        }
+      }
+    }
+
+    &_search {
+      .search-form {
+        display: grid;
+        gap: var(--#{$prefix-theme}spacing-2);
+        grid-template-columns: 1fr 4rem;
+      }
+    }
+
+    &_archive,
+    &_categories {
+      ul {
+        li {
+          a {
+            display: inline-block;
+            margin-right: .5rem;
+          }
+        }
+      }
+    }
+
+    &_calendar {
+      table {
+        width: 100%;
+
+        caption {
+          padding: 0;
+          margin-top: var(--#{$prefix-theme}spacing-3);
+        }
+
+        tr {
+          border-bottom: 1px solid $var-primary-color;
+
+          th {
+            text-align: center;
+          }
+
+          td {
+            padding: .5rem 0;
+            text-align: center;
+
+            &#today {
+              background-color: $var-accent-color;
+              color: $var-white-color;
+
+              a {
+                color: $var-white-color;
+              }
+            }
+
+            &#prev {
+              text-align: left;
+            }
+
+            &#next {
+              text-align: right;
+            }
+          }
+        }
+      }
+    }
+
+    &_rss {
+      ul {
+        li {
+          padding-bottom: 2rem;
+          margin-bottom: 2rem;
+
+          .rssSummary {
+            font-size: $var-fs-xs;
+          }
+        }
+      }
+    }
+
+    &_tag_cloud,
+    &_product_tag_cloud {
+      .tagcloud {
+        a {
+          display: inline-block;
+          font-size: $var-fs-xs !important;
+          @include border();
+          padding: .5rem 1rem;
+          margin: 0 .2rem 5px;
+
+          &:hover {
+            background-color: $var-accent-color;
+            color: $var-white-color;
+            border-color: $var-accent-color;
+          }
+        }
+      }
+    }
+  }
+
+  &.recent-post-widget {
+    .post-list {
+      .item {
+        display: grid;
+        grid-gap: .8rem;
+        grid-template-columns: 10rem 1fr;
+      }
+
+      .title {
+        margin-bottom: .8rem;
+        font-size: $var-fs-sm;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .meta {
+        font-size: 1.2rem;
+
+        i.fa {
+          margin-right: .5rem;
+        }
+      }
+    }
+  }
+
+  &.contact-info-widget {
+    .list {
+      display: grid;
+      gap: 1.2rem;
+
+      .item {
+        display: grid;
+        gap: 1.2rem;
+        grid-template-columns: 2.4rem 1fr;
+        align-items: center;
+
+        i {
+          font-size: $var-fs-md;
+          text-align: center;
+        }
+      }
+    }
+  }
+}

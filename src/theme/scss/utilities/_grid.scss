@@ -1,0 +1,24 @@
+@import "shared/scss/abstracts/abstracts";;
+
+[class^="#{$prefix-theme}row-cols-"],
+[class*="#{$prefix-theme}row-cols-"] {
+  display: grid;
+}
+
+// row-cols
+@for $i from 1 through $grid-columns {
+  .#{$prefix-theme}row-cols-#{$i} {
+    grid-template-columns: repeat(#{$i}, 1fr);
+  }
+}
+
+// responsive row-cols: .row-cols-sm-*, .row-cols-md-*, .row-cols-lg-*, .row-cols-xl-*, .row-cols-xxl-*
+@each $breakpoint, $size in $mt-breakpoints {
+  @media (min-width: $size) {
+    @for $i from 1 through $grid-columns {
+      .#{$prefix-theme}row-cols-#{$breakpoint}-#{$i} {
+        grid-template-columns: repeat(#{$i}, 1fr);
+      }
+    }
+  }
+}

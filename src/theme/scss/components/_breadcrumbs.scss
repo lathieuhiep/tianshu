@@ -1,0 +1,8 @@
+@import "shared/scss/abstracts/abstracts";;
+
+.breadcrumbs {
+  .breadcrumbs-col {
+    padding: 1.2rem 0;
+    border-bottom: .1rem solid $var-primary-color;
+  }
+}

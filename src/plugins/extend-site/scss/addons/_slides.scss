@@ -1,0 +1,95 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class-addon}slides {
+  position: relative;
+}
+
+.#{$prefix-plugin-class-addon}slides__item {
+  position: relative;
+
+  &--bg {
+    min-width: 100%;
+    min-height: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  &--inner,
+  &--overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  &--inner {
+    padding: 5rem;
+    display: flex;
+  }
+
+  &--heading {
+    margin-bottom: 3rem;
+    color: $var-white-color;
+  }
+
+  &--description {
+    color: $var-white-color;
+    margin-bottom: 3rem;
+  }
+
+  &--link {
+    display: inline-block;
+    color: $var-white-color;
+    padding: 1.2rem 2.4rem;
+    border-style: solid;
+    border-width: .2rem;
+    border-color: $var-white-color;
+    border-radius: .3rem;
+    @include transition();
+
+    a {
+      display: block;
+      color: $var-white-color;
+    }
+  }
+}
+
+.#{$prefix-plugin-class-addon}slides {
+  &--h-position-center {
+    .#{$prefix-plugin-class-addon}slides__item--inner {
+      justify-content: center;
+    }
+  }
+
+  &--h-position-left {
+    .#{$prefix-plugin-class-addon}slides__item--inner {
+      justify-content: flex-start;
+    }
+  }
+
+  &--h-position-right {
+    .#{$prefix-plugin-class-addon}slides__item--inner {
+      justify-content: flex-end;
+    }
+  }
+
+  &--v-position-middle {
+    .#{$prefix-plugin-class-addon}slides__item--inner {
+      align-items: center;
+    }
+  }
+
+  &--v-position-top {
+    .#{$prefix-plugin-class-addon}slides__item--inner {
+      align-items: flex-start;
+    }
+  }
+
+  &--v-position-bottom {
+    .#{$prefix-plugin-class-addon}slides__item--inner {
+      align-items: flex-end;
+    }
+  }
+}

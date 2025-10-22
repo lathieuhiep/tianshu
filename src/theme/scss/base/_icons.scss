@@ -1,0 +1,47 @@
+@import "shared/scss/abstracts/abstracts";
+
+// list icon
+$ic-names: (
+        bars
+        calendar-days
+        cart-plus
+        cart-shopping
+        chevron-down
+        chevron-right
+        chevron-up
+        facebook-f
+        instagram
+        linkedin-in
+        location-dot
+        magnifying-glass
+        minus
+        paper-plane
+        phone
+        plus
+        twitter
+        xmark
+        youtube
+);
+
+.ic-mask {
+  --#{$prefix-theme}ic-width: 1.6rem;
+  --#{$prefix-theme}ic-height: 1.6rem;
+  --#{$prefix-theme}ic-color: currentColor;
+
+  display: inline-block;
+  width: var(--#{$prefix-theme}ic-width);
+  height: var(--#{$prefix-theme}ic-height);
+  background-color: var(--#{$prefix-theme}ic-color);
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+
+  @each $name in $ic-names {
+    &-#{$name} {
+      @include mask-image("#{$ic-path-theme}/#{$name}.svg");
+    }
+  }
+}

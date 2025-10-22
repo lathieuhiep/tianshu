@@ -1,0 +1,122 @@
+@import "shared/scss/abstracts/abstracts";
+@import "abstracts/abstracts";
+
+.woocommerce-checkout {
+  .col2-set {
+    margin: 0 -1.2rem;
+    flex-flow: wrap;
+
+    .col-1,
+    .col-2 {
+      padding: 0 1.2rem;
+      flex: 0 0 50%;
+      max-width: 50%;
+      width: 100%;
+    }
+  }
+
+  form {
+    .form-row {
+      label {
+        width: 100%;
+      }
+
+      .input-text,
+      .select2-container {
+        border: .1rem solid #eeeeee;
+        padding: 1rem 1.5rem;
+      }
+
+      span {
+        &.woocommerce-input-wrapper {
+          display: block;
+          width: 100%;
+
+          textarea {
+            &.input-text {
+              height: 15rem;
+            }
+          }
+
+          .select2-container--default {
+            .select2-selection--single {
+              border: none;
+              border-radius: 0;
+
+              .select2-selection__rendered {
+                line-height: inherit;
+                padding: 0;
+              }
+
+              .select2-selection__arrow {
+                top: 50%;
+                transform: translateY(-50%);
+              }
+            }
+          }
+        }
+      }
+
+      &.place-order {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  }
+
+  #payment {
+    #place_order {
+      background-color: $var-black-color;
+
+      &:hover {
+        background-color: $var-accent-color;
+      }
+    }
+  }
+}
+
+#order_review_heading {
+  margin: 1.5rem 0 1.5rem;
+}
+
+.woocommerce-info,
+.woocommerce-message {
+  border-top-color: $var-accent-color;
+
+  &::before {
+    color: $var-accent-color;
+  }
+}
+
+.woocommerce {
+  #respond input#submit,
+  a.button,
+  button.button,
+  input.button {
+    display: inline-block;
+    width: auto;
+    padding: .9rem 2.2rem;
+    color: $var-black-color;
+    background-color: #eeeeee;
+    border: none;
+    font-weight: $var-fw-regular;
+    @include transition();
+
+    &:hover {
+      color: #ffffff;
+      background-color: $var-accent-color;
+    }
+  }
+
+  #review_form {
+    #respond {
+      label {
+        display: block;
+      }
+
+      p {
+        display: inline-block;
+      }
+    }
+  }
+}

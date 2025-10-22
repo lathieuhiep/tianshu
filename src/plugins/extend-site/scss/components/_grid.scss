@@ -1,0 +1,91 @@
+@use "sass:math";
+
+@import "../abstracts/abstracts";
+
+// row
+.#{$prefix-plugin-class} {
+  &row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: calc(-1 * var(--#{$prefix-plugin-class}gutter-width));
+    margin-left: calc(-1 * var(--#{$prefix-plugin-class}gutter-width));
+
+    > * {
+      padding-right: var(--#{$prefix-plugin-class}gutter-width);
+      padding-left: var(--#{$prefix-plugin-class}gutter-width);
+    }
+  }
+
+  &col {
+    flex: 1 1 0;
+  }
+}
+
+// row-gap & col-gap
+@for $i from 1 through 24 {
+  .#{$prefix-plugin-class} {
+    &row-gap-#{$i} {
+      row-gap: #{$i * $spacing-base};
+    }
+
+    &col-gap-#{$i} {
+      column-gap: #{$i * $spacing-base};
+    }
+  }
+}
+
+// Responsive row-gap & column-gap
+@each $breakpoint, $size in $breakpoints {
+  @media (min-width: $size) {
+    @for $i from 1 through 24 {
+      .#{$prefix-plugin-class} {
+        &row-gap-#{$breakpoint}-#{$i} {
+          row-gap: #{$i * $spacing-base};
+        }
+
+        &col-gap-#{$breakpoint}-#{$i} {
+          column-gap: #{$i * $spacing-base};
+        }
+      }
+    }
+  }
+}
+
+@for $i from 1 through $grid-columns {
+  .#{$prefix-plugin-class}col-#{$i} {
+    flex: 0 0 math.percentage(math.div($i, $grid-columns));
+    max-width: math.percentage(math.div($i, $grid-columns));
+  }
+}
+
+// Responsive Grid
+@each $breakpoint, $size in $breakpoints {
+  @media (min-width: $size) {
+    @for $i from 1 through $grid-columns {
+      .#{$prefix-plugin-class}col-#{$breakpoint}-#{$i} {
+        flex: 0 0 math.percentage(math.div($i, $grid-columns));
+        max-width: math.percentage(math.div($i, $grid-columns));
+      }
+    }
+  }
+}
+
+// row-cols
+@for $i from 1 through $grid-columns {
+  .#{$prefix-plugin-class}row-cols-#{$i} > * {
+    flex: 0 0 calc(100% / #{$i});
+    max-width: calc(100% / #{$i});
+  }
+}
+
+// Responsive row-cols
+@each $breakpoint, $size in $breakpoints {
+  @media (min-width: $size) {
+    @for $i from 1 through $grid-columns {
+      .#{$prefix-plugin-class}row-cols-#{$breakpoint}-#{$i} > * {
+        flex: 0 0 calc(100% / #{$i});
+        max-width: calc(100% / #{$i});
+      }
+    }
+  }
+}

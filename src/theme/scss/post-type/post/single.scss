@@ -1,0 +1,46 @@
+@import "shared/scss/abstracts/abstracts";;
+
+.single-post-content {
+  &__image,
+  .page-links {
+    margin-bottom: var(--#{$prefix-theme}spacing-6);
+  }
+
+  &__title {
+    margin-bottom: var(--#{$prefix-theme}spacing-4);
+  }
+
+  &__detail {
+    margin-bottom: var(--#{$prefix-theme}spacing-4);
+  }
+
+  &__tax {
+    margin-bottom: var(--#{$prefix-theme}spacing-5);
+  }
+
+  .post-meta {
+    margin-bottom: var(--#{$prefix-theme}spacing-4);
+  }
+}
+
+.related-posts {
+  &__title {
+    position: relative;
+    margin-bottom: var(--#{$prefix-theme}spacing-6);
+    padding-bottom: var(--#{$prefix-theme}spacing-4);
+
+    &:after {
+      position: absolute;
+      content: "";
+      left: 0;
+      bottom: 0;
+      width: 3rem;
+      height: .1rem;
+      background-color: $var-accent-color;
+    }
+  }
+
+  .item {
+    margin-bottom: var(--#{$prefix-theme}spacing-4);
+  }
+}

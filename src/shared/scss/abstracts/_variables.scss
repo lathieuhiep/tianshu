@@ -1,0 +1,127 @@
+@use "sass:map";
+
+$prefix-theme: theme-;
+$ic-path-theme: "../images/icons";
+
+// breakpoints
+$mt-breakpoints: (
+        sm: 576px,
+        md: 768px,
+        lg: 992px,
+        xl: 1200px,
+        xxl: 1400px
+);
+
+// color
+$mt-colors: (
+        "primary": #3498db,
+        "secondary": #2ecc71,
+        "accent": #e74c3c,
+        "success": #28a745,
+        "error": #dc3545,
+        "warning": #ffc107,
+        "info": #17a2b8,
+        "black": #000000,
+        "white": #ffffff
+);
+$var-primary-color: var(--#{$prefix-theme}primary);
+$var-secondary-color: var(--#{$prefix-theme}secondary);
+$var-accent-color: var(--#{$prefix-theme}accent);
+$var-success-color: var(--#{$prefix-theme}success);
+$var-error-color: var(--#{$prefix-theme}error);
+$var-warning-color: var(--#{$prefix-theme}warning);
+$var-info-color: var(--#{$prefix-theme}info);
+$var-black-color: var(--#{$prefix-theme}black);
+$var-white-color: var(--#{$prefix-theme}white);
+
+// typography
+$mt-font-sizes: (
+        xs: 1.4rem,
+        sm: 1.6rem,
+        md: 1.8rem,
+        lg: 2rem,
+        xl: 2.4rem,
+        xxl: 2.8rem,
+        3xl: 3.2rem
+);
+$var-fs-xs: var(--#{$prefix-theme}fs-xs);
+$var-fs-sm: var(--#{$prefix-theme}fs-sm);
+$var-fs-md: var(--#{$prefix-theme}fs-md);
+$var-fs-lg: var(--#{$prefix-theme}fs-lg);
+$var-fs-xl: var(--#{$prefix-theme}fs-xl);
+$var-fs-xxl: var(--#{$prefix-theme}fs-xxl);
+$var-fs-3xl: var(--#{$prefix-theme}fs-3xl);
+
+// font family
+$mt-fonts: (
+        base: '"Inter", sans-serif',
+        heading: '"Roboto Condensed", sans-serif'
+);
+$var-ff-base: var(--#{$prefix-theme}ff-base);
+$var-ff-heading: var(--#{$prefix-theme}ff-heading);
+
+// font-weights
+$mt-font-weights: (
+        regular: 400,
+        medium: 500,
+        bold: 700
+);
+$var-fw-regular: var(--#{$prefix-theme}fw-regular);
+$var-fw-medium: var(--#{$prefix-theme}fw-medium);
+$var-fw-bold: var(--#{$prefix-theme}fw-bold);
+
+$line-height-base: 1.5;
+$line-height-heading: 1.25;
+
+// spacing
+$spacing-base: 0.4rem;
+$spacers: ();
+
+@for $i from 0 through 8 {
+  $spacers: map.merge($spacers, (#{$i}: $spacing-base * $i));
+}
+
+// body
+$body-color: $var-black-color;
+$body-bg: $var-white-color;
+
+$color-required: #ff5555;
+
+// headings variables
+$headings-margin-bottom: $spacing-base * 3;
+$heading-color: $var-primary-color;
+$headings-font-family: $var-ff-heading;
+$headings-font-weight: $var-fw-bold;
+$headings-line-height: $line-height-heading;
+
+// FontAwesome
+$font-awesome-free: "Font Awesome 6 Free", serif;
+$font-awesome-brand: "Font Awesome 6 Brands", serif;
+
+// Paragraphs
+//
+// Style p element.
+$paragraph-margin-bottom: $spacing-base * 3;
+
+// others
+$transition-base: all 0.4s ease-in-out;
+
+// Grid columns
+$grid-columns: 12;
+$grid-gutter-width: $spacing-base * 6;
+
+// border
+$border-width: .1rem;
+$border-style: solid;
+$border-color: #ddd;
+$border-radius: .4rem;
+
+// ratios
+$ratios: (
+    '16-9': '16 / 9',
+    '4-3': '4 / 3',
+    '1-1': '1 / 1',
+    '3-4': '3 / 4',
+    '2-3': '2 / 3',
+    'auto': auto
+);
