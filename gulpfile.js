@@ -301,88 +301,6 @@ const buildStylePageTemplate = () => {
         .pipe(browserSync.stream())
 }
 
-// Task build style shop
-const buildStyleShop = () => {
-    return src(`${paths.theme.scss}shop/*.scss`)
-        .pipe(plumber({
-            errorHandler: function (err) {
-                console.error('SCSS Shop Error:', err.message);
-                this.emit('end');
-            }
-        }))
-        .pipe(gulpIf(isDev, sourcemaps.init()))
-        .pipe(sass({
-            outputStyle: 'expanded',
-            includePaths: ['node_modules', 'src']
-        }, '').on('error', sass.logError))
-
-        // --- Xuất file chưa min ---
-        .pipe(dest(`${paths.output.theme.woo}css/`))
-
-        // --- Tạo bản minified ---
-        .pipe(cleanCSS({level: 2}))
-        .pipe(rename({suffix: '.min'}))
-        .pipe(gulpIf(isDev, sourcemaps.write()))
-        .pipe(dest(`${paths.output.theme.woo}css/`))
-        .pipe(browserSync.stream())
-}
-
-const buildJSShop = () => {
-    const entries = glob.sync(`${paths.theme.js}shop/*.js`).reduce((result, file) => {
-        const name = path.basename(file, '.js');
-        result[name] = './' + file.replace(/\\/g, '/');
-        return result;
-    }, {});
-
-    return src(`${paths.theme.js}shop/*.js`, { allowEmpty: true })
-        .pipe(plumber({
-            errorHandler: function (err) {
-                console.error('Error in buildJSShop:', err.message);
-                this.emit('end');
-            }
-        }))
-        .pipe(webpackStream({
-            mode: 'production',
-            entry: entries,
-            output: {
-                filename: '[name].min.js',
-            },
-            module: {
-                rules: [
-                    {
-                        test: /\.m?js$/,
-                        exclude: /node_modules/,
-                        use: {
-                            loader: 'babel-loader',
-                            options: {
-                                presets: ['@babel/preset-env']
-                            }
-                        }
-                    }
-                ]
-            },
-            resolve: {
-                extensions: ['.js']
-            },
-            optimization: {
-                minimize: true,
-                minimizer: [
-                    new TerserPlugin({
-                        extractComments: false,
-                        terserOptions: {
-                            format: {
-                                comments: false
-                            },
-                        },
-                    })
-                ]
-            }
-        }, webpack))
-        .pipe(dest(`${paths.output.theme.woo}js/`))
-        .pipe(browserSync.stream());
-}
-exports.buildJSShop = buildJSShop;
-
 /*
 ** Plugin Extend Site
 * */
@@ -434,10 +352,8 @@ const buildProject = async () => {
         buildStyleTheme(),
         buildStyleCustomPostType(),
         buildStylePageTemplate(),
-        buildStyleShop(),
         buildJSCustomBootstrap(),
-        buildJSTheme(),
-        buildJSShop(),
+        buildJSTheme()
     ]);
 
     console.log("Dự án đã được xây dựng hoàn tất!");
@@ -457,8 +373,7 @@ const watchTask = () => {
         buildStyleAddonsPluginExtendSite,
         buildStyleCustomLogin,
         buildStyleCustomPostType,
-        buildStylePageTemplate,
-        buildStyleShop
+        buildStylePageTemplate
     ))
 
     // plugin essentials watch
@@ -504,18 +419,5 @@ const watchTask = () => {
     watch([
         `${paths.theme.scss}page-templates/*.scss`
     ], buildStylePageTemplate)
-
-    watch([
-        `${paths.theme.scss}shop/abstracts/*.scss`,
-        `${paths.theme.scss}shop/components/*.scss`,
-        `${paths.theme.scss}shop/*.scss`
-    ], buildStyleShop)
-
-    watch([`${paths.vendors}bootstrap/*.js`], buildJSCustomBootstrap)
-    watch([`${paths.theme.js}*.js`], buildJSTheme)
-    watch([
-        `${paths.theme.js}shop/components/*.js`,
-        `${paths.theme.js}shop/*.js`
-    ], buildJSShop)
 }
 exports.watchTask = watchTask

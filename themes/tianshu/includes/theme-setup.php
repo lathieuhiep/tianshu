@@ -28,10 +28,6 @@ function tianshu_add_theme_support(): void {
     add_theme_support('align-wide');
     add_theme_support('responsive-embeds');
     add_theme_support('custom-logo', ['height'=>80,'width'=>240,'flex-height'=>true,'flex-width'=>true]);
-
-    if ( class_exists('WooCommerce') ) {
-        add_theme_support('woocommerce');
-    }
 }
 add_action('after_setup_theme', 'tianshu_add_theme_support');
 

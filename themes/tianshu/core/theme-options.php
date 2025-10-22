@@ -41,11 +41,6 @@ function tianshu_load_options(): void {
     require get_template_directory() . '/core/theme-options/menu-options.php';
     require get_template_directory() . '/core/theme-options/blog-options.php';
     require get_template_directory() . '/core/theme-options/social-network-options.php';
-
-    if ( class_exists( 'Woocommerce' ) ) {
-        require get_template_directory() . '/core/theme-options/shop-options.php';
-    }
-
     require get_template_directory() . '/core/theme-options/footer-options.php';
     require get_template_directory() . '/core/theme-options/custom-code-options.php';
 }

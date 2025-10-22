@@ -36,12 +36,3 @@ require get_template_directory() . '/includes/theme-sidebar.php';
 require get_template_directory() . '/includes/widgets/contact-info-widget.php';
 require get_template_directory() . '/includes/widgets/recent-post.php';
 require get_template_directory() . '/includes/widgets/social-widget.php';
-
-// Woocommerce
-if ( class_exists( 'Woocommerce' ) ) {
-    require get_template_directory() . '/includes/woocommerce/woo-helpers.php';
-    require get_template_directory() . '/includes/woocommerce/woo-scripts.php';
-    require get_template_directory() . '/includes/woocommerce/woo-quick-view.php';
-    require get_template_directory() . '/includes/woocommerce/woo-template-hooks.php';
-    require get_template_directory() . '/includes/woocommerce/woo-template-functions.php';
-}

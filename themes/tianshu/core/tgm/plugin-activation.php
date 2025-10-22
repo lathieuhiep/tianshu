@@ -37,13 +37,6 @@ function tianshu_register_required_plugins(): void {
 
 		// This is an example of how to include a plugin from the WordPress Plugin Repository
 		array(
-			'name'      =>  'Woocommerce',
-			'slug'      =>  'woocommerce',
-			'required'  =>  false,
-		),
-
-		// This is an example of how to include a plugin from the WordPress Plugin Repository
-		array(
 			'name'      =>  'Breadcrumb Navxt',
 			'slug'      =>  'breadcrumb-navxt',
 			'required'  =>  false,

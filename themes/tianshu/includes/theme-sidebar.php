@@ -27,21 +27,6 @@ function tianshu_multiple_widget_init(): void {
         esc_html__('Dùng ở các trang bài viết', 'tianshu' )
     );
 
-    // sidebar woo
-    if ( class_exists( 'Woocommerce' ) ) :
-        tianshu_register_sidebar(
-            esc_html__( 'Sidebar shop', 'tianshu' ),
-            'sidebar-wc',
-            esc_html__( 'Dùng ở trang danh mục sản phẩm.', 'tianshu' )
-        );
-
-        tianshu_register_sidebar(
-            esc_html__( 'Sidebar sản phẩm', 'tianshu' ),
-            'sidebar-wc-product',
-            esc_html__( 'Dùng cho trang chi tiết sản phẩm', 'tianshu' )
-        );
-    endif;
-
 	// sidebar footer
 	$opt_number_columns = tianshu_get_option( 'opt_footer_columns', '4' );
 
