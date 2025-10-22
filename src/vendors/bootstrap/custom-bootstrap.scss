@@ -14,9 +14,9 @@ $body-color: map.get($mt-colors, "black");
 $body-text-align: inherit;
 
 // stylelint-enable value-keyword-case
-$font-family-sans-serif: $var-ff-base;
-$font-family-monospace: $var-ff-base;
-$font-family-base: $var-ff-base;
+$font-family-sans-serif: ff-var("base");
+$font-family-monospace: ff-var("base");
+$font-family-base: ff-var("base");
 
 $font-size-base: map.get($mt-font-sizes, sm);
 $line-height-base: $line-height-base;
@@ -37,12 +37,12 @@ $link-decoration: none;
 $transition-base: $transition-base;
 
 // font size
-$h1-font-size: $var-fs-3xl;
-$h2-font-size: $var-fs-xxl;
-$h3-font-size: $var-fs-xl;
-$h4-font-size: $var-fs-lg;
-$h5-font-size: $var-fs-md;
-$h6-font-size: $var-fs-sm;
+$h1-font-size: fs-var("3xl");
+$h2-font-size: fs-var("xxl");
+$h3-font-size: fs-var("xl");
+$h4-font-size: fs-var("lg");
+$h5-font-size: fs-var("md");
+$h6-font-size: fs-var("sm");
 
 // headings-variables
 $headings-color: $heading-color;

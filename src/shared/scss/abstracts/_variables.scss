@@ -5,25 +5,64 @@ $ic-path-theme: "../images/icons";
 
 // breakpoints
 $mt-breakpoints: (
-        sm: 576px,
-        md: 768px,
-        lg: 992px,
-        xl: 1200px,
-        xxl: 1400px
+    sm: 576px,
+    md: 768px,
+    lg: 992px,
+    xl: 1200px,
+    xxl: 1400px
 );
 
-// color
+// color light theme
 $mt-colors: (
-        "primary": #3498db,
-        "secondary": #2ecc71,
-        "accent": #e74c3c,
-        "success": #28a745,
-        "error": #dc3545,
-        "warning": #ffc107,
-        "info": #17a2b8,
-        "black": #000000,
-        "white": #ffffff
-);
+    "primary": #8a1f11, // đỏ son cổ (link, accent)
+    "secondary": #6e6358, // xám nâu ấm (meta/UI)
+    "accent": #b8946b, // vàng đồng / ngọc phách
+    "success": #5c7f67, // xanh ngọc trầm
+    "error": #a23a3a, // đỏ trầm
+    "warning": #d6a851, // vàng trà cổ
+    "info": #5b7c91, // lam khói
+    "black": #1c1816, // đen nâu (heading, dark-bg)
+    "white": #f8f5ec // giấy ngà (light-bg)
+) !default;
+
+// color dark theme
+$mt-colors-dark: (
+    "primary":   #e86a50, // đỏ gạch ấm (nổi trên nền tối)
+    "secondary": #b8ae99, // xám ngọc phách (meta)
+    "accent":    #c8a77d, // vàng đồng sáng hơn
+    "success":   #7fa78f, // ngọc bích sáng
+    "error":     #c05a5a, // đỏ trầm sáng
+    "warning":   #e0b764, // vàng trà sáng
+    "info":      #7fa0b2, // lam khói sáng
+    "black":     #1c1816, // nền tối
+    "white":     #e5dcc5  // chữ chính sáng ấm
+) !default;
+
+// -------- Semantic tokens --------
+$colors-semantic-light: (
+    "bg":            map-get($mt-colors, "white"),
+    "text":          #2f2a26,
+    "heading":       #1c1816,
+    "meta":          map-get($mt-colors, "secondary"),
+    "border":        #e6dfd4,
+    "link":          map-get($mt-colors, "primary"),
+    "link-hover":    #a02a1c,
+    "selection-bg":  #e6dfd4,
+    "selection-text":#1c1816
+) !default;
+
+$colors-semantic-dark: (
+    "bg":            map-get($mt-colors-dark, "black"),
+    "text":          map-get($mt-colors-dark, "white"),
+    "heading":       #f0e6d2,
+    "meta":          map-get($mt-colors-dark, "secondary"),
+    "border":        #3b3531,
+    "link":          map-get($mt-colors-dark, "primary"),
+    "link-hover":    #ff8364,
+    "selection-bg":  #4b403a,
+    "selection-text":#f6ead7
+) !default;
+
 $var-primary-color: var(--#{$prefix-theme}primary);
 $var-secondary-color: var(--#{$prefix-theme}secondary);
 $var-accent-color: var(--#{$prefix-theme}accent);
@@ -36,13 +75,13 @@ $var-white-color: var(--#{$prefix-theme}white);
 
 // typography
 $mt-font-sizes: (
-        xs: 1.4rem,
-        sm: 1.6rem,
-        md: 1.8rem,
-        lg: 2rem,
-        xl: 2.4rem,
-        xxl: 2.8rem,
-        3xl: 3.2rem
+    xs: 1.4rem,
+    sm: 1.6rem,
+    md: 1.8rem,
+    lg: 2rem,
+    xl: 2.4rem,
+    xxl: 2.8rem,
+    3xl: 3.2rem
 );
 $var-fs-xs: var(--#{$prefix-theme}fs-xs);
 $var-fs-sm: var(--#{$prefix-theme}fs-sm);
@@ -54,21 +93,21 @@ $var-fs-3xl: var(--#{$prefix-theme}fs-3xl);
 
 // font family
 $mt-fonts: (
-        base: '"Inter", sans-serif',
-        heading: '"Roboto Condensed", sans-serif'
+    base: '"Crimson Pro", sans-serif',
+    heading: '"Lora", sans-serif'
 );
 $var-ff-base: var(--#{$prefix-theme}ff-base);
 $var-ff-heading: var(--#{$prefix-theme}ff-heading);
 
 // font-weights
 $mt-font-weights: (
-        regular: 400,
-        medium: 500,
-        bold: 700
+    regular: 400,
+    medium: 500,
+    semibold: 600
 );
 $var-fw-regular: var(--#{$prefix-theme}fw-regular);
 $var-fw-medium: var(--#{$prefix-theme}fw-medium);
-$var-fw-bold: var(--#{$prefix-theme}fw-bold);
+$var-fw-semibold: var(--#{$prefix-theme}fw-semibold);
 
 $line-height-base: 1.5;
 $line-height-heading: 1.25;
@@ -91,7 +130,7 @@ $color-required: #ff5555;
 $headings-margin-bottom: $spacing-base * 3;
 $heading-color: $var-primary-color;
 $headings-font-family: $var-ff-heading;
-$headings-font-weight: $var-fw-bold;
+$headings-font-weight: $var-fw-semibold;
 $headings-line-height: $line-height-heading;
 
 // FontAwesome

@@ -1,0 +1,28 @@
+// ----------------------------------------------------
+// GLOBAL THEME FUNCTIONS
+// ----------------------------------------------------
+
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+@function theme-var($key, $ns: null, $fallback: null, $prefix: $prefix-theme) {
+  $ns-part: if($ns == null, "", "#{$ns}-");
+  @if $fallback == null {
+    @return unquote("var(--#{$prefix}#{$ns-part}#{$key})");
+  }
+  @return unquote("var(--#{$prefix}#{$ns-part}#{$key}, #{$fallback})");
+}
+
+/* Helper aliases (optional) */
+@function color-var($key, $fallback: null) {
+  @return theme-var($key, "color", $fallback);
+}
+
+@function ff-var($key, $fallback: null) {
+  @return theme-var($key, "ff", $fallback);
+}
+
+@function fs-var($key, $fallback: null) {
+  @return theme-var($key, "fs", $fallback);
+}

@@ -1,6 +1,12 @@
+@charset "UTF-8";
 /**
 # Root
 -----------------------------------------------------------------------------*/
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 button, a {
   outline: none;
 }
@@ -28,17 +34,17 @@ button, a {
 }
 
 :root {
-  --theme-primary: #3498db;
-  --theme-secondary: #2ecc71;
-  --theme-accent: #e74c3c;
-  --theme-success: #28a745;
-  --theme-error: #dc3545;
-  --theme-warning: #ffc107;
-  --theme-info: #17a2b8;
-  --theme-black: #000000;
-  --theme-white: #ffffff;
-  --theme-ff-base: "Inter", sans-serif;
-  --theme-ff-heading: "Roboto Condensed", sans-serif;
+  --theme-primary: #8a1f11;
+  --theme-secondary: #6e6358;
+  --theme-accent: #b8946b;
+  --theme-success: #5c7f67;
+  --theme-error: #a23a3a;
+  --theme-warning: #d6a851;
+  --theme-info: #5b7c91;
+  --theme-black: #1c1816;
+  --theme-white: #f8f5ec;
+  --theme-ff-base: "Crimson Pro", sans-serif;
+  --theme-ff-heading: "Lora", sans-serif;
   --theme-fs-xs: 1.4rem;
   --theme-fs-sm: 1.6rem;
   --theme-fs-md: 1.8rem;
@@ -48,7 +54,7 @@ button, a {
   --theme-fs-3xl: 3.2rem;
   --theme-fw-regular: 400;
   --theme-fw-medium: 500;
-  --theme-fw-bold: 700;
+  --theme-fw-semibold: 600;
   --theme-spacing-0: 0rem;
   --theme-spacing-1: 0.4rem;
   --theme-spacing-2: 0.8rem;
@@ -60,6 +66,11 @@ button, a {
   --theme-spacing-8: 3.2rem;
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 button, a {
   outline: none;
 }
@@ -142,6 +153,11 @@ textarea {
   padding: var(--theme-spacing-3);
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -234,6 +250,11 @@ a, button {
   margin-bottom: 0;
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -364,6 +385,11 @@ form.post-password-form p input[type=submit] {
   padding: 0.5rem 1.5rem;
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -485,6 +511,11 @@ a, button {
 /**
 # Utilities
 -----------------------------------------------------------------------------*/
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -583,6 +614,11 @@ a, button {
   background-color: var(--theme-white);
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -653,10 +689,15 @@ a, button {
   font-weight: var(--theme-fw-medium);
 }
 
-.theme-fw-bold {
-  font-weight: var(--theme-fw-bold);
+.theme-fw-semibold {
+  font-weight: var(--theme-fw-semibold);
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -929,6 +970,11 @@ a, button {
 /**
 # Layout
 -----------------------------------------------------------------------------*/
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -1304,6 +1350,11 @@ a, button {
     transform: translate(-50%, -50%) rotate(360deg);
   }
 }
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -1492,6 +1543,11 @@ a, button {
   text-align: center;
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -1531,6 +1587,11 @@ a, button {
 /**
 # Components
 -----------------------------------------------------------------------------*/
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -1562,6 +1623,11 @@ a, button {
   border-bottom: 0.1rem solid var(--theme-primary);
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -1653,6 +1719,11 @@ form.wpcf7-form.invalid .wpcf7-response-output {
   border: 0.1rem solid var(--theme-warning);
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -1758,6 +1829,11 @@ a, button {
   font-weight: var(--theme-fw-medium);
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
@@ -1810,6 +1886,11 @@ form.wpcf7-form p:has(.wpcf7-submit), .comments-area .comment-form .comment-form
   color: var(--theme-white);
 }
 
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+/* Helper aliases (optional) */
 a, button {
   outline: none;
 }
