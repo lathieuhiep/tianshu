@@ -1,46 +1,35 @@
-# WPBuilderKit - WordPress Theme & Plugin Development
+=== Tianshu ===
+Contributors: DiepLK
+Requires at least: 6.0
+Tested up to: 6.7
+Requires PHP: 8.2
+Stable tag: 1.0.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Tags: blog, minimal, reading, novel, responsive
 
-## Mô tả
-Dự án này bao gồm một theme WordPress cơ bản và một plugin mở rộng các thành phần cho theme (addons thêm cho elementor,...). Bạn có thể phát triển song song cả theme và plugin, quản lý SCSS và JS chung thông qua Gulp.
+== Description ==
+Tianshu is a clean and elegant WordPress theme designed for reading long-form stories and serialized fiction.  
+It features smooth scrolling, beautiful typography, and a distraction-free reading layout inspired by classic scrolls.
 
-## Cấu trúc thư mục
-- `themes/`: Chứa các theme của WordPress.
-- `plugins/`: Chứa các plugin của WordPress.
-- `src/`: Thư mục chứa mã nguồn chung cho SCSS và JS.
-    - `scss/`: SCSS cho theme và plugin.
-    - `js/`: JavaScript cho theme và plugin.
-- `gulpfile.js`: File cấu hình Gulp để build và watch.
-- `node_modules/`: Các thư viện Node.js.
+== Features ==
+* Lightweight and fast
+* Elegant typography for better readability
+* Responsive and mobile-friendly
+* Custom logo and header
+* Built-in pagination
+* Translation-ready (supports .pot file)
+* Gutenberg compatible
 
-## Cài đặt và phát triển
-1. Clone dự án về:
-- Di chuyển vào thư mục wp-content và khởi tạo Git (nếu chưa làm):
-    ```bash
-    git init
-  
-2. Thêm remote repository
-     ```bash
-   git remote add origin <repository_url>
-   git pull origin main
-   
-3. Di chuyển các thư mục themes và plugins tạm thời nếu chúng có dữ liệu từ trước:
-    ```bash
-    mv themes themes_backup
-    mv plugins plugins_backup
-   
-4. Sao chép lại các tệp từ các thư mục backup vào:
-- Sao chép lại các thay đổi từ thư mục themes_backup và plugins_backup vào thư mục tương ứng:
-    ```bash
-    cp -r themes_backup/* themes/
-    cp -r plugins_backup/* plugins/
+== Installation ==
+1. Upload the `tianshu` folder to your `/wp-content/themes/` directory.
+2. Activate **Tianshu** in the Appearance → Themes menu.
+3. Customize your site via the Customizer.
 
-5. Xóa các thư mục backup tạm thời:
-- Sau khi sao chép xong, bạn có thể xóa các thư mục backup:
-    ```bash
-    rm -rf themes_backup
-    rm -rf plugins_backup
+== Changelog ==
+= 1.0.0 =
+* Initial release.
 
-## Liên Hệ
-
-Nếu bạn gặp vấn đề hoặc có câu hỏi nào liên quan đến dự án, vui lòng mở issue trên GitHub hoặc liên hệ qua
-- email: [khacdiepkma90@gmail.com](mailto:khacdiepkma90@gmail.com)
+== Credits ==
+Developed by DiepLK.  
+Licensed under GPLv2 or later.
