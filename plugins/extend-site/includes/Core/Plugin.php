@@ -16,7 +16,7 @@ class Plugin
         self::active_core();
         self::include_files();
         self::active_elementor_addon();
-        self::active_custom_post_types();
+//        self::active_custom_post_types();
     }
 
     /**
