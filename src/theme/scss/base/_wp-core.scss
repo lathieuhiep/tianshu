@@ -1,4 +1,4 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 %margin-alignnone {
   margin: .5rem 2rem 2rem 0;
@@ -58,7 +58,7 @@ a {
 }
 
 .wp-caption {
-  background-color: $var-white-color;
+  background-color: color-var("white");
   max-width: 96%;
   padding: .4rem .2rem 1rem;
   text-align: center;
@@ -88,7 +88,7 @@ a {
     &.wp-caption-text {
       --#{$prefix-theme}padding-caption: 0 .4rem .5rem;
 
-      font-size: $var-fs-sm;
+      font-size: fs-var("sm");
       margin: 0;
       padding: var(--#{$prefix-theme}padding-caption);
     }
@@ -106,7 +106,7 @@ a {
   &:focus {
     background-color: #f1f1f1;
     clip: auto !important;
-    color: $var-accent-color;
+    color: color-var("accent");;
     display: block;
     height: auto;
     width: auto;
@@ -123,7 +123,7 @@ a {
 
 .bypostauthor,
 .sticky {
-  color: $var-accent-color;
+  color: color-var("accent");;
 }
 
 form {
@@ -141,9 +141,9 @@ form {
 
         &[type='submit'] {
           @include border-radius();
-          background-color: $var-primary-color;
+          background-color: color-var("primary");
           border: none;
-          color: $var-white-color;
+          color: color-var("white");
           text-transform: uppercase;
           padding: .5rem 1.5rem;
         }

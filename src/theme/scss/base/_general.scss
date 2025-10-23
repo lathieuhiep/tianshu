@@ -1,4 +1,4 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 .main-warp {
   @extend %flex-column;
@@ -22,7 +22,7 @@
 #back-top {
   --#{$prefix-theme}bt-square: 4rem;
 
-  background-color: $var-accent-color;
+  background-color: color-var("accent");
   @include square(var(--#{$prefix-theme}bt-square));
   opacity: 0;
   bottom: 0;
@@ -33,7 +33,7 @@
   @include transition();
 
   a {
-    color: $var-white-color;
+    color: color-var("white");
     height: inherit;
     @include flex-center();
     @include transition(all 0.25s ease-in-out);
@@ -45,7 +45,7 @@
   }
 
   &:hover {
-    background-color: $var-black-color;
+    background-color: color-var("black");
   }
 }
 

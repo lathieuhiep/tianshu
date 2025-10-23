@@ -22,7 +22,7 @@ $mt-colors: (
     "warning": #d6a851, // vàng trà cổ
     "info": #5b7c91, // lam khói
     "black": #1c1816, // đen nâu (heading, dark-bg)
-    "white": #f8f5ec // giấy ngà (light-bg)
+    "white": #ffffff // giấy ngà (light-bg)
 ) !default;
 
 // color dark theme
@@ -40,64 +40,46 @@ $mt-colors-dark: (
 
 // -------- Semantic tokens --------
 $colors-semantic-light: (
-    "bg":            map-get($mt-colors, "white"),
+    "bg":            #f8f5ec,
     "text":          #2f2a26,
     "heading":       #1c1816,
-    "meta":          map-get($mt-colors, "secondary"),
+    "meta":          #6e6358,
     "border":        #e6dfd4,
-    "link":          map-get($mt-colors, "primary"),
+    "link":          #8a1f11,
     "link-hover":    #a02a1c,
     "selection-bg":  #e6dfd4,
     "selection-text":#1c1816
 ) !default;
 
 $colors-semantic-dark: (
-    "bg":            map-get($mt-colors-dark, "black"),
-    "text":          map-get($mt-colors-dark, "white"),
+    "bg":            map.get($mt-colors-dark, "black"),
+    "text":          map.get($mt-colors-dark, "white"),
     "heading":       #f0e6d2,
-    "meta":          map-get($mt-colors-dark, "secondary"),
+    "meta":          map.get($mt-colors-dark, "secondary"),
     "border":        #3b3531,
-    "link":          map-get($mt-colors-dark, "primary"),
+    "link":          map.get($mt-colors-dark, "primary"),
     "link-hover":    #ff8364,
     "selection-bg":  #4b403a,
     "selection-text":#f6ead7
 ) !default;
 
-$var-primary-color: var(--#{$prefix-theme}primary);
-$var-secondary-color: var(--#{$prefix-theme}secondary);
-$var-accent-color: var(--#{$prefix-theme}accent);
-$var-success-color: var(--#{$prefix-theme}success);
-$var-error-color: var(--#{$prefix-theme}error);
-$var-warning-color: var(--#{$prefix-theme}warning);
-$var-info-color: var(--#{$prefix-theme}info);
-$var-black-color: var(--#{$prefix-theme}black);
-$var-white-color: var(--#{$prefix-theme}white);
-
 // typography
 $mt-font-sizes: (
-    xs: 1.4rem,
-    sm: 1.6rem,
-    md: 1.8rem,
-    lg: 2rem,
-    xl: 2.4rem,
-    xxl: 2.8rem,
-    3xl: 3.2rem
+    xs: 1.4rem,  // 14px
+    sm: 1.6rem,  // 16px
+    base: 1.8rem,// 18px
+    md: 2rem,    // 20px
+    lg: 2.4rem,  // 24px
+    xl: 2.8rem,  // 28px
+    xxl: 3.2rem, // 32px
+    3xl: 4rem    // 40px
 );
-$var-fs-xs: var(--#{$prefix-theme}fs-xs);
-$var-fs-sm: var(--#{$prefix-theme}fs-sm);
-$var-fs-md: var(--#{$prefix-theme}fs-md);
-$var-fs-lg: var(--#{$prefix-theme}fs-lg);
-$var-fs-xl: var(--#{$prefix-theme}fs-xl);
-$var-fs-xxl: var(--#{$prefix-theme}fs-xxl);
-$var-fs-3xl: var(--#{$prefix-theme}fs-3xl);
 
 // font family
 $mt-fonts: (
     base: '"Crimson Pro", sans-serif',
     heading: '"Lora", sans-serif'
 );
-$var-ff-base: var(--#{$prefix-theme}ff-base);
-$var-ff-heading: var(--#{$prefix-theme}ff-heading);
 
 // font-weights
 $mt-font-weights: (
@@ -105,9 +87,6 @@ $mt-font-weights: (
     medium: 500,
     semibold: 600
 );
-$var-fw-regular: var(--#{$prefix-theme}fw-regular);
-$var-fw-medium: var(--#{$prefix-theme}fw-medium);
-$var-fw-semibold: var(--#{$prefix-theme}fw-semibold);
 
 $line-height-base: 1.5;
 $line-height-heading: 1.25;
@@ -121,16 +100,16 @@ $spacers: ();
 }
 
 // body
-$body-color: $var-black-color;
-$body-bg: $var-white-color;
+$body-color: color-var("black");
+$body-bg: color-var("white");
 
 $color-required: #ff5555;
 
 // headings variables
 $headings-margin-bottom: $spacing-base * 3;
-$heading-color: $var-primary-color;
-$headings-font-family: $var-ff-heading;
-$headings-font-weight: $var-fw-semibold;
+$heading-color: color-var("primary");
+$headings-font-family: ff-var("heading");
+$headings-font-weight: fw-var("semibold");
 $headings-line-height: $line-height-heading;
 
 // FontAwesome
@@ -153,6 +132,9 @@ $grid-gutter-width: $spacing-base * 6;
 $border-width: .1rem;
 $border-style: solid;
 $border-color: #ddd;
+$border-radius: .4rem;
+
+// border-radius
 $border-radius: .4rem;
 
 // ratios

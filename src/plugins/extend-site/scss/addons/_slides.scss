@@ -31,27 +31,27 @@
 
   &--heading {
     margin-bottom: 3rem;
-    color: $var-white-color;
+    color: color-var("white");
   }
 
   &--description {
-    color: $var-white-color;
+    color: color-var("white");
     margin-bottom: 3rem;
   }
 
   &--link {
     display: inline-block;
-    color: $var-white-color;
+    color: color-var("white");
     padding: 1.2rem 2.4rem;
     border-style: solid;
     border-width: .2rem;
-    border-color: $var-white-color;
+    border-color: color-var("white");
     border-radius: .3rem;
     @include transition();
 
     a {
       display: block;
-      color: $var-white-color;
+      color: color-var("white");
     }
   }
 }

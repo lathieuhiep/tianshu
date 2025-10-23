@@ -1,21 +1,21 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 .site-error {
   --#{$prefix-theme}page-error-color: #c9c9c9;
 
   height: 100vh;
   padding: var(--#{$prefix-theme}spacing-6);
-  background-color: $var-black-color;
+  background-color: color-var("black");
   @extend %flex-align-center;
 
   &__content {
     max-width: 46rem;
     text-align: center;
-    color: $var-white-color;
+    color: color-var("white");
 
     .heading {
       font-size: 16rem;
-      color: $var-error-color;
+      color: color-var("error");
       line-height: 1;
       text-shadow: .2rem .2rem 0 var(--#{$prefix-theme}page-error-color), -0.2rem -0.2rem 0 var(--#{$prefix-theme}page-error-color);
     }
@@ -32,8 +32,8 @@
       @include border(.2rem, var(--#{$prefix-theme}page-error-color));
 
       &:hover {
-        color: $var-accent-color;
-        border-color: $var-accent-color;
+        color: color-var("accent");;
+        border-color: color-var("accent");;
       }
     }
   }

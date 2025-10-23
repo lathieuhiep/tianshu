@@ -1,0 +1,20 @@
+@import "shared/scss/abstracts/abstracts";
+
+// aspect ratios for thumbnails
+.#{$prefix-theme}ratio {
+  @each $name, $value in $ratios {
+    &-#{$name} {
+      .#{$prefix-theme}ratio-thumb {
+        aspect-ratio: #{$value};
+      }
+    }
+  }
+
+  &-thumb {
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+}

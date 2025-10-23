@@ -1,8 +1,9 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 :root {
   //color
   @include generate-css-variables($mt-colors, $prefix-theme);
+  @include generate-css-variables($colors-semantic-light, $prefix-theme);
 
   // font-family
   @include generate-css-variables($mt-fonts, "#{$prefix-theme}ff-");

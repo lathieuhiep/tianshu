@@ -1,14 +1,14 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 .social-network-item {
   display: inline-block;
 
   a {
     display: block;
-    color: $var-black-color;
+    color: color-var("black");
 
     &:hover {
-      color: $var-accent-color;
+      color: color-var("accent");;
     }
   }
 }

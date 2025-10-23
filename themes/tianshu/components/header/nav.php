@@ -1,9 +1,9 @@
-<div id="primary-menu" class="primary-menu collapse navbar-collapse d-lg-block">
+<div id="primary-menu" class="primary-menu collapse navbar-collapse d-lg-block h-100">
     <?php
     if ( has_nav_menu( 'primary' ) ) :
         wp_nav_menu( array(
             'theme_location' => 'primary',
-            'menu_class' => 'd-lg-flex justify-content-lg-end',
+            'menu_class' => 'd-lg-flex',
             'container' => false,
         ) );
     else:

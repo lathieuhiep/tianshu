@@ -1,4 +1,4 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 .footer {
   section {
@@ -8,13 +8,13 @@
   }
 
   &__column {
-    border-top: .1rem solid $var-primary-color;
+    border-top: .1rem solid color-var("primary");
     padding: 3rem 0;
   }
 
   &__bottom {
     padding: 1rem 0;
-    color: $var-white-color;
+    color: color-var("white");
     background-color: $body-color;
   }
 }

@@ -1,9 +1,9 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 .content-archive-post {
   .item {
     padding: 2.4rem 1.2rem 1.2rem;
-    border: .1rem solid $var-primary-color;
+    border: .1rem solid color-var("primary");
   }
 
   .post-title {
@@ -15,11 +15,11 @@
 
       i {
         margin-right: .4rem;
-        color: $var-accent-color;
+        color: color-var("accent");;
       }
 
       &:hover {
-        color: $var-accent-color;
+        color: color-var("accent");;
       }
     }
   }
@@ -40,7 +40,7 @@
       width: 100%;
 
       tr {
-        border-bottom: .1rem solid $var-primary-color;
+        border-bottom: .1rem solid color-var("primary");
 
         th {
           padding: 1rem 2rem 1rem 0;
@@ -76,7 +76,7 @@
       }
 
       a {
-        color: $var-accent-color;
+        color: color-var("accent");;
 
         &:hover {
           color: $body-color;

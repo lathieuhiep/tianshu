@@ -1,10 +1,10 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 .search-form {
   --#{$prefix-theme}search-field-min-height: 4rem;
   --#{$prefix-theme}search-field-padding: 0 1rem;
 
-  font-size: $var-fs-xs;
+  font-size: fs-var("xs");
 
   .search-field {
     min-height: var(--#{$prefix-theme}search-field-min-height);
@@ -16,8 +16,8 @@
 
   .search-submit {
     padding: var(--#{$prefix-theme}search-field-padding);
-    background-color: $var-accent-color;
-    color: $var-white-color;
+    background-color: color-var("accent");
+    color: color-var("white");
     border: none;
     cursor: pointer;
     @include border-radius();
@@ -37,7 +37,7 @@
   .widget-title {
     text-transform: uppercase;
     margin-bottom: 2rem;
-    font-size: $var-fs-sm;
+    font-size: fs-var("sm");
   }
 
   ul {
@@ -74,7 +74,7 @@
   select {
     width: 100%;
     padding: .9rem 1rem;
-    font-size: $var-fs-xs;
+    font-size: fs-var("xs");
   }
 
   &.widget {
@@ -126,7 +126,7 @@
         }
 
         tr {
-          border-bottom: 1px solid $var-primary-color;
+          border-bottom: 1px solid color-var("primary");
 
           th {
             text-align: center;
@@ -137,11 +137,11 @@
             text-align: center;
 
             &#today {
-              background-color: $var-accent-color;
-              color: $var-white-color;
+              background-color: color-var("accent");
+              color: color-var("white");
 
               a {
-                color: $var-white-color;
+                color: color-var("white");
               }
             }
 
@@ -164,7 +164,7 @@
           margin-bottom: 2rem;
 
           .rssSummary {
-            font-size: $var-fs-xs;
+            font-size: fs-var("xs");
           }
         }
       }
@@ -175,15 +175,15 @@
       .tagcloud {
         a {
           display: inline-block;
-          font-size: $var-fs-xs !important;
+          font-size: fs-var("xs") !important;
           @include border();
           padding: .5rem 1rem;
           margin: 0 .2rem 5px;
 
           &:hover {
-            background-color: $var-accent-color;
-            color: $var-white-color;
-            border-color: $var-accent-color;
+            background-color: color-var("accent");
+            color: color-var("white");
+            border-color: color-var("accent");
           }
         }
       }
@@ -200,7 +200,7 @@
 
       .title {
         margin-bottom: .8rem;
-        font-size: $var-fs-sm;
+        font-size: fs-var("sm");
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -230,7 +230,7 @@
         align-items: center;
 
         i {
-          font-size: $var-fs-md;
+          font-size: fs-var("md");
           text-align: center;
         }
       }

@@ -16,7 +16,7 @@
 
 /* Helper aliases (optional) */
 @function color-var($key, $fallback: null) {
-  @return theme-var($key, "color", $fallback);
+  @return theme-var($key, null, $fallback);
 }
 
 @function ff-var($key, $fallback: null) {
@@ -25,4 +25,8 @@
 
 @function fs-var($key, $fallback: null) {
   @return theme-var($key, "fs", $fallback);
+}
+
+@function fw-var($key, $fallback: null) {
+  @return theme-var($key, "fw", $fallback);
 }

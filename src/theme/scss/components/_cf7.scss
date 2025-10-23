@@ -1,4 +1,4 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 form {
   &.wpcf7-form {
@@ -26,7 +26,7 @@ form {
 
     label {
       display: block;
-      font-weight: $var-fw-medium;
+      font-weight: fw-var("medium");
 
       .wpcf7-form-control-wrap {
         margin-top: var(--#{$prefix-theme}margin-top-control, var(--#{$prefix-theme}spacing-2));
@@ -35,7 +35,7 @@ form {
 
     span {
       &.required {
-        color: $var-error-color;
+        color: color-var("error");
       }
     }
 
@@ -49,11 +49,11 @@ form {
         display: block;
         @include border();
         @include border-radius();
-        background-color: $var-white-color;
-        color: $var-black-color;
+        background-color: color-var("white");
+        color: color-var("black");
 
         &:focus {
-          border-color: $var-primary-color;
+          border-color: color-var("primary");
         }
       }
 
@@ -63,12 +63,12 @@ form {
     }
 
     .wpcf7-submit {
-      color: $var-white-color;
+      color: color-var("white");
       border: none;
       cursor: pointer;
       text-transform: uppercase;
       @include border-radius();
-      background: $var-black-color;
+      background: color-var("black");
       @include transition();
 
       &:hover {
@@ -77,14 +77,14 @@ form {
     }
 
     .wpcf7-not-valid-tip {
-      color: $var-error-color;
+      color: color-var("error");
     }
 
     &.invalid {
       .wpcf7-response-output {
         margin: var(--#{$prefix-theme}margin-res, var(--#{$prefix-theme}spacing-3) 0 0);
         padding: var(--#{$prefix-theme}padding-res, var(--#{$prefix-theme}spacing-2));
-        @include border(.1rem, $var-warning-color);
+        @include border(.1rem, color-var("warning"));
       }
     }
   }

@@ -1,4 +1,4 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 .pagination {
   display: block;
@@ -25,9 +25,9 @@
 
     span.current,
     a:hover {
-      background: $var-accent-color;
-      border-color: $var-accent-color;
-      color: $var-white-color;
+      background: color-var("accent");;
+      border-color: color-var("accent");;
+      color: color-var("white");
     }
   }
 }

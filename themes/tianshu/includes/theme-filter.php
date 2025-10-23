@@ -55,7 +55,7 @@ function tianshu_add_arrow($output, $item, $depth, $args)
 {
     if ('primary' == $args->theme_location && $depth >= 0) {
         if (in_array("menu-item-has-children", $item->classes)) {
-            $output .= '<span class="sub-menu-toggle ic-mask"></span>';
+            $output .= '<span class="sub-menu-toggle ic-mask ic-mask-chevron-down"></span>';
         }
     }
 

@@ -1,4 +1,4 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 .comments-area {
   display: grid;
@@ -41,11 +41,11 @@
         }
 
         .name {
-          color: $var-primary-color;
+          color: color-var("primary");
         }
 
         .date {
-          color: $var-accent-color;
+          color: color-var("accent");;
         }
       }
     }
@@ -88,9 +88,9 @@
         @include transition();
 
         &:hover {
-          background-color: $var-primary-color;
-          color: $var-white-color;
-          border-color: $var-primary-color;
+          background-color: color-var("primary");
+          color: color-var("white");
+          border-color: color-var("primary");
         }
       }
     }
@@ -98,15 +98,15 @@
 }
 
 #cancel-comment-reply-link {
-  color: $var-accent-color;
+  color: color-var("accent");;
 }
 
 #reply-title {
   display: flex;
   gap: var(--#{$prefix-theme}spacing-3);
   align-items: center;
-  font-size: $var-fs-lg;
-  font-weight: $var-fw-medium;
+  font-size: ff-var("lg");
+  font-weight: fw-var("medium");
 }
 
 .comment-respond {

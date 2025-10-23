@@ -139,7 +139,7 @@ const buildJSCustomBootstrap = () => {
                 this.emit('end');
             }
         }))
-        .pipe(webpack({
+        .pipe(webpackStream({
             mode: 'production',
             output: {
                 filename: 'custom-bootstrap.min.js'
@@ -215,7 +215,7 @@ const buildJSTheme = () => {
                 this.emit('end');
             }
         }))
-        .pipe(webpack({
+        .pipe(webpackStream({
             mode: 'production',
             output: {
                 filename: 'main.min.js'
@@ -405,12 +405,21 @@ const watchTask = () => {
     ], buildStyleCustomBootstrap)
 
     watch([
+        `${paths.vendors}bootstrap/*.js`
+    ], buildJSCustomBootstrap)
+
+    watch([
         `${paths.theme.scss}base/*.scss`,
+        `${paths.theme.scss}helpers/*.scss`,
         `${paths.theme.scss}utilities/*.scss`,
         `${paths.theme.scss}components/*.scss`,
         `${paths.theme.scss}layout/*.scss`,
         `${paths.theme.scss}main.scss`,
     ], buildStyleTheme)
+
+    watch([
+        `${paths.theme.js}*.js`
+    ], buildJSTheme)
 
     watch([
         `${paths.theme.scss}post-type/*/**.scss`

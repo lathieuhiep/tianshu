@@ -9,6 +9,11 @@
 @import "utilities/utilities";
 
 /**
+# Helpers
+-----------------------------------------------------------------------------*/
+@import "helpers/helpers";
+
+/**
 # Layout
 -----------------------------------------------------------------------------*/
 @import "layout/header";
@@ -22,4 +27,5 @@
 @import "components/cf7";
 @import "components/comment-form";
 @import "components/pagination";
+@import "components/search-form";
 @import "components/social-network";

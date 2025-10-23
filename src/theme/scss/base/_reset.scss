@@ -1,4 +1,4 @@
-@import "shared/scss/abstracts/abstracts";;
+@import "shared/scss/abstracts/abstracts";
 
 html {
   min-height: 100%;
@@ -44,7 +44,7 @@ iframe {
 }
 
 blockquote {
-  border-left: .1rem solid $var-accent-color;
+  border-left: .1rem solid color-var("accent");;
   padding-left: 30px;
 }
 

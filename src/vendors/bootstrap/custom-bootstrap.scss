@@ -18,7 +18,7 @@ $font-family-sans-serif: ff-var("base");
 $font-family-monospace: ff-var("base");
 $font-family-base: ff-var("base");
 
-$font-size-base: map.get($mt-font-sizes, sm);
+$font-size-base: map.get($mt-font-sizes, base);
 $line-height-base: $line-height-base;
 
 // Grid columns
@@ -46,7 +46,7 @@ $h6-font-size: fs-var("sm");
 
 // headings-variables
 $headings-color: $heading-color;
-$headings-font-family: $var-ff-heading;
+$headings-font-family: ff-var("heading");
 $headings-margin-bottom: $headings-margin-bottom;
 $headings-font-weight: $headings-font-weight;
 $headings-line-height: $headings-line-height;
@@ -58,19 +58,26 @@ $paragraph-margin-bottom: $paragraph-margin-bottom;
 
 // Navs
 // scss-docs-start nav-variables
-$nav-link-font-size: $var-fs-sm;
+$nav-link-font-size: fs-var("sm");
 $nav-link-font-weight: 400;
-$nav-link-color: $var-primary-color;
+$nav-link-color: color-var("primary");
 
 // scss-docs-start container-max-widths
 $container-max-widths: (
-        xl: 1224px
+    xl: 1224px
 ) !default;
 
 // Spacing
 // scss-docs-start spacer-variables-maps
 $spacer: $spacing-base !default;
 $spacers: $spacers !default;
+
+// scss-docs-start border-radius-variables
+$border-radius-sm: $border-radius * 1;
+$border-radius: $border-radius * 2;
+$border-radius-lg: $border-radius * 3;
+$border-radius-xl: $border-radius * 4;
+$border-radius-xxl: $border-radius * 5;
 
 // Include remainder of required Bootstrap stylesheets
 @import "bootstrap/scss/variables";
@@ -91,6 +98,7 @@ $spacers: $spacers !default;
 @import "bootstrap/scss/transitions";
 @import "bootstrap/scss/nav";
 @import "bootstrap/scss/navbar";
+@import "bootstrap/scss/offcanvas";
 @import "bootstrap/scss/close";
 @import "bootstrap/scss/modal";
 

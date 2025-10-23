@@ -2,11 +2,25 @@
     "use strict";
 
     $(document).ready(function () {
-        // back to top
-        $('#back-top').on('click', function (e) {
-            e.preventDefault();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+        const BREAKPOINT_LG = 992;
+        const RESIZE_DELAY = 150;
+
+        /**
+         * Hàm Debounce: Giới hạn tần suất gọi hàm (chỉ gọi sau khi sự kiện dừng trong 1 khoảng thời gian)
+         * @param {Function} func Hàm cần được Debounce
+         * @param {number} delay Độ trễ tính bằng mili giây
+         */
+        const debounce = (func, delay) => {
+            let timeoutId;
+            return function(...args) {
+                // Xóa timer trước (nếu có) để đặt lại thời gian chờ
+                clearTimeout(timeoutId);
+                // Thiết lập timer mới
+                timeoutId = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        };
 
         // mobile menu
         const windowWidth = $(window).width();
@@ -46,26 +60,64 @@
                 primaryMenu.find('.sub-menu-toggle').removeClass('active');
             }
         });
-    });
 
-    // loading
-    $(window).on("load", function () {
-        $('#site-loading').remove();
-    });
-
-    // scroll event
-    let isScrolling;
-    $(window).on('scroll', function () {
-        if (isScrolling) cancelAnimationFrame(isScrolling);
-
-        isScrolling = requestAnimationFrame(function () {
-            let $scrollTop = $(window).scrollTop();
-
-            if ($scrollTop > 200) {
-                $('#back-top').addClass('active_top');
-            } else {
-                $('#back-top').removeClass('active_top');
-            }
+        // loading
+        $(window).on("load", function () {
+            $('#site-loading').remove();
         });
+
+        // scroll event
+        let isScrolling;
+        const SCROLL_THRESHOLD = 200;
+        const $backToTop = $('#back-top');
+
+        if ( $backToTop.length ) {
+            // back to top
+            $backToTop.on('click', function (e) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            $(window).on('scroll', function () {
+                // Hủy yêu cầu rAF trước đó (kỹ thuật tương tự Debounce/Throttle nhưng tối ưu hơn)
+                if (isScrolling) {
+                    cancelAnimationFrame(isScrolling);
+                }
+
+                // Yêu cầu rAF mới
+                isScrolling = requestAnimationFrame(function () {
+                    // Lấy vị trí cuộn mới nhất
+                    const currentScrollTop = $(window).scrollTop();
+
+                    // Thực hiện logic cập nhật giao diện
+                    if (currentScrollTop > SCROLL_THRESHOLD) {
+                        $backToTop.addClass('active_top');
+                    } else {
+                        $backToTop.removeClass('active_top');
+                    }
+
+                    // Đặt lại isScrolling về null sau khi đã chạy xong
+                    isScrolling = null;
+                });
+            });
+        }
+
+        if ($(window).scrollTop() > SCROLL_THRESHOLD) {
+            $backToTop.addClass('active_top');
+        }
+
+        // close mobile menu on desktop resize
+        const primaryMenuMobile = $('#primary-menu-mobile');
+        const autoHideOffCanvas = () => {
+            const currentWidth = $(window).width();
+
+            if (primaryMenuMobile.length && primaryMenuMobile.hasClass('show') && currentWidth >= BREAKPOINT_LG) {
+                primaryMenuMobile.offcanvas('hide');
+                console.log('Offcanvas đã được tự động ẩn vì màn hình >= 992px');
+            }
+        };
+
+        autoHideOffCanvas();
+        $(window).on('resize', debounce(autoHideOffCanvas, RESIZE_DELAY));
     });
 })(jQuery);
