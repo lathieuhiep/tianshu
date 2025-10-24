@@ -8,11 +8,8 @@ const cleanCSS = require('gulp-clean-css')
 const rename = require("gulp-rename")
 const gulpIf = require('gulp-if');
 const plumber = require('gulp-plumber');
-const webpack = require('webpack');
 const webpackStream = require('webpack-stream');
 const TerserPlugin = require('terser-webpack-plugin');
-const glob = require('glob');
-const path = require('path');
 
 require('dotenv').config()
 
@@ -99,7 +96,7 @@ const paths = {
 
 // server
 // tạo file .env với biến PROXY="localhost/basictheme". Có thể thay đổi giá trị này.
-const proxy = process.env.PROXY || "localhost/basictheme";
+const proxy = process.env.PROXY || "localhost/tianshu";
 
 const server = () => {
     browserSync.init({

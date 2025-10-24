@@ -14,7 +14,6 @@
     "bootstrap": "^5.3.8",
     "browser-sync": "^3.0.2",
     "dotenv": "^16.4.5",
-    "glob": "^11.0.3",
     "gulp-changed": "^5.0.2",
     "gulp-clean-css": "^4.3.0",
     "gulp-if": "^3.0.0",
@@ -22,7 +21,6 @@
     "gulp-sourcemaps": "^3.0.0",
     "owl.carousel": "^2.3.4",
     "terser-webpack-plugin": "^5.3.14",
-    "webpack": "^5.99.9",
     "webpack-stream": "^7.0.0"
   }
 }
