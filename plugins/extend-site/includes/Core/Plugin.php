@@ -2,7 +2,9 @@
 
 namespace ExtendSite\Core;
 
-use ExtendSite\PostType\PortfolioPostType;
+use ExtendSite\PostType\AuthorPostType;
+use ExtendSite\PostType\ChapterPostType;
+use ExtendSite\PostType\StoryPostType;
 use ExtendSite\ElementorAddon\ElementorAddon;
 use ExtendSite\PostType\TemplateLoader;
 
@@ -16,7 +18,7 @@ class Plugin
         self::active_core();
         self::include_files();
         self::active_elementor_addon();
-//        self::active_custom_post_types();
+        self::active_custom_post_types();
     }
 
     /**
@@ -61,7 +63,10 @@ class Plugin
      */
     private static function active_custom_post_types(): void
     {
-        new PortfolioPostType();
+        new StoryPostType();
+        new ChapterPostType();
+        new AuthorPostType();
+
         TemplateLoader::boot();
     }
 }

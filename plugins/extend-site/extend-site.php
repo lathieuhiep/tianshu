@@ -14,7 +14,10 @@
 
 use ExtendSite\Core\Autoloader;
 use ExtendSite\Core\Plugin;
-use ExtendSite\PostType\PortfolioPostType;
+use ExtendSite\PostType\AuthorPostType;
+use ExtendSite\PostType\ChapterPostType;
+use ExtendSite\PostType\StoryPostType;
+use ExtendSite\Seeders\StoryStatusSeeder;
 
 defined('ABSPATH') || exit;
 
@@ -41,7 +44,9 @@ register_activation_hook(EXTEND_SITE_FILE, function () {
 
     // Instantiate CPT classes so we can register them now (before flush)
     $post_types = [
-        PortfolioPostType::class
+        StoryPostType::class,
+        ChapterPostType::class,
+        AuthorPostType::class
     ];
 
     $instances = [];

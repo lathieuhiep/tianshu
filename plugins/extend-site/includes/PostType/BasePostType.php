@@ -32,6 +32,7 @@ abstract class BasePostType
     public const TEMPLATE_SINGLE = '';
     public const TEMPLATE_ARCHIVE = '';
     public const TEMPLATE_TAX_CAT = '';
+    public const TEMPLATE_TAX_TAG = '';
 
     /** Extra args merge vào */
     protected array $args = [];
@@ -54,11 +55,17 @@ abstract class BasePostType
         if (!empty($constants['TEMPLATE_SINGLE'])) {
             self::$templates[static::SLUG]['single'] = $constants['TEMPLATE_SINGLE'];
         }
+
         if (!empty($constants['TEMPLATE_ARCHIVE'])) {
             self::$templates[static::SLUG]['archive'] = $constants['TEMPLATE_ARCHIVE'];
         }
+
         if (!empty($constants['TEMPLATE_TAX_CAT'])) {
             self::$templates[static::TAX_SLUG]['taxonomy'] = $constants['TEMPLATE_TAX_CAT'];
+        }
+
+        if (!empty($constants['TEMPLATE_TAX_TAG'])) {
+            self::$templates[static::TAG_SLUG]['taxonomy'] = $constants['TEMPLATE_TAX_TAG'];
         }
     }
 
@@ -90,9 +97,9 @@ abstract class BasePostType
             'new_item' => sprintf(__('Mới %s', 'extend-site'), static::SINGULAR),
             'edit_item' => sprintf(__('Chỉnh sửa %s', 'extend-site'), static::SINGULAR),
             'view_item' => sprintf(__('Xem %s', 'extend-site'), static::SINGULAR),
-            'all_items' => sprintf(__('Tất cả %s', 'extend-site'), static::PLURAL),
-            'search_items' => sprintf(__('Tìm kiếm %s', 'extend-site'), static::PLURAL),
-            'parent_item_colon' => sprintf(__('Cha của %s:', 'extend-site'), static::PLURAL),
+            'all_items' => sprintf(__('Tất cả %s', 'extend-site'), static::SINGULAR),
+            'search_items' => sprintf(__('Tìm kiếm %s', 'extend-site'), static::SINGULAR),
+            'parent_item_colon' => sprintf(__('Cha của %s:', 'extend-site'), static::SINGULAR),
             'not_found' => esc_html__('Không tìm thấy.', 'extend-site'),
             'not_found_in_trash' => esc_html__('Không tìm thấy trong Thùng rác.', 'extend-site'),
         ];
@@ -101,9 +108,9 @@ abstract class BasePostType
             'labels' => $labels,
             'public' => true,
             'has_archive' => true,
-            'show_in_rest' => false,           // Gutenberg + REST
+            'show_in_rest' => false,           // Off Gutenberg + REST
             'hierarchical' => false,
-            'supports' => ['title', 'editor', 'thumbnail', 'excerpt', 'author', 'revisions'],
+            'supports' => ['title','editor','thumbnail','excerpt','author','comments','revisions'],
             'menu_position' => 5,
             'menu_icon' => 'dashicons-portfolio',
             'rewrite' => ['slug' => static::SLUG, 'with_front' => false],
@@ -119,7 +126,7 @@ abstract class BasePostType
     protected function register_taxonomy(string $tax_slug, string $singular, string $plural, array $args = []): void
     {
         $labels = [
-            'name' => sprintf(__('Danh mục %s', 'extend-site'), static::SLUG),
+            'name' => sprintf(__('Danh mục %s', 'extend-site'), static::TAX_NAME),
             'singular_name' => _x($singular, 'taxonomy singular name', 'extend-site'),
             'search_items' => sprintf(__('Tìm kiếm %s', 'extend-site'), $plural),
             'all_items' => sprintf(__('Tất cả %s', 'extend-site'), $plural),

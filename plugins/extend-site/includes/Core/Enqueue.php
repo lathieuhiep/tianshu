@@ -1,7 +1,7 @@
 <?php
 namespace ExtendSite\Core;
 
-use ExtendSite\PostType\PortfolioPostType;
+use ExtendSite\PostType\StoryPostType;
 
 defined('ABSPATH') || exit;
 
@@ -61,7 +61,7 @@ class Enqueue
             );
         }
 
-        if ( is_singular(PortfolioPostType::SLUG) ) {
+        if ( is_singular(StoryPostType::SLUG) ) {
             // load portfolio style
             wp_enqueue_style('es-single-portfolio',
                 EXTEND_SITE_URL . 'assets/css/frontend/post-type/portfolio/single-portfolio.min.css',

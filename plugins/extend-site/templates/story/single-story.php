@@ -1,4 +1,15 @@
-<?php get_header(); ?>
+<?php
+get_header();
+
+//$author_ids = get_post_meta(get_the_ID(), \ExtendSite\PostType\StoryPostType::META_AUTHOR_IDS, true);
+//$author_ids = is_array($author_ids) ? $author_ids : [];
+//if ($author_ids) {
+//    foreach ($author_ids as $aid) {
+//        if (get_post_type($aid) !== 'story_author') continue;
+//        echo '<a href="' . esc_url(get_permalink($aid)) . '">' . esc_html(get_the_title($aid)) . '</a> ';
+//    }
+//}
+?>
 
 <div class="es-single-portfolio-warp">
     <div class="es-container">
