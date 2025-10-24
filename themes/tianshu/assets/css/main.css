@@ -1384,7 +1384,7 @@ a, button {
   animation: spin-block-ui 0.6s linear infinite;
 }
 .main-header .widget-cart-warp .mini-cart-dropdown .mini-cart-items .item .action .remove {
-  --wc-red: color-var("error");
+  --wc-red: var(--theme-error);
   color: var(--wc-red);
   width: 2.4rem;
   height: 2.4rem;
@@ -1785,7 +1785,7 @@ form.wpcf7-form p {
   margin: 0;
 }
 form.wpcf7-form p + p {
-  margin-top: var(--theme-margin-top-p, var(--theme-spacing-2));
+  margin-top: var(--theme-spacing-2);
 }
 form.wpcf7-form .ajax-loader {
   position: absolute;
@@ -1796,7 +1796,7 @@ form.wpcf7-form label {
   font-weight: var(--theme-fw-medium);
 }
 form.wpcf7-form label .wpcf7-form-control-wrap {
-  margin-top: var(--theme-margin-top-control, var(--theme-spacing-2));
+  margin-top: var(--theme-spacing-2);
 }
 form.wpcf7-form span.required {
   color: var(--theme-error);
@@ -1819,7 +1819,8 @@ form.wpcf7-form .wpcf7-form-control-wrap textarea:focus {
   border-color: var(--theme-primary);
 }
 form.wpcf7-form .wpcf7-form-control-wrap textarea {
-  height: var(--theme-h-textarea, 10rem);
+  --theme-h-textarea: 10rem;
+  height: var(--theme-h-textarea);
 }
 form.wpcf7-form .wpcf7-submit {
   color: var(--theme-white);
@@ -1837,8 +1838,8 @@ form.wpcf7-form .wpcf7-not-valid-tip {
   color: var(--theme-error);
 }
 form.wpcf7-form.invalid .wpcf7-response-output {
-  margin: var(--theme-margin-res, var(--theme-spacing-3) 0 0);
-  padding: var(--theme-padding-res, var(--theme-spacing-2));
+  margin: var(--theme-spacing-2) 0 0;
+  padding: var(--theme-spacing-2);
   border: 0.1rem solid var(--theme-warning);
 }
 
@@ -1948,7 +1949,7 @@ a, button {
   display: flex;
   gap: var(--theme-spacing-3);
   align-items: center;
-  font-size: var(--theme-ff-lg);
+  font-size: var(--theme-fs-lg);
   font-weight: var(--theme-fw-medium);
 }
 

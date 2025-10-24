@@ -60,7 +60,7 @@
   }
 
   .post-meta {
-    font-size: var(--#{$prefix-theme}fs-xs);
+    font-size: fs-var("xs");;
 
     &__item {
       &:after {

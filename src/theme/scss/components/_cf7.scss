@@ -11,7 +11,7 @@ form {
       margin: 0;
 
       + p {
-        margin-top: var(--#{$prefix-theme}margin-top-p, var(--#{$prefix-theme}spacing-2));
+        margin-top: theme-var('spacing-2');
       }
 
       &:has(.wpcf7-submit) {
@@ -29,7 +29,7 @@ form {
       font-weight: fw-var("medium");
 
       .wpcf7-form-control-wrap {
-        margin-top: var(--#{$prefix-theme}margin-top-control, var(--#{$prefix-theme}spacing-2));
+        margin-top: theme-var('spacing-2');
       }
     }
 
@@ -58,7 +58,9 @@ form {
       }
 
       textarea {
-        height: var(--#{$prefix-theme}h-textarea, 10rem);
+        --#{$prefix-theme}h-textarea: 10rem;
+
+        height: theme-var('h-textarea');
       }
     }
 
@@ -82,8 +84,8 @@ form {
 
     &.invalid {
       .wpcf7-response-output {
-        margin: var(--#{$prefix-theme}margin-res, var(--#{$prefix-theme}spacing-3) 0 0);
-        padding: var(--#{$prefix-theme}padding-res, var(--#{$prefix-theme}spacing-2));
+        margin: theme-var('spacing-2') 0 0;
+        padding: theme-var('spacing-2');
         @include border(.1rem, color-var("warning"));
       }
     }

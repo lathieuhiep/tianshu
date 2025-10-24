@@ -382,7 +382,7 @@
 
           .action {
             .remove {
-              --wc-red: color-var("error");
+              --wc-red: #{color-var("error")};
 
               color: var(--wc-red);
               @include square(2.4rem, 50%);
