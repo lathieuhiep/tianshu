@@ -11,7 +11,7 @@ get_header();
 //}
 ?>
 
-<div class="es-single-portfolio-warp">
+<div class="es-single-warp">
     <div class="es-container">
         <?php
         if ( have_posts() ) :

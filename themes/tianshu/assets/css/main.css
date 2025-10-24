@@ -133,7 +133,7 @@ p {
   margin-bottom: 0;
 }
 p + p {
-  margin-top: var(--theme-spacing-3);
+  margin-top: var(--theme-spacing-1);
 }
 
 figure {
@@ -1092,7 +1092,9 @@ a, button {
   --theme-max-width-logo: 16rem;
   border-right: 0.1rem solid var(--theme-border);
   flex: 0 0 auto;
+  padding-top: var(--theme-spacing-2);
   padding-right: var(--theme-spacing-2);
+  padding-bottom: var(--theme-spacing-2);
 }
 .main-header__top .logo a {
   display: inline-block;

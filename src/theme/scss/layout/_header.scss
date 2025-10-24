@@ -1,7 +1,5 @@
 @import "shared/scss/abstracts/abstracts";
 
-;
-
 .main-header {
   background-color: color-var("white");
 
@@ -23,7 +21,9 @@
 
       border-right: .1rem solid theme-var('border');
       flex: 0 0 auto;
+      padding-top: theme-var('spacing-2');
       padding-right: theme-var('spacing-2');
+      padding-bottom: theme-var('spacing-2');
 
       a {
         display: inline-block;

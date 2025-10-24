@@ -26,7 +26,7 @@ p {
   margin-bottom: 0;
 
   + p {
-    margin-top: var(--#{$prefix-theme}spacing-3);
+    margin-top: theme-var('spacing-1');
   }
 }
 
