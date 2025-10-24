@@ -27,7 +27,7 @@
 
 .widget {
   ~ .widget {
-    margin-top: var(--#{$prefix-theme}spacing-6);
+    margin-top: theme-var('spacing-4');
   }
 
   &:last-child {
@@ -36,7 +36,7 @@
 
   .widget-title {
     text-transform: uppercase;
-    margin-bottom: 2rem;
+    margin-bottom: theme-var('spacing-2');
     font-size: fs-var("sm");
   }
 
@@ -225,7 +225,7 @@
 
       .item {
         display: grid;
-        gap: 1.2rem;
+        gap: theme-var('spacing-1');
         grid-template-columns: 2.4rem 1fr;
         align-items: center;
 

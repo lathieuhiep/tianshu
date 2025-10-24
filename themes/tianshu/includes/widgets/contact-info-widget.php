@@ -36,7 +36,7 @@ class BasicTheme_Contact_Info_Widget extends WP_Widget {
 
             <?php if ( ! empty( $instance['email'] ) ) : ?>
                 <div class="item">
-                    <i class="ic-mask ic-mask-paper-plane"></i>
+                    <i class="ic-mask ic-mask-envelope"></i>
                     <a class="text"
                        href="mailto:<?php echo esc_attr( $instance['email'] ); ?>"><?php echo esc_html( $instance['email'] ); ?></a>
                 </div>

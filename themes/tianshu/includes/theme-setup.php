@@ -35,6 +35,7 @@ add_action('after_setup_theme', 'tianshu_add_theme_support');
 function tianshu_register_nav_menus(): void {
     register_nav_menus([
         'primary' => esc_html__('Menu chính', 'tianshu'),
+        'footer' => esc_html__('Menu chân trang', 'tianshu'),
     ]);
 }
 add_action('after_setup_theme', 'tianshu_register_nav_menus');

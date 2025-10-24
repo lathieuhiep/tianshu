@@ -1,20 +1,19 @@
 @import "shared/scss/abstracts/abstracts";
 
 .footer {
-  section {
-    &.widget {
+  background-color: theme-var('white');
+  border-top: .1rem solid theme-var('border');
 
-    }
+  section {
+    &.widget {}
   }
 
   &__column {
-    border-top: .1rem solid color-var("primary");
     padding: 3rem 0;
   }
 
   &__bottom {
-    padding: 1rem 0;
-    color: color-var("white");
-    background-color: $body-color;
+    padding: theme-var('spacing-3') 0;
+    border-top: .1rem solid theme-var('border');
   }
 }

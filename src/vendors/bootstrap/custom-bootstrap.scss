@@ -9,8 +9,8 @@
 $enable-rfs: false;
 
 // body
-$body-bg: map.get($mt-colors, "white");
-$body-color: map.get($mt-colors, "black");
+$body-bg: map.get($colors-semantic-light, "bg");
+$body-color: map.get($colors-semantic-light, "text");
 $body-text-align: inherit;
 
 // stylelint-enable value-keyword-case

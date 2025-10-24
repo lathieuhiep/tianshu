@@ -43,8 +43,8 @@ button, a {
   --theme-info: #5b7c91;
   --theme-black: #1c1816;
   --theme-white: #ffffff;
-  --theme-bg: #f8f5ec;
-  --theme-text: #2f2a26;
+  --theme-bg: #f8f5f0;
+  --theme-text: #2b2b2b;
   --theme-heading: #1c1816;
   --theme-meta: #6e6358;
   --theme-border: #e6dfd4;
@@ -468,6 +468,10 @@ a, button {
 .ic-mask-chevron-up {
   mask-image: url("../images/icons/chevron-up.svg");
   -webkit-mask-image: url("../images/icons/chevron-up.svg");
+}
+.ic-mask-envelope {
+  mask-image: url("../images/icons/envelope.svg");
+  -webkit-mask-image: url("../images/icons/envelope.svg");
 }
 .ic-mask-facebook-f {
   mask-image: url("../images/icons/facebook-f.svg");
@@ -1088,6 +1092,7 @@ a, button {
   --theme-max-width-logo: 16rem;
   border-right: 0.1rem solid var(--theme-border);
   flex: 0 0 auto;
+  padding-right: var(--theme-spacing-2);
 }
 .main-header__top .logo a {
   display: inline-block;
@@ -1518,14 +1523,14 @@ a, button {
 }
 
 .widget ~ .widget {
-  margin-top: var(--theme-spacing-6);
+  margin-top: var(--theme-spacing-4);
 }
 .widget:last-child {
   margin-bottom: 0;
 }
 .widget .widget-title, .widget.widget_block .wp-block-heading {
   text-transform: uppercase;
-  margin-bottom: 2rem;
+  margin-bottom: var(--theme-spacing-2);
   font-size: var(--theme-fs-sm);
 }
 .widget ul {
@@ -1648,7 +1653,7 @@ a, button {
 }
 .widget.contact-info-widget .list .item {
   display: grid;
-  gap: 1.2rem;
+  gap: var(--theme-spacing-1);
   grid-template-columns: 2.4rem 1fr;
   align-items: center;
 }
@@ -1688,14 +1693,16 @@ a, button {
   flex-direction: column;
 }
 
+.footer {
+  background-color: var(--theme-white);
+  border-top: 0.1rem solid var(--theme-border);
+}
 .footer__column {
-  border-top: 0.1rem solid var(--theme-primary);
   padding: 3rem 0;
 }
 .footer__bottom {
-  padding: 1rem 0;
-  color: var(--theme-white);
-  background-color: var(--theme-black);
+  padding: var(--theme-spacing-3) 0;
+  border-top: 0.1rem solid var(--theme-border);
 }
 
 /**
