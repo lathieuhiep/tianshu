@@ -1,0 +1,48 @@
+@use "sass:map";
+
+// Base spacing unit
+$spacing-base: 0.4rem;
+
+// Generate map of spacers (0 → 8)
+$spacers: ();
+@for $i from 0 through 8 {
+  $spacers: map.merge($spacers, (#{$i}: $spacing-base * $i));
+}
+
+// Directions for margin/padding utilities
+$directions: (
+    "": "",        // all sides
+    "t": "-top",
+    "r": "-right",
+    "b": "-bottom",
+    "l": "-left",
+    "x": ("-left", "-right"),
+    "y": ("-top", "-bottom")
+);
+
+// Property groups
+$properties: (
+    "m": "margin",
+    "p": "padding"
+);
+
+// Prefix for your project
+$prefix: "es";
+
+// Generate spacing utilities
+@each $prop-abbr, $prop-name in $properties {
+  @each $dir-abbr, $dir-val in $directions {
+    @each $size, $length in $spacers {
+      $class: if($dir-abbr == "", "#{$prefix}-#{$prop-abbr}-#{$size}", "#{$prefix}-#{$prop-abbr}#{$dir-abbr}-#{$size}");
+      .#{$class} {
+        @if type-of($dir-val) == "list" {
+          @each $side in $dir-val {
+            #{$prop-name}#{$side}: #{$length} !important;
+          }
+        } @else {
+          #{$prop-name}#{$dir-val}: #{$length} !important;
+        }
+      }
+    }
+  }
+}

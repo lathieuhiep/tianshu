@@ -78,4 +78,26 @@ class TemplateLoader
 
         return $template;
     }
+
+    /**
+     * Load a partial template file from plugin templates.
+     *
+     * Usage:
+     * \ExtendSite\Core\TemplateLoader::part('story/partials/story-tabs', ['story_id' => 123]);
+     *
+     * @param string $slug Relative path inside /templates/ without .php.
+     * @param array  $args Optional. Arguments passed to the template as $args.
+     * @return void
+     */
+    public static function part(string $slug, array $args = []): void {
+        $file = trailingslashit(EXTEND_SITE_PATH) . 'templates/' . ltrim($slug, '/') . '.php';
+
+        if (file_exists($file)) {
+            load_template($file, true, $args);
+        } else {
+            if (WP_DEBUG) {
+                trigger_error(sprintf('[ExtendSite] Template part not found: %s', esc_html($file)), E_USER_WARNING);
+            }
+        }
+    }
 }

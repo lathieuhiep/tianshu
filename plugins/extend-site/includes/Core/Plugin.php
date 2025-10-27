@@ -46,8 +46,13 @@ class Plugin
      */
     private static function include_files(): void
     {
+        // Helpers
         require_once EXTEND_SITE_PATH . 'functions/helpers.php';
         require_once EXTEND_SITE_PATH . 'functions/cpt-helpers.php';
+        require_once EXTEND_SITE_PATH . 'functions/breadcrumbs.php';
+
+        // hooks
+        require_once EXTEND_SITE_PATH . 'hooks/cpt-hooks.php';
     }
 
     /**

@@ -1,0 +1,9 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+@each $key, $value in $mt-font-sizes {
+  // class font-size
+  .#{$prefix-plugin-class}fs-#{$key} {
+    font-size: $value;
+  }
+}

@@ -41,6 +41,12 @@
   }
 }
 
+.#{$prefix-plugin-class}list-style-none {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 // Utility to remove all margin from an element
 .#{$prefix-plugin-class}m-0 {
   margin: 0 !important;
@@ -62,5 +68,12 @@
       height: 100%;
       object-fit: cover;
     }
+  }
+}
+
+// color
+@each $name, $color in $colors {
+  .#{$prefix-plugin-class}text-#{$name} {
+    color: $color !important;
   }
 }

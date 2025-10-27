@@ -1,4 +1,8 @@
 <?php
+
+use ExtendSite\PostType\AuthorPostType;
+use ExtendSite\PostType\StoryPostType;
+
 /**
  * Thêm dropdown filter taxonomy cho màn danh sách của một CPT.
  *
@@ -67,4 +71,97 @@ function es_add_custom_taxonomy_filter_to_cpt(string $post_type, string $taxonom
             }
         });
     });
+}
+
+/**
+ * Lấy ngày cập nhật gần nhất của truyện dựa trên chapter mới nhất.
+ * Ưu tiên tốc độ: SELECT MAX(post_modified_gmt) + cache.
+ *
+ * @param int    $story_id
+ * @param string $format   Default 'd-m-Y'
+ * @return string
+ */
+function es_site_get_story_last_update( int $story_id, string $format = 'd-m-Y' ): string {
+    if ( $story_id <= 0 ) {
+        return '';
+    }
+
+    $cache_key_runtime  = "es:story_last_update:$story_id";
+    $cache_group        = 'es_story';
+    $cached             = wp_cache_get( $cache_key_runtime, $cache_group );
+
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    // fallback transient (phòng khi không có persistent object cache)
+    $cached = get_transient( $cache_key_runtime );
+    if ( false !== $cached ) {
+        wp_cache_set( $cache_key_runtime, $cached, $cache_group, 10 * MINUTE_IN_SECONDS );
+        return $cached;
+    }
+
+    global $wpdb;
+
+    // Lấy mốc thời gian GMT của chapter mới nhất theo story
+    $last_mod_gmt = $wpdb->get_var( $wpdb->prepare("
+        SELECT MAX(p.post_modified_gmt)
+        FROM {$wpdb->posts} p
+        INNER JOIN {$wpdb->postmeta} pm
+            ON pm.post_id = p.ID
+           AND pm.meta_key = %s
+           AND pm.meta_value = %d
+        WHERE p.post_type = 'chapter'
+          AND p.post_status = 'publish'
+    ", '_chapter_story_id', $story_id ) );
+
+    if ( $last_mod_gmt ) {
+        // Chuyển từ GMT sang local và format
+        $timestamp = strtotime( get_date_from_gmt( $last_mod_gmt, 'Y-m-d H:i:s' ) );
+        $date      = date_i18n( $format, $timestamp );
+    } else {
+        // Không có chapter → fallback ngày sửa của story
+        $date = get_the_modified_date( $format, $story_id );
+    }
+
+    // Cache 10 phút (tuỳ chỉnh theo tần suất xuất bản)
+    wp_cache_set( $cache_key_runtime, $date, $cache_group, 10 * MINUTE_IN_SECONDS );
+    set_transient( $cache_key_runtime, $date, 10 * MINUTE_IN_SECONDS );
+
+    return $date;
+}
+
+/**
+ * Get formatted author links for a story.
+ *
+ * @param int $story_id
+ * @return string HTML of author names separated by commas.
+ */
+function es_site_get_story_authors( int $story_id ): string {
+    $author_ids = get_post_meta( $story_id, StoryPostType::META_AUTHOR_IDS, true );
+    $author_ids = is_array( $author_ids ) ? $author_ids : [];
+
+    if ( empty( $author_ids ) ) {
+        return esc_html__( 'Chưa rõ tác giả', 'extend-site' );
+    }
+
+    $authors = [];
+
+    foreach ( $author_ids as $aid ) {
+        if ( get_post_type( $aid ) !== AuthorPostType::SLUG ) {
+            continue;
+        }
+
+        $authors[] = sprintf(
+            '<a href="%s" class="author-name">%s</a>',
+            esc_url( get_permalink( $aid ) ),
+            esc_html( get_the_title( $aid ) )
+        );
+    }
+
+    if ( empty( $authors ) ) {
+        return esc_html__( 'Chưa rõ tác giả', 'extend-site' );
+    }
+
+    return implode( ', ', $authors );
 }

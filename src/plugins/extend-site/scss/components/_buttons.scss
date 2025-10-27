@@ -1,0 +1,79 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class}btn {
+  --#{$prefix-plugin-class}btn-padding-y: #{$es-btn-padding-y};
+  --#{$prefix-plugin-class}btn-padding-x: #{$es-btn-padding-x};
+  --#{$prefix-plugin-class}btn-font-size: #{$es-btn-font-size};
+  --#{$prefix-plugin-class}btn-border-radius: #{$es-btn-border-radius};
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: 0 plugin-var('btn-padding-x');
+  font-size: plugin-var('btn-font-size');
+  line-height: 1;
+  min-height: 3.2rem;
+  border-radius: plugin-var('btn-border-radius');
+  transition: $es-btn-transition;
+
+  &:disabled,
+  &.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+// Variants
+@each $name, $color in $colors {
+  .#{$prefix-plugin-class}btn-#{$name} {
+    background-color: $color;
+    border-color: $color;
+    color: if($name == 'light', #000, #fff);
+
+    &:hover {
+      background-color: darken($color, 7%);
+      border-color: darken($color, 10%);
+    }
+
+    &:active {
+      background-color: darken($color, 10%);
+      border-color: darken($color, 12%);
+    }
+  }
+
+  .#{$prefix-plugin-class}btn-outline-#{$name} {
+    background-color: transparent;
+    border-color: $color;
+    color: $color;
+
+    &:hover {
+      background-color: $color;
+      color: if($name == 'light', #000, #fff);
+    }
+
+    &:active {
+      background-color: darken($color, 10%);
+      border-color: darken($color, 12%);
+      color: if($name == 'light', #000, #fff);
+    }
+  }
+}
+
+// Size modifiers
+.#{$prefix-plugin-class}btn-sm {
+  --#{$prefix-plugin-class}btn-padding-y: 0.5rem;
+  --#{$prefix-plugin-class}btn-padding-x: 1rem;
+  --#{$prefix-plugin-class}btn-font-size: 1.2rem;
+}
+
+.#{$prefix-plugin-class}btn-lg {
+  --#{$prefix-plugin-class}btn-padding-y: 1.2rem;
+  --#{$prefix-plugin-class}btn-padding-x: 2rem;
+  --#{$prefix-plugin-class}btn-font-size: 1.6rem;
+}

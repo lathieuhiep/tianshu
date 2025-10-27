@@ -391,7 +391,8 @@ const watchTask = () => {
         `${paths.plugins.es.scss}abstracts/*.scss`,
         `${paths.plugins.es.scss}base/*.scss`,
         `${paths.plugins.es.scss}components/*.scss`,
-        `${paths.plugins.es.scss}post-type/*/**.scss`
+        `${paths.plugins.es.scss}post-type/*/**.scss`,
+        `${paths.plugins.es.scss}utilities/*.scss`
     ], buildStyleCPTPluginExtendSite)
 
     watch([`${paths.plugins.es.js}*/**.js`], buildJPluginExtendSite)

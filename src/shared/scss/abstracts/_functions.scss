@@ -9,9 +9,10 @@
 @function theme-var($key, $ns: null, $fallback: null, $prefix: $prefix-theme) {
   $ns-part: if($ns == null, "", "#{$ns}-");
   @if $fallback == null {
-    @return unquote("var(--#{$prefix}#{$ns-part}#{$key})");
+    @return var(--#{$prefix}#{$ns-part}#{$key});
   }
-  @return unquote("var(--#{$prefix}#{$ns-part}#{$key}, #{$fallback})");
+
+  @return var(--#{$prefix}#{$ns-part}#{$key}, #{$fallback});
 }
 
 /* Helper aliases (optional) */

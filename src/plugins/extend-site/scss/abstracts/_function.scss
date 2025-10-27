@@ -1,0 +1,12 @@
+/**
+ * theme-var($key, $ns, $fallback, $prefix)
+ * Trả về var(--prefix[ns-]key[, fallback])
+ */
+@function plugin-var($key, $ns: null, $fallback: null, $prefix: $prefix-plugin-class) {
+  $ns-part: if($ns == null, "", "#{$ns}-");
+  @if $fallback == null {
+    @return var(--#{$prefix}#{$ns-part}#{$key});
+  }
+
+  @return var(--#{$prefix}#{$ns-part}#{$key}, #{$fallback});
+}

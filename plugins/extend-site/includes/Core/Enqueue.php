@@ -62,11 +62,19 @@ class Enqueue
         }
 
         if ( is_singular(StoryPostType::SLUG) ) {
-            // load portfolio style
-            wp_enqueue_style('es-single-portfolio',
-                EXTEND_SITE_URL . 'assets/css/frontend/post-type/portfolio/single-portfolio.min.css',
+            // load single style
+            wp_enqueue_style('es-single-' . StoryPostType::SLUG,
+                EXTEND_SITE_URL . 'assets/css/frontend/post-type/story/single.min.css',
                 [],
                 EXTEND_SITE_VERSION
+            );
+
+            // load single script
+            wp_enqueue_script('es-single-' . StoryPostType::SLUG,
+                EXTEND_SITE_URL . 'assets/js/frontend/single-story.min.js',
+                ['jquery'],
+                EXTEND_SITE_VERSION,
+                true
             );
         }
     }
