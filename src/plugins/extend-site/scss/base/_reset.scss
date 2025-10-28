@@ -2,11 +2,11 @@
 @import "../abstracts/abstracts";
 
 :root {
-  --#{$prefix-plugin-class}gutter-width: #{$gutter-width};
-  --#{$prefix-plugin-class}fs-base: #{$font-size-base};
+  --#{$prefix-plugin-class}gutter-width: #{$es-gutter-width};
+  --#{$prefix-plugin-class}fs-base: #{$es-font-size-base};
 
-  @include generate-css-variables($colors, $prefix-plugin-class);
-  --#{$prefix-plugin-class}color-text: #{$color-text};
+  @include generate-css-variables($es-colors, $prefix-plugin-class);
+  --#{$prefix-plugin-class}color-text: #{$es-color-text};
 }
 
 [data-plugin="extend-site"] {

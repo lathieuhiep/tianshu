@@ -62,6 +62,15 @@ class Enqueue
         }
 
         if ( is_singular(StoryPostType::SLUG) ) {
+            wp_enqueue_style('es-extend-site',
+                EXTEND_SITE_URL . 'assets/css/frontend/extend-site.min.css',
+                [],
+                EXTEND_SITE_VERSION
+            );
+        }
+
+        // Story Post Type
+        if ( is_singular(StoryPostType::SLUG) ) {
             // load single style
             wp_enqueue_style('es-single-' . StoryPostType::SLUG,
                 EXTEND_SITE_URL . 'assets/css/frontend/post-type/story/single.min.css',
@@ -76,6 +85,11 @@ class Enqueue
                 EXTEND_SITE_VERSION,
                 true
             );
+
+            wp_localize_script('es-single-' . StoryPostType::SLUG, 'extendSite', [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce'   => wp_create_nonce('load_chapters_nonce'),
+            ]);
         }
     }
 }

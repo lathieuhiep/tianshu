@@ -30,7 +30,7 @@
 }
 
 // Variants
-@each $name, $color in $colors {
+@each $name, $color in $es-colors {
   .#{$prefix-plugin-class}btn-#{$name} {
     background-color: $color;
     border-color: $color;

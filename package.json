@@ -3,6 +3,7 @@
     "@babel/core": "^7.27.1",
     "@babel/preset-env": "^7.27.2",
     "babel-loader": "^10.0.0",
+    "cross-env": "^10.1.0",
     "gifsicle": "^7.0.1",
     "gulp": "^5.0.1",
     "gulp-if": "^3.0.0",
@@ -24,5 +25,9 @@
     "terser-webpack-plugin": "^5.3.14",
     "webpack": "^5.102.1",
     "webpack-stream": "^7.0.0"
+  },
+  "scripts": {
+    "gulp-build": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" gulp buildProject",
+    "gulp-watch": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" gulp watchTask"
   }
 }

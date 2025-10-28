@@ -1,0 +1,23 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class}pagination {
+  @extend %flex-align-center;
+  gap: .8rem;
+
+  .page-numbers {
+    display: inline-block;
+    border: 1px solid $border-color;
+    padding: 0 1.4rem;
+    height: 3.2rem;
+    border-radius: $border-radius;
+    @extend %flex-align-center;
+
+    &.current,
+    &:hover {
+      background-color: plugin-var('primary');
+      color: plugin-var('white');
+      border-color: plugin-var('primary');
+    }
+  }
+}

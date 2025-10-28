@@ -5,7 +5,7 @@ use ExtendSite\PostType\TemplateLoader;
 get_header();
 ?>
 
-<div class="es-single-warp" data-plugin="extend-site">
+<div class="es-single-warp es-pt-6 es-pb-4" data-plugin="extend-site">
     <div class="es-container">
         <?php
         TemplateLoader::part('common/breadcrumb');
@@ -13,7 +13,7 @@ get_header();
         if (have_posts()) :
             while (have_posts()) : the_post();
                 ?>
-                <div class="es-post">
+                <div class="es-post es-mt-6">
                     <div class="es-row">
                         <div class="es-col-4 es-ratio-1-1">
                             <div class="thumbnail-box es-ratio-thumb">
@@ -86,8 +86,12 @@ get_header();
                                 </div>
                             </div>
 
-                            <div class="content">
-                                <?php the_content(); ?>
+                            <div class="group-box es-mt-6 es-pt-6 es-row-gap-6">
+                                <?php TemplateLoader::part('story/parts/single-actions'); ?>
+
+                                <div class="content">
+                                    <?php the_content(); ?>
+                                </div>
                             </div>
                         </div>
                     </div>

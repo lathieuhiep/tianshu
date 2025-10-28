@@ -1,0 +1,11 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.es-breadcrumb {
+  &__item {
+    .#{$prefix-plugin-class}ic-mask {
+      --#{$prefix-plugin-class}ic-width: 1.2rem;
+      --#{$prefix-plugin-class}ic-height: 1.2rem;
+    }
+  }
+}

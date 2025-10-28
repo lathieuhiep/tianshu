@@ -25,53 +25,53 @@
 @for $i from 1 through 24 {
   .#{$prefix-plugin-class} {
     &row-gap-#{$i} {
-      row-gap: #{$i * $spacing-base};
+      row-gap: #{$i * $es-spacing-base};
     }
 
     &col-gap-#{$i} {
-      column-gap: #{$i * $spacing-base};
+      column-gap: #{$i * $es-spacing-base};
     }
   }
 }
 
 // Responsive row-gap & column-gap
-@each $breakpoint, $size in $breakpoints {
+@each $breakpoint, $size in $es-breakpoints {
   @media (min-width: $size) {
     @for $i from 1 through 24 {
       .#{$prefix-plugin-class} {
         &row-gap-#{$breakpoint}-#{$i} {
-          row-gap: #{$i * $spacing-base};
+          row-gap: #{$i * $es-spacing-base};
         }
 
         &col-gap-#{$breakpoint}-#{$i} {
-          column-gap: #{$i * $spacing-base};
+          column-gap: #{$i * $es-spacing-base};
         }
       }
     }
   }
 }
 
-@for $i from 1 through $grid-columns {
+@for $i from 1 through $es-grid-columns {
   .#{$prefix-plugin-class}col-#{$i} {
-    flex: 0 0 math.percentage(math.div($i, $grid-columns));
-    max-width: math.percentage(math.div($i, $grid-columns));
+    flex: 0 0 math.percentage(math.div($i, $es-grid-columns));
+    max-width: math.percentage(math.div($i, $es-grid-columns));
   }
 }
 
 // Responsive Grid
-@each $breakpoint, $size in $breakpoints {
+@each $breakpoint, $size in $es-breakpoints {
   @media (min-width: $size) {
-    @for $i from 1 through $grid-columns {
+    @for $i from 1 through $es-grid-columns {
       .#{$prefix-plugin-class}col-#{$breakpoint}-#{$i} {
-        flex: 0 0 math.percentage(math.div($i, $grid-columns));
-        max-width: math.percentage(math.div($i, $grid-columns));
+        flex: 0 0 math.percentage(math.div($i, $es-grid-columns));
+        max-width: math.percentage(math.div($i, $es-grid-columns));
       }
     }
   }
 }
 
 // row-cols
-@for $i from 1 through $grid-columns {
+@for $i from 1 through $es-grid-columns {
   .#{$prefix-plugin-class}row-cols-#{$i} > * {
     flex: 0 0 calc(100% / #{$i});
     max-width: calc(100% / #{$i});
@@ -79,9 +79,9 @@
 }
 
 // Responsive row-cols
-@each $breakpoint, $size in $breakpoints {
+@each $breakpoint, $size in $es-breakpoints {
   @media (min-width: $size) {
-    @for $i from 1 through $grid-columns {
+    @for $i from 1 through $es-grid-columns {
       .#{$prefix-plugin-class}row-cols-#{$breakpoint}-#{$i} > * {
         flex: 0 0 calc(100% / #{$i});
         max-width: calc(100% / #{$i});

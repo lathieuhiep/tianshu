@@ -1,10 +1,10 @@
 $prefix-plugin-class: es-;
 $prefix-plugin-class-addon: es-addon-;
 
-$icon-path: "../../icons";
+$es-icon-path: "../../icons";
 
 // breakpoints
-$breakpoints: (
+$es-breakpoints: (
         sm: 576px,
         md: 768px,
         lg: 992px,
@@ -13,47 +13,47 @@ $breakpoints: (
 );
 
 // colors
-$blue: #0d6efd;
-$red: #dc3545;
-$yellow: #ffc107;
-$green: #198754;
-$cyan: #0dcaf0;
+$es-blue: #0d6efd;
+$es-red: #dc3545;
+$es-yellow: #ffc107;
+$es-green: #198754;
+$es-cyan: #0dcaf0;
 
-$gray-600: #6c757d;
+$es-gray-600: #6c757d;
 
-$colors: (
-    "primary": $blue,
-    "secondary": $gray-600,
-    "success": $green,
-    "error": $red,
-    "warning": $yellow,
-    "info": $cyan,
+$es-colors: (
+    "primary": $es-blue,
+    "secondary": $es-gray-600,
+    "success": $es-green,
+    "error": $es-red,
+    "warning": $es-yellow,
+    "info": $es-cyan,
     "black": #000000,
     "white": #ffffff
 ) !default;
 
-$color-text: #2b2b2b;
+$es-color-text: #2b2b2b;
 
 // font sizes
-$font-size-base: 1.8rem;
+$es-font-size-base: 1.8rem;
 
-$font-size-h1: 3.6rem;
-$font-size-h2: 3.2rem;
-$font-size-h3: 2.8rem;
-$font-size-h4: 2.4rem;
-$font-size-h5: 2rem;
-$font-size-h6: $font-size-base;
+$es-font-size-h1: 3.6rem;
+$es-font-size-h2: 3.2rem;
+$es-font-size-h3: 2.8rem;
+$es-font-size-h4: 2.4rem;
+$es-font-size-h5: 2rem;
+$es-font-size-h6: $es-font-size-base;
 
 // grid
-$gutter-width: 1.2rem;
-$grid-columns: 12;
+$es-gutter-width: 1.2rem;
+$es-grid-columns: 12;
 
 // spacing
-$spacing-base: 0.4rem;
+$es-spacing-base: 0.4rem;
 
 // buttons
 $es-btn-padding-y: 0.4rem;
 $es-btn-padding-x: 1.6rem;
-$es-btn-font-size: $font-size-base;
+$es-btn-font-size: $es-font-size-base;
 $es-btn-border-radius: 0.8rem;
 $es-btn-transition: all 0.25s ease-in-out;

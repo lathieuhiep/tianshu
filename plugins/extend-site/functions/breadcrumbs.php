@@ -9,7 +9,7 @@ if ( ! function_exists( 'es_get_breadcrumbs' ) ) :
     function es_get_breadcrumbs(): array {
         $items = [];
         $home_url  = home_url( '/' );
-        $home_text = __( 'Home', 'tianshu' );
+        $home_text = esc_html__( 'Trang chủ', 'tianshu' );
 
         // Home
         $items[] = [
@@ -184,24 +184,43 @@ if ( ! function_exists( 'es_the_breadcrumbs' ) ) :
         $items = es_get_breadcrumbs();
         if ( empty( $items ) ) return;
 
-        echo '<nav class="' . esc_attr( $class ) . '" aria-label="' . esc_attr__( 'Breadcrumb', 'tianshu' ) . '" itemscope itemtype="https://schema.org/BreadcrumbList">';
-        echo '<ol class="es-breadcrumb__list">';
+        // Bắt đầu chế độ HTML
+        ?>
+        <nav class="<?php echo esc_attr( $class ); ?>"
+             aria-label="<?php echo esc_attr__( 'Breadcrumb', 'tianshu' ); ?>"
+             itemscope
+             itemtype="https://schema.org/BreadcrumbList">
 
-        $pos = 1;
-        foreach ( $items as $it ) {
-            $label = wp_kses_post( $it['label'] );
-            $url   = esc_url( $it['url'] );
-            echo '<li class="es-breadcrumb__item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
-            if ( $url ) {
-                echo '<a itemprop="item" href="' . $url . '"><span itemprop="name">' . $label . '</span></a>';
-            } else {
-                echo '<span class="is-current" itemprop="name">' . $label . '</span>';
-            }
-            echo '<meta itemprop="position" content="' . (int) $pos . '" />';
-            echo '</li>';
-            $pos++;
-        }
+            <ol class="es-breadcrumb__list es-list-style-none es-flex es-col-gap-2">
+                <?php
+                $pos = 1;
+                foreach ( $items as $it ) :
+                    $label = wp_kses_post( $it['label'] );
+                    $url   = esc_url( $it['url'] );
+                ?>
 
-        echo '</ol></nav>';
+                    <li class="es-breadcrumb__item es-flex es-flex-align-center es-col-gap-2 es-fw-bold"
+                        itemprop="itemListElement"
+                        itemscope
+                        itemtype="https://schema.org/ListItem">
+                        <?php if ( $url ) : ?>
+                            <a itemprop="item" href="<?php echo esc_url( $url ); ?>">
+                                <span itemprop="name"><?php echo esc_attr( $label ); ?></span>
+                            </a>
+
+                            <i class="es-ic-mask es-ic-mask-angle-right"></i>
+                        <?php else : ?>
+                            <span class="is-current" itemprop="name"><?php echo esc_html( $label ); ?></span>
+                        <?php endif; ?>
+
+                        <meta itemprop="position" content="<?php echo esc_attr( $pos ); ?>" />
+                    </li>
+                <?php
+                    $pos++;
+                endforeach;
+                ?>
+            </ol>
+        </nav>
+        <?php
     }
 endif;

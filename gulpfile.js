@@ -310,6 +310,14 @@ const buildStyleCustomLogin = () => {
     })
 }
 
+// Task build style plugin extend-site
+const buildStylePluginExtendSite = () => {
+    return buildScssPipeline({
+        input: `${paths.plugins.es.scss}extend-site.scss`,
+        output: `${paths.output.plugins.es.css}frontend/`
+    })
+}
+
 // Task build style elementor addons
 const buildStyleAddonsPluginExtendSite = () => {
     return buildScssPipeline({
@@ -339,6 +347,7 @@ const buildProject = async () => {
     // Chạy các plugin styles song song
     await Promise.all([
         buildStyleCustomLogin(),
+        buildStylePluginExtendSite(),
         buildStyleAddonsPluginExtendSite(),
         buildJPluginExtendSite(),
     ]);
@@ -367,16 +376,27 @@ const watchTask = () => {
     ], gulp.series(
         buildStyleCustomBootstrap,
         buildStyleTheme,
-        buildStyleAddonsPluginExtendSite,
-        buildStyleCustomLogin,
         buildStyleCustomPostType,
-        buildStylePageTemplate
+        buildStylePageTemplate,
+
+        buildStyleCustomLogin,
+        buildStylePluginExtendSite,
+        buildStyleAddonsPluginExtendSite,
+        buildStyleCPTPluginExtendSite
     ))
 
     // plugin essentials watch
     watch([
         `${paths.plugins.es.scss}custom-login.scss`
     ], buildStyleCustomLogin)
+
+    watch([
+        `${paths.plugins.es.scss}abstracts/*.scss`,
+        `${paths.plugins.es.scss}base/*.scss`,
+        `${paths.plugins.es.scss}components/*.scss`,
+        `${paths.plugins.es.scss}utilities/*.scss`,
+        `${paths.plugins.es.scss}extend-site.scss`
+    ], buildStylePluginExtendSite)
 
     watch([
         `${paths.plugins.es.scss}abstracts/*.scss`,
@@ -389,10 +409,7 @@ const watchTask = () => {
 
     watch([
         `${paths.plugins.es.scss}abstracts/*.scss`,
-        `${paths.plugins.es.scss}base/*.scss`,
-        `${paths.plugins.es.scss}components/*.scss`,
-        `${paths.plugins.es.scss}post-type/*/**.scss`,
-        `${paths.plugins.es.scss}utilities/*.scss`
+        `${paths.plugins.es.scss}post-type/*/**.scss`
     ], buildStyleCPTPluginExtendSite)
 
     watch([`${paths.plugins.es.js}*/**.js`], buildJPluginExtendSite)

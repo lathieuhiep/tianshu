@@ -14,7 +14,7 @@ $story_id = isset($args['story_id']) ? absint($args['story_id']) : get_the_ID();
 <div class="story-tabs" data-story-id="<?php echo esc_attr($story_id); ?>">
     <ul class="story-tab-nav es-list-style-none" role="tablist">
         <li>
-            <button class="story-tab-btn is-active"
+            <button class="story-tab-btn es-btn es-btn-outline-primary is-active"
                     role="tab"
                     data-tab-target="#story-tab-chapters"
                     aria-selected="true">
@@ -22,7 +22,7 @@ $story_id = isset($args['story_id']) ? absint($args['story_id']) : get_the_ID();
             </button>
         </li>
         <li>
-            <button class="story-tab-btn"
+            <button class="story-tab-btn es-btn es-btn-outline-primary"
                     role="tab"
                     data-tab-target="#story-tab-comments"
                     aria-selected="false">

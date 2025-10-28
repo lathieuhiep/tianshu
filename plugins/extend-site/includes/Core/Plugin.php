@@ -2,16 +2,22 @@
 
 namespace ExtendSite\Core;
 
+use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
 use ExtendSite\ElementorAddon\ElementorAddon;
 use ExtendSite\PostType\TemplateLoader;
+use ExtendSite\Repositories\ChapterRepository;
 
 defined('ABSPATH') || exit;
 
 class Plugin
 {
+    /**
+     * Boot the plugin by initializing all components.
+     * @return void
+     */
     public function boot(): void
     {
         self::load_text_domain();
@@ -19,10 +25,13 @@ class Plugin
         self::include_files();
         self::active_elementor_addon();
         self::active_custom_post_types();
+        self::load_repository();
+        self::load_ajax();
     }
 
     /**
      * Load the plugin text domain for translations.
+     * @return void
      */
     private static function load_text_domain(): void
     {
@@ -35,6 +44,7 @@ class Plugin
 
     /**
      * Load core functionalities.
+     * @return void
      */
     private static function active_core(): void
     {
@@ -43,6 +53,7 @@ class Plugin
 
     /**
      * Include necessary files.
+     * @return void
      */
     private static function include_files(): void
     {
@@ -57,6 +68,7 @@ class Plugin
 
     /**
      * Load the Elementor addon.
+     * @return void
      */
     private static function active_elementor_addon(): void
     {
@@ -65,6 +77,7 @@ class Plugin
 
     /**
      * Load custom post types.
+     * @return void
      */
     private static function active_custom_post_types(): void
     {
@@ -73,5 +86,23 @@ class Plugin
         new AuthorPostType();
 
         TemplateLoader::boot();
+    }
+
+    /**
+     * Load repositories and their hooks.
+     * @return void
+     */
+    private static function load_repository(): void
+    {
+        ChapterRepository::hook_invalidations();
+    }
+
+    /**
+     * Load AJAX handlers.
+     * @return void
+     */
+    private static function load_ajax(): void
+    {
+        LoadChapters::init();
     }
 }
