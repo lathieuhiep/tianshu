@@ -133,7 +133,7 @@ p {
   margin-bottom: 0;
 }
 p + p {
-  margin-top: var(--theme-spacing-1);
+  margin-top: var(--theme-spacing-2);
 }
 
 figure {

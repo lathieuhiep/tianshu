@@ -54,10 +54,8 @@
         }
     }
 
-    $(function () {
-        $('.story-tabs').each(function () {
-            initTabs($(this));
-        });
+    $('.story-tabs').each(function () {
+        initTabs($(this));
     });
 
     // chapter pagination
@@ -104,28 +102,24 @@
                 $link.addClass('current');
             },
             success: (res) => {
-                console.log('✅ Success:', res);
                 if (res.success && res.data.html) {
                     const $new = $(res.data.html);
-                    // xóa nội dung cũ
                     $chapters.find('.chapter-list, .chapter-pagination').remove();
-                    // thêm nội dung mới
                     $chapters.append($new);
-                    // cập nhật trang hiện tại
                     $chapters.attr('data-current-page', pageNum);
-                    // cập nhật URL
+
                     const newUrl = new URL(window.location.href);
                     newUrl.searchParams.set('chap_page', pageNum);
                     window.history.pushState({}, '', newUrl);
-                    // cuộn lên đầu
-                    $chapters.get(0).scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             },
             error: (xhr, status, err) => {
                 console.error('❌ AJAX error:', status, err);
                 console.log('Response:', xhr.responseText);
             },
-            complete: () => $chapters.removeClass('is-loading'),
+            complete: () => {
+                $chapters.removeClass('is-loading');
+            }
         });
     });
 })(jQuery);

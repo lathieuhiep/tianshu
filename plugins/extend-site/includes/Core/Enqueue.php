@@ -1,6 +1,7 @@
 <?php
 namespace ExtendSite\Core;
 
+use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
 
 defined('ABSPATH') || exit;
@@ -61,7 +62,12 @@ class Enqueue
             );
         }
 
-        if ( is_singular(StoryPostType::SLUG) ) {
+        if ( is_singular(StoryPostType::SLUG)
+            || is_post_type_archive(StoryPostType::SLUG)
+            || is_tax('story_genre')
+            || is_tax('story_status')
+            || is_singular(ChapterPostType::SLUG)
+        ) {
             wp_enqueue_style('es-extend-site',
                 EXTEND_SITE_URL . 'assets/css/frontend/extend-site.min.css',
                 [],

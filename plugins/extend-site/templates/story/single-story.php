@@ -5,7 +5,7 @@ use ExtendSite\PostType\TemplateLoader;
 get_header();
 ?>
 
-<div class="es-single-warp es-pt-6 es-pb-4" data-plugin="extend-site">
+<div class="es-single-warp es-pt-6 es-pb-6" data-plugin="extend-site">
     <div class="es-container">
         <?php
         TemplateLoader::part('common/breadcrumb');
@@ -14,8 +14,8 @@ get_header();
             while (have_posts()) : the_post();
                 ?>
                 <div class="es-post es-mt-6">
-                    <div class="es-row">
-                        <div class="es-col-4 es-ratio-1-1">
+                    <div class="es-row es-row-gap-6">
+                        <div class="es-col-12 es-col-sm-4 es-ratio-1-1">
                             <div class="thumbnail-box es-ratio-thumb">
                                 <?php
                                 if (has_post_thumbnail()) :
@@ -28,7 +28,7 @@ get_header();
                             </div>
                         </div>
 
-                        <div class="es-col-8">
+                        <div class="es-col-12 es-col-sm-8">
                             <h1 class="title"><?php the_title(); ?></h1>
 
                             <div class="info es-grid-layout es-row-gap-3">
@@ -48,7 +48,7 @@ get_header();
 
                                 <div class="item item-story-genre">
                                     <strong class="item__label"><?php esc_html_e('Thể loại', 'extend-site'); ?></strong>
-                                    <div class="item__value es-flex es-col-gap-2 es-row-gap-2">
+                                    <div class="item__value es-flex es-flex-wrap es-col-gap-2 es-row-gap-2">
                                         <?php
                                         $terms = get_the_terms(get_the_ID(), 'story_genre');
                                         if ($terms && !is_wp_error($terms)) :

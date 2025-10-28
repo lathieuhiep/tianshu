@@ -11,3 +11,19 @@
 .#{$prefix-plugin-class}fw-bold {
   font-weight: bold;
 }
+
+.#{$prefix-plugin-class}text-center {
+  text-align: center;
+}
+
+.#{$prefix-plugin-class}text-left {
+  text-align: left;
+}
+
+.#{$prefix-plugin-class}text-right {
+  text-align: right;
+}
+
+.#{$prefix-plugin-class}text-justify {
+  text-align: justify;
+}

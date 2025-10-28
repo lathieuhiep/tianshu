@@ -4,6 +4,7 @@
 .#{$prefix-plugin-class}pagination {
   @extend %flex-align-center;
   gap: .8rem;
+  flex-wrap: wrap;
 
   .page-numbers {
     display: inline-block;

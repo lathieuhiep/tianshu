@@ -25,7 +25,6 @@ class Plugin
         self::include_files();
         self::active_elementor_addon();
         self::active_custom_post_types();
-        self::load_repository();
         self::load_ajax();
     }
 
@@ -86,15 +85,6 @@ class Plugin
         new AuthorPostType();
 
         TemplateLoader::boot();
-    }
-
-    /**
-     * Load repositories and their hooks.
-     * @return void
-     */
-    private static function load_repository(): void
-    {
-        ChapterRepository::hook_invalidations();
     }
 
     /**

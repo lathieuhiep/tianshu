@@ -29,6 +29,10 @@
   justify-content: space-between;
 }
 
+.#{$prefix-plugin-class}flex-wrap {
+  flex-wrap: wrap;
+}
+
 .#{$prefix-plugin-class}custom-swiper-slider {
   &.is-initializing {
     visibility: hidden;
@@ -87,5 +91,18 @@
 @each $name, $color in $es-colors {
   .#{$prefix-plugin-class}text-#{$name} {
     color: $color !important;
+  }
+}
+
+// single page
+.#{$prefix-plugin-class}single-warp {
+  --#{$prefix-plugin-class}pd-x: 2rem;
+  --#{$prefix-plugin-class}pd-y: 2rem;
+
+  .es-post {
+    padding: plugin-var('pd-y') plugin-var('pd-x');
+    background-color: #ffffff;
+    box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
+    border-radius: 0.8rem;
   }
 }

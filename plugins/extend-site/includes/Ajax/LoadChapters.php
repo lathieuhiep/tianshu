@@ -47,17 +47,24 @@ class LoadChapters
     public static function render(int $story_id, int $page = 1, int $per_page = 10): string
     {
         $query = new WP_Query([
-            'post_type' => ChapterPostType::SLUG,
-            'meta_key' => ChapterPostType::META_STORY_ID,
-            'meta_value' => $story_id,
-            'orderby' => 'meta_value_num',
-            'order' => 'ASC',
-            'posts_per_page' => $per_page,
-            'paged' => $page,
-            'no_found_rows' => false,
-            'update_post_meta_cache' => false,
-            'update_post_term_cache' => false,
+                'post_type' => ChapterPostType::SLUG,
+                'meta_query' => [
+                    [
+                        'key' => ChapterPostType::META_STORY_ID,
+                        'value' => $story_id,
+                    ],
+                ],
+                'orderby' => [
+                        ChapterPostType::META_NUMBER => 'ASC',
+                ],
+                'posts_per_page' => $per_page,
+                'paged' => $page,
+                'no_found_rows' => false,
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
+                'fields' => 'ids', // nếu chỉ cần ID để render sau
         ]);
+
 
         return self::render_view($query, $page);
     }
@@ -70,7 +77,7 @@ class LoadChapters
         ob_start();
 
         if ($query->have_posts()) :
-        ?>
+            ?>
             <div class="chapter-list es-flex es-flex-column es-row-gap-3">
                 <?php while ($query->have_posts()) : $query->the_post(); ?>
                     <a href="<?php the_permalink(); ?>"
@@ -81,23 +88,23 @@ class LoadChapters
                 <?php endwhile; ?>
             </div>
 
-            <div class="chapter-pagination es-pagination text-center mt-3">
+            <div class="chapter-pagination es-pagination text-center mt-6">
                 <?php
                 echo paginate_links([
-                    'base'      => add_query_arg('chap_page', '%#%'),
-                    'format'    => '',
-                    'current'   => $page,
-                    'total'     => $query->max_num_pages,
-                    'prev_text' => '<i class="es-ic-mask es-ic-mask-angle-left"></i>',
-                    'next_text' => '<i class="es-ic-mask es-ic-mask-angle-right"></i>',
-                    'type'      => 'plain',
+                        'base' => add_query_arg('chap_page', '%#%'),
+                        'format' => '',
+                        'current' => $page,
+                        'total' => $query->max_num_pages,
+                        'prev_text' => '<i class="es-ic-mask es-ic-mask-angle-left"></i>',
+                        'next_text' => '<i class="es-ic-mask es-ic-mask-angle-right"></i>',
+                        'type' => 'plain',
                 ]);
                 ?>
             </div>
-        <?php
+            <?php
             wp_reset_postdata();
         else :
-        ?>
+            ?>
             <p class="chapter-empty text-center py-4">
                 <?php esc_html_e('Chưa có chương nào.', 'extend-site'); ?>
             </p>
