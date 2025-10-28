@@ -68,13 +68,24 @@
         const $chapters = $link.closest('.es-chapters');
         const storyID = $chapters.data('story-id');
         const perPage = $chapters.data('per-page');
-        const currentPage = parseInt($chapters.data('current-page')) || 1;
+        const currentPage = parseInt($chapters.data('current-page'), 10) || 1;
 
-        // 🧠 Lấy số trang
-        let pageNum = parseInt($link.text().match(/\d+/)?.[0]);
-        if ($link.hasClass('next')) pageNum = currentPage + 1;
-        if ($link.hasClass('prev')) pageNum = currentPage - 1;
-        if (!pageNum || isNaN(pageNum)) pageNum = 1;
+        let pageNum = 1;
+
+        // 🔹 Ưu tiên lấy từ href (?chap_page=2)
+        const href = $link.attr('href');
+        const match = href && href.match(/chap_page=(\d+)/);
+        if (match && match[1]) {
+            pageNum = parseInt(match[1], 10);
+        } else if ($link.hasClass('next')) {
+            pageNum = currentPage + 1;
+        } else if ($link.hasClass('prev')) {
+            pageNum = currentPage - 1;
+        }
+
+        if (pageNum < 1 || isNaN(pageNum)) pageNum = 1;
+
+        console.log('➡️ Loading page:', pageNum);
 
         $.ajax({
             url: extendSite.ajaxUrl,
@@ -89,40 +100,30 @@
             },
             beforeSend: () => {
                 $chapters.addClass('is-loading');
-                // Xóa trạng thái active cũ (tạm thời)
                 $chapters.find('.chapter-pagination .page-numbers.current').removeClass('current');
-                // Highlight trang đang click ngay lập tức (cho cảm giác phản hồi nhanh)
                 $link.addClass('current');
             },
             success: (res) => {
-                console.log('✅ AJAX success:', res);
+                console.log('✅ Success:', res);
                 if (res.success && res.data.html) {
-                    // Tạo node HTML mới từ response
-                    const $newContent = $(res.data.html);
-
-                    // Tìm container
-                    const $chapters = $link.closest('.es-chapters');
-
-                    // Xóa nội dung cũ
-                    $chapters.find('.chapter-list').remove();
-                    $chapters.find('.chapter-pagination').remove();
-
-                    // Thêm nội dung mới
-                    $chapters.append($newContent);
-
-                    // Cập nhật current-page cho data attribute
+                    const $new = $(res.data.html);
+                    // xóa nội dung cũ
+                    $chapters.find('.chapter-list, .chapter-pagination').remove();
+                    // thêm nội dung mới
+                    $chapters.append($new);
+                    // cập nhật trang hiện tại
                     $chapters.attr('data-current-page', pageNum);
-
-                    // Cập nhật URL
+                    // cập nhật URL
                     const newUrl = new URL(window.location.href);
                     newUrl.searchParams.set('chap_page', pageNum);
                     window.history.pushState({}, '', newUrl);
-
-                    // Scroll nhẹ
+                    // cuộn lên đầu
                     $chapters.get(0).scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } else {
-                    console.error(res.data?.message || 'Error loading chapters.');
                 }
+            },
+            error: (xhr, status, err) => {
+                console.error('❌ AJAX error:', status, err);
+                console.log('Response:', xhr.responseText);
             },
             complete: () => $chapters.removeClass('is-loading'),
         });
