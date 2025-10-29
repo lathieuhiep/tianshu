@@ -100,9 +100,19 @@
   --#{$prefix-plugin-class}pd-y: 2rem;
 
   .es-post {
-    padding: plugin-var('pd-y') plugin-var('pd-x');
+    padding: plugin-var('pd-y') plugin-var('pd-x') 4rem;
     background-color: #ffffff;
     box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
     border-radius: 0.8rem;
+  }
+
+  .title {
+    --#{$prefix-plugin-class}fs-title: #{$es-font-size-h3};
+
+    font-size: plugin-var('fs-title');
+
+    @media (max-width: 991px) {
+      --#{$prefix-plugin-class}fs-title: #{$es-font-size-h5};
+    }
   }
 }

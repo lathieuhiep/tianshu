@@ -1,0 +1,22 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../../abstracts/abstracts";
+
+.chapter-footer {
+  padding: 1.2rem 0;
+  box-shadow: 0 0 .2rem 0 rgba(0,0,0,.1);
+  background-color: plugin-var('white');
+
+  @media (min-width: 576px) {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+
+  a {
+    color: plugin-var('white');
+  }
+
+  .chapter-selector-box {
+    width: 32rem;
+  }
+}

@@ -2,13 +2,13 @@
 
 namespace ExtendSite\Core;
 
+use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
 use ExtendSite\ElementorAddon\ElementorAddon;
 use ExtendSite\PostType\TemplateLoader;
-use ExtendSite\Repositories\ChapterRepository;
 
 defined('ABSPATH') || exit;
 
@@ -94,5 +94,6 @@ class Plugin
     private static function load_ajax(): void
     {
         LoadChapters::init();
+        LoadChapterNeighbors::init();
     }
 }

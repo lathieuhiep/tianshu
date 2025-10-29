@@ -5,7 +5,7 @@ $es-spacing-base: 0.4rem;
 
 // Generate map of spacers (0 → 8)
 $spacers: ();
-@for $i from 0 through 8 {
+@for $i from 0 through 12 {
   $spacers: map.merge($spacers, (#{$i}: $es-spacing-base * $i));
 }
 

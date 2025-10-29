@@ -1,0 +1,29 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+%badge {
+  color: map-get($es-colors, "black");
+}
+
+.#{$prefix-plugin-class}badge {
+  --#{$prefix-plugin-class}badge-px: 1.2rem;
+  --#{$prefix-plugin-class}badge-py: 1.6rem;
+  --#{$prefix-plugin-class}border-radius: 1rem;
+  --#{$prefix-plugin-class}font-size: 1.6rem;
+  --#{$prefix-plugin-class}line-height: 1.5;
+
+  padding: plugin-var('badge-px') plugin-var('badge-py');
+  border-radius: plugin-var('border-radius');
+  font-size: plugin-var('font-size');
+  line-height: plugin-var('line-height');
+
+  &-primary {
+    background-color: map-get($es-colors, "primary");
+    @extend %badge;
+  }
+
+  &-info {
+    background-color: #f8f5f0;
+    @extend %badge;
+  }
+}

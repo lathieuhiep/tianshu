@@ -1,22 +1,12 @@
 @import "shared/scss/abstracts/abstracts";
 @import "../../abstracts/abstracts";
 
-.es-single-warp {
-  .es-post {
+.#{$prefix-plugin-class}single-warp {
+  .#{$prefix-plugin-class}post {
     .thumbnail-box {
       border-radius: $border-radius-lg;
       box-shadow: 0 0 8px 0 #757575;
       overflow: hidden;
-    }
-
-    .title {
-      --#{$prefix-plugin-class}fs-title: #{$es-font-size-h3};
-
-      font-size: plugin-var('fs-title');
-
-      @media (max-width: 991px) {
-        --#{$prefix-plugin-class}fs-title: #{$es-font-size-h5};
-      }
     }
 
     .info {

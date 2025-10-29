@@ -13,8 +13,8 @@ defined('ABSPATH') || exit;
 class LoadChapters
 {
 
-    private const ACTION = 'load_chapters';
-    private const NONCE = 'load_chapters_nonce';
+    public const ACTION = 'load_chapters';
+    public const NONCE = 'load_chapters_nonce';
 
     public static function init(): void
     {
