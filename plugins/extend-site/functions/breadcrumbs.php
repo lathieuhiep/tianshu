@@ -5,6 +5,8 @@
  * - i18n: dùng text-domain của theme (vd: 'tianshu')
  */
 
+use ExtendSite\PostType\StoryPostType;
+
 if ( ! function_exists( 'es_get_breadcrumbs' ) ) :
     function es_get_breadcrumbs(): array {
         $items = [];
@@ -107,9 +109,11 @@ if ( ! function_exists( 'es_get_breadcrumbs' ) ) :
 
             // CPT archive link
             if ( $post_type && $post_type !== 'post' && $post_type !== 'page' ) {
-                $obj = get_post_type_object( $post_type );
-                if ( $obj && $obj->has_archive ) {
-                    $items[] = [ 'label' => $obj->labels->name, 'url' => get_post_type_archive_link( $post_type ) ];
+                if ( $post_type !== StoryPostType::SLUG ) {
+                    $obj = get_post_type_object( $post_type );
+                    if ( $obj && $obj->has_archive ) {
+                        $items[] = [ 'label' => $obj->labels->name, 'url' => get_post_type_archive_link( $post_type ) ];
+                    }
                 }
             }
 

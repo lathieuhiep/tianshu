@@ -94,6 +94,22 @@ class Enqueue
             );
         }
 
+        // load ajax chapters for Story Post Type and Chapter Post Type
+        if ( is_singular(StoryPostType::SLUG) || is_singular(ChapterPostType::SLUG) ) {
+            // load single script
+            wp_enqueue_script('es-load-chapters',
+                EXTEND_SITE_URL . 'assets/js/frontend/load-chapters.min.js',
+                ['jquery'],
+                EXTEND_SITE_VERSION,
+                true
+            );
+
+            wp_localize_script('es-load-chapters', 'esLoadChapters', [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce'   => wp_create_nonce(LoadChapters::NONCE),
+            ]);
+        }
+
         // Story Post Type
         if ( is_singular(StoryPostType::SLUG) ) {
             // load single style
@@ -110,11 +126,6 @@ class Enqueue
                 EXTEND_SITE_VERSION,
                 true
             );
-
-            wp_localize_script('es-single-' . StoryPostType::SLUG, 'extendSite', [
-                'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce'   => wp_create_nonce(LoadChapters::NONCE),
-            ]);
         }
 
         // Chapter Post Type

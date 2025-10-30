@@ -1,124 +1,48 @@
-(function ($, window) {
+(function ($) {
     'use strict';
 
-    const ESingleChapter = {
-        hasLoaded: false,
-        $select: null,
-        $parent: null,
-        storyId: 0,
-        current: 0,
-        security: '',
+    // Mở modal danh sách chương
+    const modalChapterList = () => {
+        $(document).on('click', '.es-btn-chapter-list', function (e) {
+            e.preventDefault();
 
-        init() {
-            this.$select = $('#chapter-selector');
-            if (!this.$select.length) return;
+            const storyID = $(this).data('story-id');
+            const currentPage = $(this).data('current-page') || 1;
 
-            this.$parent  = $('.chapter-selector-box');
-            this.storyId  = this.$select.data('story-id');
-            this.current  = this.$select.data('current');
-            this.security = esSingleChapterAjax.nonce;
+            const $modal = $('#es-chapter-modal');
+            const $body = $('#es-chapter-modal-body');
 
-            this.appendCurrentPlaceholder();
-            this.initSelect2();
-            this.bindEvents();
-        },
+            $modal.addClass('active').attr('aria-hidden', 'false');
+            $('body').addClass('es-modal-open');
+        });
 
-        /**
-         * Hiển thị tạm chương hiện tại (placeholder)
-         */
-        appendCurrentPlaceholder() {
-            const title = $('h1.title').first().text().trim() || 'Chương hiện tại';
-            const text = `Chương ${this.current} – ${title} (Đang đọc)`;
-            const option = new Option(text, this.current, true, true);
-            this.$select.append(option).trigger('change');
-        },
+        // Đóng modal
+        $(document).on('click', '[data-close]', function (e) {
+            e.preventDefault();
+            const $modal = $('#es-chapter-modal');
 
-        /**
-         * Khởi tạo Select2 AJAX mode với hook transport
-         */
-        initSelect2() {
-            const self = this;
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
 
-            this.$select.select2({
-                width: '100%',
-                dropdownParent: this.$parent,
-                placeholder: 'Chọn hoặc tìm chương...',
-                language: {
-                    searching: () => 'Đang tải chương...',
-                    noResults: () => 'Không tìm thấy chương phù hợp',
-                },
-                ajax: {
-                    url: esSingleChapterAjax.ajax_url,
-                    type: 'POST',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function () {
-                        return {
-                            action: 'load_chapter_neighbors',
-                            security: self.security,
-                            story_id: self.storyId,
-                            current_number: self.current,
-                        };
-                    },
+            $modal.removeClass('active').attr('aria-hidden', 'true');
+            $('body').removeClass('es-modal-open');
+        });
 
-                    /**
-                     * ✅ Hook Select2 transport — ta chèn logic custom ở đây
-                     */
-                    transport: function (params, success, failure) {
-                        // Chỉ gọi 1 lần duy nhất
-                        if (self.hasLoaded) {
-                            // Lần sau trả luôn cache
-                            if (self.cachedData) {
-                                success(self.cachedData);
-                            }
-                            return null;
-                        }
-                        self.hasLoaded = true;
+        $(document).on('keyup', function (e) {
+            if (e.key === 'Escape') {
+                const $modal = $('#es-chapter-modal');
+                if ($modal.hasClass('active')) {
+                    if (document.activeElement) document.activeElement.blur();
 
-                        // Hiển thị tạm dòng "Đang tải chương..."
-                        const $results = $('.select2-results__options');
-                        $results.html('<li class="select2-results__option">Đang tải chương...</li>');
-
-                        const request = $.ajax(params);
-                        request.then(function (data) {
-                            console.log('✅ AJAX success:', data);
-
-                            self.cachedData = data; // cache để không gọi lại
-
-                            // Gọi callback gốc
-                            success(data);
-
-                            // Mở lại dropdown khi data trả về
-                            setTimeout(() => self.$select.select2('open'), 10);
-                        }).fail(function (xhr) {
-                            console.error('❌ AJAX error:', xhr.status, xhr.statusText);
-                            failure();
-                        });
-
-                        return request;
-                    },
-
-                    processResults: function (data) {
-                        return data; // dạng { results: [...] }
-                    },
-                    cache: true,
+                    $modal.removeClass('active').attr('aria-hidden', 'true');
+                    $('body').removeClass('es-modal-open');
                 }
-            });
-        },
+            }
+        });
+    }
 
-        /**
-         * Sự kiện chọn chương
-         */
-        bindEvents() {
-            this.$select.on('select2:select', function (e) {
-                const selected = e.params.data;
-                if (selected && selected.url) {
-                    window.location.href = selected.url;
-                }
-            });
-        },
-    };
-
-    $(document).ready(() => ESingleChapter.init());
-
-})(jQuery, window);
+    $(document).ready(function () {
+        modalChapterList();
+    });
+})(jQuery);

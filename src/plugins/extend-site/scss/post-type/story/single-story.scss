@@ -100,14 +100,6 @@
       }
     }
 
-    .es-chapters {
-      &.is-loading {
-        opacity: 0.4;
-        pointer-events: none;
-        transition: opacity 0.25s ease;
-      }
-    }
-
     .story-comments {
       // place for comment resets
     }

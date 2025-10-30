@@ -2,6 +2,7 @@
 
 namespace ExtendSite\Ajax;
 
+use ExtendSite\Repositories\ChapterRepository;
 use WP_Query;
 use ExtendSite\PostType\ChapterPostType;
 
@@ -32,58 +33,77 @@ class LoadChapters
         $story_id = absint($_POST['story_id'] ?? 0);
         $page = max(1, (int)($_POST['page'] ?? 1));
         $per_page = min(50, (int)($_POST['per_page'] ?? 10));
+        $show_title = isset($_POST['show_title']) ? filter_var($_POST['show_title'], FILTER_VALIDATE_BOOLEAN) : true;
+        $show_date = isset($_POST['show_date']) ? filter_var($_POST['show_date'], FILTER_VALIDATE_BOOLEAN) : true;
 
         if (!$story_id || !get_post($story_id)) {
-            wp_send_json_error(['message' => __('Invalid story ID.', 'extend-site')]);
+            wp_send_json_error(['message' => esc_html__('Invalid story ID.', 'extend-site')]);
         }
 
-        $html = self::render($story_id, $page, $per_page);
+        $html = self::render($story_id, $page, $per_page, $show_title, $show_date);
         wp_send_json_success(['html' => $html]);
     }
 
     /**
      * Render HTML (can be reused in template part)
      */
-    public static function render(int $story_id, int $page = 1, int $per_page = 10): string
+    public static function render(
+        int  $story_id,
+        int  $page = 1,
+        int  $per_page = 10,
+        bool $show_title = true,
+        bool $show_date = true
+    ): string
     {
         $query = new WP_Query([
-                'post_type' => ChapterPostType::SLUG,
-                'meta_query' => [
-                    [
-                        'key' => ChapterPostType::META_STORY_ID,
-                        'value' => $story_id,
-                    ],
+            'post_type' => ChapterPostType::SLUG,
+            'meta_query' => [
+                [
+                    'key' => ChapterPostType::META_STORY_ID,
+                    'value' => $story_id,
                 ],
-                'orderby' => [
-                        ChapterPostType::META_NUMBER => 'ASC',
-                ],
-                'posts_per_page' => $per_page,
-                'paged' => $page,
-                'no_found_rows' => false,
-                'update_post_meta_cache' => false,
-                'update_post_term_cache' => false,
-                'fields' => 'ids', // nếu chỉ cần ID để render sau
+            ],
+            'orderby' => [
+                ChapterPostType::META_NUMBER => 'ASC',
+            ],
+            'posts_per_page' => $per_page,
+            'paged' => $page,
+            'no_found_rows' => false,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+            'fields' => 'ids', // nếu chỉ cần ID để render sau
         ]);
 
-
-        return self::render_view($query, $page);
+        return self::render_view($query, $page, $show_title, $show_date);
     }
 
     /**
      * Render the HTML view for chapters
      */
-    private static function render_view(WP_Query $query, int $page): string
+    private static function render_view(WP_Query $query, int $page, bool $show_title, bool $show_date): string
     {
         ob_start();
 
         if ($query->have_posts()) :
             ?>
-            <div class="chapter-list es-flex es-flex-column es-row-gap-3">
-                <?php while ($query->have_posts()) : $query->the_post(); ?>
+            <div class="chapter-list es-flex es-flex-column es-row-gap-3 es-col-gap-3">
+                <?php
+                while ($query->have_posts()) :
+                    $query->the_post();
+
+                    if ($show_title) {
+                        $title = get_the_title();
+                    } else {
+                        $title = esc_html__('Chương') . ' ' . ChapterRepository::get_chapter_number(get_the_ID());
+                    }
+                ?>
                     <a href="<?php the_permalink(); ?>"
                        class="chapter-list__item es-flex es-flex-align-center es-flex-justify-space-between es-col-gap-3">
-                        <span class="chapter-title"><?php the_title(); ?></span>
-                        <span class="chapter-date"><?php echo esc_html(get_the_date('d/m/Y')); ?></span>
+                        <span class="chapter-title"><?php echo esc_html($title); ?></span>
+
+                        <?php if ($show_date) : ?>
+                            <span class="chapter-date"><?php echo esc_html(get_the_date('d/m/Y')); ?></span>
+                        <?php endif; ?>
                     </a>
                 <?php endwhile; ?>
             </div>
@@ -91,13 +111,13 @@ class LoadChapters
             <div class="chapter-pagination es-pagination text-center mt-6">
                 <?php
                 echo paginate_links([
-                        'base' => add_query_arg('chap_page', '%#%'),
-                        'format' => '',
-                        'current' => $page,
-                        'total' => $query->max_num_pages,
-                        'prev_text' => '<i class="es-ic-mask es-ic-mask-angle-left"></i>',
-                        'next_text' => '<i class="es-ic-mask es-ic-mask-angle-right"></i>',
-                        'type' => 'plain',
+                    'base' => add_query_arg('chap_page', '%#%'),
+                    'format' => '',
+                    'current' => $page,
+                    'total' => $query->max_num_pages,
+                    'prev_text' => '<i class="es-ic-mask es-ic-mask-angle-left"></i>',
+                    'next_text' => '<i class="es-ic-mask es-ic-mask-angle-right"></i>',
+                    'type' => 'plain',
                 ]);
                 ?>
             </div>

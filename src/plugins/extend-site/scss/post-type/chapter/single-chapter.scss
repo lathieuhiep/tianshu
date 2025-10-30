@@ -16,7 +16,49 @@
     color: plugin-var('white');
   }
 
+  .chapter-navigation {
+    .text-nav {
+      @media (max-width: 479px) {
+        display: none;
+      }
+    }
+  }
+
   .chapter-selector-box {
     width: 32rem;
+  }
+}
+
+.es-chapter-modal {
+  .es-modal {
+    &__body {
+      padding-bottom: 0;
+    }
+  }
+
+  .es-chapters {
+    .chapter-list {
+      display: grid;
+
+      @media (min-width: 576px) {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      @media (min-width: 480px) and (max-width: 575px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      @media (max-width: 479px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .chapter-pagination {
+      padding: 1.2rem 0;
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+      background-color: plugin-var('white');
+    }
   }
 }

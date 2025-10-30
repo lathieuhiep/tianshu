@@ -30,7 +30,10 @@ class StoryPostType extends BasePostType
     public function __construct(array $args = [])
     {
         $args = array_replace_recursive([
-            'rewrite' => ['slug' => 'truyen', 'with_front' => false],
+            'rewrite' => [
+                'slug' => 'truyen',
+                'with_front' => false
+            ],
             'menu_icon' => 'dashicons-book',
         ], $args);
 
