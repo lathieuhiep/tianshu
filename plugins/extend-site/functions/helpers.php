@@ -66,3 +66,32 @@ function es_pagination(): void
         'screen_reader_text' => '&nbsp;',
     ));
 }
+
+/**
+ * Chuyển đổi thời gian từ ngày tháng thành định dạng thân thiện với người dùng
+ * (ví dụ: 5 phút trước, 1 năm trước).
+ *
+ * @param int|string $time Thời gian đầu vào (Timestamp hoặc chuỗi ngày tháng).
+ * @return string Chuỗi thời gian đã định dạng.
+ */
+function es_display_time_ago(int|string $time ): string
+{
+
+    if ( is_string( $time ) ) {
+        $timestamp = strtotime( $time );
+        var_dump($timestamp);
+    } elseif ( is_numeric( $time ) ) {
+        $timestamp = (int) $time;
+    } else {
+        return '';
+    }
+
+    if ( $timestamp === false || $timestamp <= 0 ) {
+        return '';
+    }
+
+    $current_time = current_time( 'timestamp' );
+    $time_difference = human_time_diff( $timestamp, $current_time );
+
+    return sprintf( '%s trước', $time_difference );
+}
