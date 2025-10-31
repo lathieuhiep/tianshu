@@ -23,6 +23,7 @@ class StoryPostType extends BasePostType
     public const TEMPLATE_ARCHIVE = 'story/archive-story.php';
     public const TEMPLATE_TAX_CAT = 'story/taxonomy-story-genre.php';
     public const TEMPLATE_TAX_TAG = 'story/taxonomy-story-tag.php';
+    public const TEMPLATE_TAX_STATUS = 'story/taxonomy-story-status.php';
 
     // meta keys
     public const META_AUTHOR_IDS = '_story_author_ids'; // array<int>

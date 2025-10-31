@@ -13,7 +13,7 @@
   }
 
   .title {
-    --#{$prefix-plugin-class}fs-title: #{$es-font-size-h3};
+    --#{$prefix-plugin-class}fs-title: #{$es-font-size-h4};
 
     font-size: plugin-var('fs-title');
 

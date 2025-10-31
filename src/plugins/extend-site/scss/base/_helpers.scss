@@ -63,6 +63,17 @@
   list-style: none;
 }
 
+.#{$prefix-plugin-class}two-line-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.#{$prefix-plugin-class}border-bottom-1 {
+  border-bottom: .1rem solid $border-color;
+}
+
 // Utility to remove all margin from an element
 .#{$prefix-plugin-class}m-0 {
   margin: 0 !important;

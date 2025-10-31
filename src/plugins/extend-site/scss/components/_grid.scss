@@ -24,6 +24,10 @@
 // row-gap & col-gap
 @for $i from 1 through 24 {
   .#{$prefix-plugin-class} {
+    &gap-#{$i} {
+      gap: #{$i * $es-spacing-base};
+    }
+
     &row-gap-#{$i} {
       row-gap: #{$i * $es-spacing-base};
     }
@@ -39,6 +43,10 @@
   @media (min-width: $size) {
     @for $i from 1 through 24 {
       .#{$prefix-plugin-class} {
+        &gap-#{$breakpoint}-#{$i} {
+          gap: #{$i * $es-spacing-base};
+        }
+
         &row-gap-#{$breakpoint}-#{$i} {
           row-gap: #{$i * $es-spacing-base};
         }

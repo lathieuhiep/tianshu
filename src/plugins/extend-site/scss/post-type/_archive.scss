@@ -8,8 +8,9 @@
 }
 
 .es-archive-warp {
-  .es-story-list {
+  .es-archive-list {
     .item {
+      height: 100%;
       border-radius: $border-radius-lg;
       background-color: plugin-var('white');
       box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
@@ -21,9 +22,40 @@
         border-top-right-radius: $border-radius-lg;
       }
 
+      &__content {
+        @extend %flex-column;
+        flex: 1;
+
+        .title {
+          flex: 1;
+          line-height: 1.5;
+        }
+      }
+
+      .es-story-latest {
+        width: 15rem;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+
       &:hover {
-        margin-top: -.5rem;
         box-shadow: 0 .5rem 1rem 0 rgba(0,0,0,.3);
+        transform: translateY(-.5rem);
+      }
+    }
+  }
+
+  .es-author-list {
+    .item {
+      &__thumbnail {
+        .img {
+          display: inline-block;
+          border-radius: 50%;
+          max-width: 17rem;
+          max-height: 17rem;
+          overflow: hidden;
+        }
       }
     }
   }

@@ -67,31 +67,57 @@ function es_pagination(): void
     ));
 }
 
-/**
- * Chuyển đổi thời gian từ ngày tháng thành định dạng thân thiện với người dùng
- * (ví dụ: 5 phút trước, 1 năm trước).
- *
- * @param int|string $time Thời gian đầu vào (Timestamp hoặc chuỗi ngày tháng).
- * @return string Chuỗi thời gian đã định dạng.
- */
-function es_display_time_ago(int|string $time ): string
-{
+// Pagination Nav Query
+function es_paging_nav_query( $query ): void {
+    $args = array(
+        'prev_text' => '<i class="es-ic-mask es-ic-mask-angle-left"></i>',
+        'next_text' => '<i class="es-ic-mask es-ic-mask-angle-right"></i>',
+        'current'   => max( 1, get_query_var( 'paged' ) ),
+        'total'     => $query->max_num_pages,
+        'type'      => 'list',
+    );
 
+    $paginate_links = paginate_links( $args );
+
+    if ( $paginate_links ) :
+        ?>
+        <nav class="pagination">
+            <?php echo $paginate_links; ?>
+        </nav>
+    <?php
+    endif;
+}
+
+/**
+ * Hiển thị thời gian đăng bài theo dạng "x phút trước", "x ngày trước".
+ *
+ * @param int|string|null $time (Tùy chọn) Thời gian đầu vào (timestamp hoặc chuỗi ngày).
+ *                              Nếu bỏ trống, tự động lấy từ bài hiện tại.
+ * @return string Chuỗi thời gian thân thiện (ví dụ: "5 phút trước").
+ */
+function es_display_time_ago( int|string|null $time = null ): string {
+    // Nếu không truyền gì, tự động lấy thời gian bài hiện tại
+    if ( $time === null ) {
+        $time = get_the_time( 'U' );
+    }
+
+    // Chuẩn hóa timestamp
     if ( is_string( $time ) ) {
         $timestamp = strtotime( $time );
-        var_dump($timestamp);
     } elseif ( is_numeric( $time ) ) {
         $timestamp = (int) $time;
     } else {
         return '';
     }
 
-    if ( $timestamp === false || $timestamp <= 0 ) {
+    // Bảo vệ nếu dữ liệu không hợp lệ
+    if ( ! $timestamp || $timestamp <= 0 ) {
         return '';
     }
 
+    // Tính thời gian chênh lệch
     $current_time = current_time( 'timestamp' );
-    $time_difference = human_time_diff( $timestamp, $current_time );
+    $diff         = human_time_diff( $timestamp, $current_time );
 
-    return sprintf( '%s trước', $time_difference );
+    return sprintf( '%s trước', $diff );
 }

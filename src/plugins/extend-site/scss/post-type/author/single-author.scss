@@ -1,0 +1,13 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../../abstracts/abstracts";
+
+.es-single-author-warp {
+  .thumbnail-box {
+    margin: 0 auto;
+    width: 10rem;
+    height: 10rem;
+    overflow: hidden;
+    border: .3rem solid #ccc;
+    border-radius: 50%;
+  }
+}

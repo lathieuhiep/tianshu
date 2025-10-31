@@ -1,8 +1,11 @@
 <?php
+use ExtendSite\PostType\AuthorPostType;
+use ExtendSite\PostType\StoryPostType;
+
 /**
  * Xoá cache khi lưu/publish chapter.
  */
-add_action( 'save_post_chapter', function( $post_id, $post, $update ) {
+add_action( 'save_post_chapter', function($post_id, $post, $update ) {
     if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
         return;
     }
@@ -28,3 +31,21 @@ add_action( 'before_delete_post', function( $post_id ) {
         delete_transient( $key );
     }
 }, 10 );
+
+/**
+ * Thiết lập số bài viết hiển thị trên trang lưu trữ cho CPT Story và Author.
+ */
+add_action( 'pre_get_posts', function( WP_Query $query ) {
+    // Chỉ chạy ở frontend và query chính
+    if ( is_admin() || ! $query->is_main_query() ) {
+        return;
+    }
+
+    // Áp dụng cho CPT story + các taxonomy liên quan
+    if ( is_post_type_archive( StoryPostType::SLUG )
+        || is_tax( [ StoryPostType::TAX_SLUG, StoryPostType::TAG_SLUG, StoryPostType::STATUS_TAX ] )
+        || is_post_type_archive( AuthorPostType::SLUG )
+    ) {
+        $query->set( 'posts_per_page', 12 );
+    }
+});

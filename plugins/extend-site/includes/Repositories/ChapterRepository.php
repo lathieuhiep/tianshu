@@ -12,14 +12,11 @@ class ChapterRepository
      * Lấy ID chương đầu hoặc chương mới nhất của 1 truyện.
      *
      * @param int $story_id
-     * @param string $edge 'first' | 'latest'
-     * @return int|null
+     * @param string $order
+     * @return array|null
      */
-    public static function get_edge_chapter_id(int $story_id, string $edge = 'first'): ?int
+    public static function get_edge_chapter(int $story_id, string $order = 'ASC'): ?array
     {
-        $edge = ($edge === 'latest') ? 'latest' : 'first';
-        $order = ($edge === 'latest') ? 'DESC' : 'ASC';
-
         $q = new \WP_Query([
             'post_type' => ChapterPostType::SLUG,
             'fields' => 'ids',
@@ -41,21 +38,33 @@ class ChapterRepository
             'order' => $order,
         ]);
 
-        return $q->have_posts() ? (int)$q->posts[0] : null;
+        if ( empty( $q->posts ) ) {
+            return null;
+        }
+
+        $chapter_id = $q->posts[0];
+
+        return [
+            'id'     => $chapter_id,
+            'url'    => get_permalink( $chapter_id ),
+            'title'  => get_the_title( $chapter_id ),
+            'number' => self::get_chapter_number( $chapter_id ),
+        ];
     }
 
     /**
-     * Trả về URL của chương đầu và chương mới nhất.
+     * Lấy URL chương đầu tiên.
      */
-    public static function get_edge_urls(int $story_id): array
+    public static function get_first_chapter( int $story_id ): ?array
     {
-        $first_id = self::get_edge_chapter_id($story_id, 'first');
-        $latest_id = self::get_edge_chapter_id($story_id, 'latest');
+        return self::get_edge_chapter( $story_id );
+    }
 
-        return [
-            'first' => $first_id ? get_permalink($first_id) : null,
-            'latest' => $latest_id ? get_permalink($latest_id) : null,
-        ];
+    /**
+     * Lấy URL chương mới nhất.
+     */
+    public static function get_latest_chapter( int $story_id ): ?array {
+        return self::get_edge_chapter( $story_id, 'DESC' );
     }
 
     /**

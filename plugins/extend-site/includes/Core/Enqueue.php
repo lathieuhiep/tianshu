@@ -3,6 +3,7 @@ namespace ExtendSite\Core;
 
 use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
+use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
 
@@ -86,6 +87,8 @@ class Enqueue
             || is_tax('story_genre')
             || is_tax('story_status')
             || is_singular(ChapterPostType::SLUG)
+            || is_singular(AuthorPostType::SLUG)
+            || is_post_type_archive(AuthorPostType::SLUG)
         ) {
             wp_enqueue_style('es-extend-site',
                 EXTEND_SITE_URL . 'assets/css/frontend/extend-site.min.css',
@@ -149,6 +152,16 @@ class Enqueue
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce(LoadChapterNeighbors::NONCE),
             ]);
+        }
+
+        // Author Post Type
+        if ( is_singular(AuthorPostType::SLUG) ) {
+            // load single style
+            wp_enqueue_style('es-single-' . AuthorPostType::SLUG,
+                EXTEND_SITE_URL . 'assets/css/frontend/post-type/author/single-author.min.css',
+                [],
+                EXTEND_SITE_VERSION
+            );
         }
     }
 }

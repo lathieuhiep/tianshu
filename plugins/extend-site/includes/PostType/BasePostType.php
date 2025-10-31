@@ -67,6 +67,10 @@ abstract class BasePostType
         if (!empty($constants['TEMPLATE_TAX_TAG'])) {
             self::$templates[static::TAG_SLUG]['taxonomy'] = $constants['TEMPLATE_TAX_TAG'];
         }
+
+        if (!empty($constants['TEMPLATE_TAX_STATUS'])) {
+            self::$templates[static::STATUS_TAX]['taxonomy'] = $constants['TEMPLATE_TAX_STATUS'];
+        }
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace ExtendSite\PostType;
 
+use ExtendSite\Repositories\StoryRepository;
+
 defined('ABSPATH') || exit;
 
 class AuthorPostType extends BasePostType
@@ -40,8 +42,14 @@ class AuthorPostType extends BasePostType
 
         add_action('manage_' . self::SLUG . '_posts_custom_column', function (string $col, int $post_id) {
             if ($col !== 'author_stories') return;
-            // Sau này khi bạn lưu quan hệ ở Story (meta _story_author_ids),
-            // có thể đếm nhanh bằng WP_Query meta_query. Tạm thời hiển thị “—”.
+
+            $count = StoryRepository::count_by_author($post_id);
+
+            if ($count > 0) {
+                echo esc_html($count);
+                return;
+            }
+
             echo '<em>—</em>';
         }, 10, 2);
     }

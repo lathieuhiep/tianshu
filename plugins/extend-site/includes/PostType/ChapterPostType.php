@@ -14,7 +14,6 @@ class ChapterPostType extends BasePostType
 
     // (tuỳ chọn) tên file template nếu bạn dùng TemplateLoader
     public const TEMPLATE_SINGLE = 'chapter/single-chapter.php';
-    public const TEMPLATE_ARCHIVE = 'chapter/archive-chapter.php';
 
     public function __construct(array $args = [])
     {
@@ -24,7 +23,10 @@ class ChapterPostType extends BasePostType
             'hierarchical' => false, // KHÔNG dùng post_parent
             'supports' => ['title', 'editor', 'author', 'revisions'],
             'menu_icon' => 'dashicons-media-text',
-            'rewrite' => ['slug' => 'chuong', 'with_front' => false],
+            'rewrite' => [
+                'slug' => '%story%/chuong',
+                'with_front' => false
+            ],
         ], $args);
 
         parent::__construct($args);
@@ -38,6 +40,24 @@ class ChapterPostType extends BasePostType
         add_action('manage_' . self::SLUG . '_posts_custom_column', [$this, 'render_admin_columns'], 10, 2);
         add_filter('manage_edit-' . self::SLUG . '_sortable_columns', [$this, 'sortable_columns']);
         add_action('pre_get_posts', [$this, 'handle_admin_sorting']);
+
+        // Permalink tùy chỉnh để có dạng /story-slug/chuong/chapter-slug
+        add_filter('post_type_link', [$this, 'filter_permalink'], 10, 2);
+    }
+
+    /** Thay thế %story% trong permalink chương */
+    public function filter_permalink(string $permalink, \WP_Post $post): string {
+        if ($post->post_type !== self::SLUG) {
+            return $permalink;
+        }
+
+        $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
+        if (!$story_id) {
+            return str_replace('%story%', 'unknown-story', $permalink);
+        }
+
+        $story_slug = get_post_field('post_name', $story_id);
+        return str_replace('%story%', $story_slug, $permalink);
     }
 
     /** Meta boxes */
@@ -53,6 +73,7 @@ class ChapterPostType extends BasePostType
         );
     }
 
+    /** Hiển thị meta box */
     public function render_meta_box(\WP_Post $post): void
     {
         wp_nonce_field('chapter_meta_save', 'chapter_meta_nonce');
@@ -93,6 +114,7 @@ class ChapterPostType extends BasePostType
         echo '<p class="description">' . esc_html__('Dùng để sắp xếp chương theo thứ tự trong truyện. Có thể trùng tiêu đề nhưng hạn chế trùng số.', 'extend-site') . '</p>';
     }
 
+    /** Lưu meta box */
     public function save_meta(int $post_id, \WP_Post $post): void
     {
         if (!isset($_POST['chapter_meta_nonce']) || !wp_verify_nonce($_POST['chapter_meta_nonce'], 'chapter_meta_save')) {
@@ -135,6 +157,7 @@ class ChapterPostType extends BasePostType
         return $new;
     }
 
+    /** Hiển thị nội dung cột admin */
     public function render_admin_columns(string $col, int $post_id): void
     {
         if ($col === 'chapter_story') {
@@ -152,12 +175,14 @@ class ChapterPostType extends BasePostType
         }
     }
 
+    /** Đánh dấu cột Số chương là có thể sắp xếp được */
     public function sortable_columns(array $cols): array
     {
         $cols['chapter_number'] = 'chapter_number';
         return $cols;
     }
 
+    /** Xử lý sắp xếp cột Số chương */
     public function handle_admin_sorting(\WP_Query $q): void
     {
         if (!is_admin() || !$q->is_main_query() || $q->get('post_type') !== self::SLUG) {

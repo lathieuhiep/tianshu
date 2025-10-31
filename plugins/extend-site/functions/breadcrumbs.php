@@ -5,6 +5,7 @@
  * - i18n: dùng text-domain của theme (vd: 'tianshu')
  */
 
+use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
 
 if ( ! function_exists( 'es_get_breadcrumbs' ) ) :
@@ -119,9 +120,13 @@ if ( ! function_exists( 'es_get_breadcrumbs' ) ) :
 
             // Special: chapter → story parent (dựa meta _story_id)
             if ( $post_type === 'chapter' ) {
-                $story_id = (int) get_post_meta( $post->ID, '_story_id', true );
+                $story_id = (int) get_post_meta( $post->ID, ChapterPostType::META_STORY_ID, true );
+
                 if ( $story_id ) {
-                    $items[] = [ 'label' => get_the_title( $story_id ), 'url' => get_permalink( $story_id ) ];
+                    $items[] = [
+                        'label' => get_the_title( $story_id ),
+                        'url'   => get_permalink( $story_id ),
+                    ];
                 }
             }
 
