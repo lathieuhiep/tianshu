@@ -2,7 +2,6 @@
 
 namespace ExtendSite\PostType;
 
-use ExtendSite\Seeders\StoryStatusSeeder;
 use function es_add_custom_taxonomy_filter_to_cpt;
 
 defined('ABSPATH') || exit;
@@ -17,6 +16,7 @@ class StoryPostType extends BasePostType
     public const SINGULAR = 'truyện';
     public const PLURAL = 'Truyện';
     public const TAX_NAME = 'Danh mục truyện';
+    public const META_STORY_VIEWS   = '_story_view_count'; // số lượt xem truyện
 
     // name file template
     public const TEMPLATE_SINGLE = 'story/single-story.php';
@@ -99,16 +99,6 @@ class StoryPostType extends BasePostType
                 es_add_custom_taxonomy_filter_to_cpt(self::SLUG, 'story_status');
             }
         });
-
-        // Seed default terms for story_status
-        add_action('init', function () {
-            if ( ! get_option('extend_site_status_seeded') ) {
-                if ( class_exists('\ExtendSite\Seeders\StoryStatusSeeder') ) {
-                    StoryStatusSeeder::run();
-                    update_option('extend_site_status_seeded', 1, true);
-                }
-            }
-        }, 20);
     }
 
     public function add_author_meta_box(): void

@@ -9,7 +9,6 @@
 
 namespace ExtendSite\Repositories;
 
-use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\StoryPostType;
 use WP_Query;
 
@@ -18,6 +17,17 @@ use WP_Query;
  */
 class StoryRepository
 {
+
+    /**
+     * Get author IDs associated with a story.
+     *
+     * @param int $story_id Story post ID.
+     * @return array<int> Array of author IDs.
+     */
+    public static function get_author_ids(int $story_id): array
+    {
+        return (array) get_post_meta($story_id, StoryPostType::META_AUTHOR_IDS, true);
+    }
 
     /**
      * Get total number of stories written by an author.

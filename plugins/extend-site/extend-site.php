@@ -17,7 +17,6 @@ use ExtendSite\Core\Plugin;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
-use ExtendSite\Seeders\StoryStatusSeeder;
 
 defined('ABSPATH') || exit;
 

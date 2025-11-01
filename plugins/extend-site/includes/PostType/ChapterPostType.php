@@ -11,6 +11,7 @@ class ChapterPostType extends BasePostType
     public const PLURAL = 'Chương';
     public const META_STORY_ID = '_chapter_story_id';   // liên kết tới story (post ID)
     public const META_NUMBER = '_chapter_number';     // số thứ tự chương
+    public const META_CHAPTER_VIEWS = '_chapter_view_count'; // số lượt xem chương
 
     // (tuỳ chọn) tên file template nếu bạn dùng TemplateLoader
     public const TEMPLATE_SINGLE = 'chapter/single-chapter.php';
