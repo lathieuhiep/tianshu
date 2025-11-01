@@ -36,7 +36,7 @@ class LoadChapterNeighbors {
      */
     public static function handle(): void {
         // 🔐 Verify nonce
-        check_ajax_referer(self::NONCE, 'security');
+        check_ajax_referer(EXTEND_SITE_NONCE_ACTION, 'security');
 
         // 🧹 Sanitize inputs
         $story_id       = absint($_POST['story_id'] ?? 0);

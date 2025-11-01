@@ -2,6 +2,7 @@
 
 use ExtendSite\PostType\TemplateLoader;
 use ExtendSite\Repositories\StoryRepository;
+use ExtendSite\Views\ViewTracker;
 
 get_header();
 
@@ -42,6 +43,13 @@ $total_stories = $query->found_posts;
                         </div>
 
                         <div class="info es-mt-6">
+                            <div class="item item-author-stories-count es-flex es-gap-3 es-items-center">
+                                <strong class="item__label"><?php esc_html_e('Lượt xem', 'extend-site'); ?>:</strong>
+                                <div class="item__value">
+                                    <?php echo esc_html( ViewTracker::format_full( ViewTracker::get_author_views( $author_id ) ) ); ?>
+                                </div>
+                            </div>
+
                             <div class="item item-author-stories-count es-flex es-gap-3 es-items-center">
                                 <strong class="item__label"><?php esc_html_e('Số truyện', 'extend-site'); ?>:</strong>
                                 <div class="item__value">

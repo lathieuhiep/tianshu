@@ -2,6 +2,7 @@
 
 namespace ExtendSite\Core;
 
+use ExtendSite\Ajax\IncrementView;
 use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\PostType\AuthorPostType;
@@ -94,6 +95,7 @@ class Plugin
     private static function load_ajax(): void
     {
         LoadChapters::init();
-        LoadChapterNeighbors::init();
+//        LoadChapterNeighbors::init();
+        IncrementView::init();
     }
 }

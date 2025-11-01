@@ -1,6 +1,7 @@
 <?php
 
 use ExtendSite\PostType\TemplateLoader;
+use ExtendSite\Views\ViewTracker;
 
 get_header();
 ?>
@@ -66,7 +67,7 @@ get_header();
                                 <div class="item item-views">
                                     <strong class="item__label"><?php esc_html_e('Lượt xem', 'extend-site'); ?></strong>
                                     <div class="item__value">
-                                        218
+                                        <?php echo esc_html( ViewTracker::get_story_views(get_the_ID()) ); ?>
                                     </div>
                                 </div>
 

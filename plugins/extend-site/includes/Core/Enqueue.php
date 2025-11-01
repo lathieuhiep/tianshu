@@ -1,8 +1,6 @@
 <?php
 namespace ExtendSite\Core;
 
-use ExtendSite\Ajax\LoadChapterNeighbors;
-use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -108,8 +106,8 @@ class Enqueue
             );
 
             wp_localize_script('es-load-chapters', 'esLoadChapters', [
-                'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce'   => wp_create_nonce(LoadChapters::NONCE),
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce'   => wp_create_nonce(EXTEND_SITE_NONCE_ACTION),
             ]);
         }
 
@@ -150,7 +148,7 @@ class Enqueue
 
             wp_localize_script('es-single-' . ChapterPostType::SLUG, 'esSingleChapterAjax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce(LoadChapterNeighbors::NONCE),
+                'nonce' => wp_create_nonce(EXTEND_SITE_NONCE_ACTION),
             ]);
         }
 

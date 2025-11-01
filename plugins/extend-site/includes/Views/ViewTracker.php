@@ -1,6 +1,7 @@
 <?php
-namespace ExtendSite\ViewTracker;
+namespace ExtendSite\Views;
 
+use ExtendSite\DB\ViewsStoryDailyTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -28,8 +29,11 @@ class ViewTracker {
 
         // Story views
         $story_id = ChapterRepository::get_story_id($chapter_id);
-        if ($story_id && get_post($story_id)) {
+        if ( StoryRepository::is_active($story_id) ) {
             self::increment_meta($story_id, StoryPostType::META_STORY_VIEWS);
+
+            // Daily story views table
+            ViewsStoryDailyTable::increment($story_id);
 
             // Author views
             $author_ids = StoryRepository::get_author_ids($story_id);
@@ -101,15 +105,15 @@ class ViewTracker {
     public static function format_short(int $views): string {
         if ($views >= 1_000_000) {
             $val = round($views / 1_000_000, 1);
-            return rtrim(rtrim(number_format_i18n($val, 1), '0'), '.') . 'M';
+            return rtrim(rtrim(number_format($val, 1, '.', ''), '0'), '.') . 'M';
         }
 
         if ($views >= 1_000) {
             $val = round($views / 1_000, 1);
-            return rtrim(rtrim(number_format_i18n($val, 1), '0'), '.') . 'K';
+            return rtrim(rtrim(number_format($val, 1, '.', ''), '0'), '.') . 'K';
         }
 
-        return number_format_i18n($views);
+        return number_format($views);
     }
 
     /**

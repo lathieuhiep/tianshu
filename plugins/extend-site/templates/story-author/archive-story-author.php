@@ -1,6 +1,7 @@
 <?php
 
 use ExtendSite\Repositories\StoryRepository;
+use ExtendSite\Views\ViewTracker;
 
 get_header();
 ?>
@@ -19,6 +20,7 @@ get_header();
                             <?php
                             while ( have_posts() ) : the_post();
                                 $total_stories = StoryRepository::count_by_author( get_the_ID() );
+                                $total_views = ViewTracker::format_short( ViewTracker::get_author_views( get_the_ID() ) );
                             ?>
 
                             <article id="story-author-<?php the_ID(); ?>"
@@ -44,7 +46,12 @@ get_header();
                                         </a>
                                     </h2>
 
-                                    <div class="info">
+                                    <div class="info es-flex es-flex-wrap es-gap-2 es-flex-justify-space-between es-flex-align-center">
+                                        <div class="info__item es-flex es-flex-align-center es-flex-justify-center es-gap-2">
+                                            <i class="es-ic-mask es-ic-mask-eye"></i>
+                                            <span class="txt-val"><?php echo esc_html( $total_views ); ?></span>
+                                        </div>
+
                                         <div class="info__item es-flex es-flex-align-center es-flex-justify-center es-gap-2">
                                             <i class="es-ic-mask es-ic-mask-book"></i>
                                             <span class="txt-val"><?php echo esc_html( $total_stories ); ?></span>

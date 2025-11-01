@@ -14,6 +14,7 @@
 
 use ExtendSite\Core\Autoloader;
 use ExtendSite\Core\Plugin;
+use ExtendSite\DB\DBInstaller;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -23,6 +24,7 @@ defined('ABSPATH') || exit;
 // Constants
 const EXTEND_SITE_VERSION  = '1.0.0';
 const EXTEND_SITE_FILE     = __FILE__;
+const EXTEND_SITE_NONCE_ACTION = 'es_nonce_action_key';
 define('EXTEND_SITE_PATH',     plugin_dir_path(EXTEND_SITE_FILE));
 define('EXTEND_SITE_URL',      plugin_dir_url(EXTEND_SITE_FILE));
 define('EXTEND_SITE_BASENAME', plugin_basename(EXTEND_SITE_FILE));
@@ -40,6 +42,9 @@ register_activation_hook(EXTEND_SITE_FILE, function () {
     // Ensure autoloader is available during activation request
     require_once EXTEND_SITE_PATH . 'includes/Core/Autoloader.php';
     Autoloader::register();
+
+    // Create necessary DB tables
+    DBInstaller::install();
 
     // Instantiate CPT classes so we can register them now (before flush)
     $post_types = [

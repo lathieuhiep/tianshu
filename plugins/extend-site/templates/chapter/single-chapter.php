@@ -3,6 +3,7 @@
 use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\PostType\TemplateLoader;
 use ExtendSite\Repositories\ChapterRepository;
+use ExtendSite\Views\ViewTracker;
 
 get_header();
 
@@ -24,7 +25,7 @@ $chapter_number = ChapterRepository::get_chapter_number($current_id);
         if (have_posts()) :
             while (have_posts()) : the_post();
         ?>
-            <div class="es-post es-mt-6">
+            <div class="es-post es-mt-6" data-chapter-id="<?php echo esc_attr( $current_id ); ?>">
                 <h1 class="title es-mb-6"><?php the_title(); ?></h1>
 
                 <div class="es-badge es-badge-info es-mb-6">
@@ -35,7 +36,7 @@ $chapter_number = ChapterRepository::get_chapter_number($current_id);
 
                     <div class="item item-view">
                         <span class="item__label"><?php esc_html_e('Lượt xem:', 'extend-site'); ?></span>
-                        <span class="item__value">2412</span>
+                        <span class="item__value"><?php echo esc_html( ViewTracker::get_chapter_views( $current_id ) ) ?></span>
                     </div>
                 </div>
 

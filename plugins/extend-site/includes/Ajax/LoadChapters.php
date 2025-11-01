@@ -15,7 +15,6 @@ class LoadChapters
 {
 
     public const ACTION = 'load_chapters';
-    public const NONCE = 'load_chapters_nonce';
 
     public static function init(): void
     {
@@ -28,7 +27,7 @@ class LoadChapters
      */
     public static function handle(): void
     {
-        check_ajax_referer(self::NONCE, 'security');
+        check_ajax_referer(EXTEND_SITE_NONCE_ACTION, 'security');
 
         $story_id = absint($_POST['story_id'] ?? 0);
         $page = max(1, (int)($_POST['page'] ?? 1));

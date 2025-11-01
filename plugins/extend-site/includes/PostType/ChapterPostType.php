@@ -25,7 +25,7 @@ class ChapterPostType extends BasePostType
             'supports' => ['title', 'editor', 'author', 'revisions'],
             'menu_icon' => 'dashicons-media-text',
             'rewrite' => [
-                'slug' => '%story%/chuong',
+                'slug' => 'chuong',
                 'with_front' => false
             ],
         ], $args);
@@ -43,7 +43,25 @@ class ChapterPostType extends BasePostType
         add_action('pre_get_posts', [$this, 'handle_admin_sorting']);
 
         // Permalink tùy chỉnh để có dạng /story-slug/chuong/chapter-slug
-        add_filter('post_type_link', [$this, 'filter_permalink'], 10, 2);
+        add_filter('post_type_link', function ($permalink, $post) {
+            if ($post->post_type === self::SLUG) {
+                $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
+                if ($story_id && ($story = get_post($story_id))) {
+                    // tạo permalink có dạng /ten-truyen/chuong/chuong-1/
+                    $permalink = home_url( sprintf('%s/chuong/%s', $story->post_name, $post->post_name) );
+                }
+            }
+            return $permalink;
+        }, 10, 2);
+
+        // Thay thế %story% trong permalink chương
+        add_action('init', function () {
+            add_rewrite_rule(
+                '^([^/]+)/chuong/([^/]+)/?$',
+                'index.php?chapter=$matches[2]',
+                'top'
+            );
+        });
     }
 
     /** Thay thế %story% trong permalink chương */

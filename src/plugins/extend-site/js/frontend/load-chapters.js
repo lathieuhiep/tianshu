@@ -31,7 +31,7 @@
         if (pageNum < 1 || isNaN(pageNum)) pageNum = 1;
 
         $.ajax({
-            url: esLoadChapters.ajaxUrl,
+            url: esLoadChapters.ajax_url,
             type: 'POST',
             dataType: 'json',
             data: {

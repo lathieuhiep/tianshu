@@ -1,4 +1,12 @@
 <?php
+defined('ABSPATH') || exit;
+
+// Get current date according to WP timezone (format Y-m-d)
+function es_get_today(): string
+{
+    return current_time('Y-m-d');
+}
+
 // check if Elementor is active
 function es_check_elementor_builder()
 {

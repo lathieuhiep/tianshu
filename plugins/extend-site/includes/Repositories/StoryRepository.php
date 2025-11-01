@@ -17,6 +17,16 @@ use WP_Query;
  */
 class StoryRepository
 {
+    /**
+     * Check if a story is active (published).
+     *
+     * @param int $story_id Story post ID.
+     * @return bool True if active, false otherwise.
+     */
+    public static function is_active(int $story_id): bool {
+        $post = get_post($story_id);
+        return $post && $post->post_type === StoryPostType::SLUG && $post->post_status === 'publish';
+    }
 
     /**
      * Get author IDs associated with a story.
