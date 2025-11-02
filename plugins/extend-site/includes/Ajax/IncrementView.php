@@ -40,15 +40,15 @@ class IncrementView
         ViewTracker::increment_views($chapter_id);
 
         // Ghi log phục vụ test
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log(sprintf(
-                '[ViewTracker] +1 view for chapter=%d | uid=%s | ip=%s | fp=%s',
-                $chapter_id,
-                substr($uid, 0, 8),
-                $ip,
-                substr($fingerprint, 0, 12)
-            ));
-        }
+//        if (defined('WP_DEBUG') && WP_DEBUG) {
+//            error_log(sprintf(
+//                '[ViewTracker] +1 view for chapter=%d | uid=%s | ip=%s | fp=%s',
+//                $chapter_id,
+//                substr($uid, 0, 8),
+//                $ip,
+//                substr($fingerprint, 0, 12)
+//            ));
+//        }
 
         wp_send_json_success(['message' => 'View accepted']);
     }

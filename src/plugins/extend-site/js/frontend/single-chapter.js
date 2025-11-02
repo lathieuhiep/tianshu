@@ -38,7 +38,7 @@
         if (!chapterID) return;
 
         /**
-         * 🕒 Giới hạn thời gian giữa 2 view hợp lệ (ms)
+         * Giới hạn thời gian giữa 2 view hợp lệ (ms)
          * Mặc định: 1 giờ = 3600000 ms
          * Khi test có thể giảm xuống 10000 (10 giây)
          */
@@ -73,7 +73,7 @@
         const now = Date.now();
         if (lastViewTime && now - lastViewTime < TIME_LIMIT_MS) {
             const remain = ((TIME_LIMIT_MS - (now - lastViewTime)) / 1000).toFixed(0);
-            console.info(`⛔ Skipped: viewed ${(now - lastViewTime) / 1000}s ago. Wait ${remain}s.`);
+            console.info(`Skipped: viewed ${(now - lastViewTime) / 1000}s ago. Wait ${remain}s.`);
             return;
         }
 
@@ -99,15 +99,15 @@
                 success: function (res) {
                     console.log(res);
                     if (res.success) {
-                        console.info(`✅ View counted: ${res.data.message}`);
-                        // 🟢 Ghi thời gian sau khi gửi thành công
+                        console.info(`View counted: ${res.data.message}`);
+                        // Ghi thời gian sau khi gửi thành công
                         localStorage.setItem(key, Date.now().toString());
                     } else {
-                        console.warn(`⛔ Skipped (server): ${res.data.message}`);
+                        console.warn(`Skipped (server): ${res.data.message}`);
                     }
                 },
                 error: function (xhr, status, error) {
-                    console.error('⚠️ AJAX Error:', status, error);
+                    console.error('AJAX Error:', status, error);
                     console.log('🧾 Response text:', xhr.responseText);
                 },
             });

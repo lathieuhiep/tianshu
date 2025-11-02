@@ -64,6 +64,7 @@ class Plugin
 
         // hooks
         require_once EXTEND_SITE_PATH . 'hooks/cpt-hooks.php';
+        require_once EXTEND_SITE_PATH . 'hooks/sidebar.php';
     }
 
     /**

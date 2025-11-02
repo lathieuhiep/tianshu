@@ -1,6 +1,7 @@
 <div class="es-row">
-    <div class="es-col-12 es-col-sm-9">
+    <div class="es-col-12<?php echo esc_attr( is_active_sidebar( 'es-sidebar' ) ? ' es-col-sm-9' : '' ); ?>">
         <?php use ExtendSite\Repositories\ChapterRepository;
+        use ExtendSite\Views\ViewTracker;
 
         if ( have_posts() ) : ?>
             <div class="es-archive-list es-story-list">
@@ -8,7 +9,8 @@
                     <?php
                     while ( have_posts() ) : the_post();
                         $latest_chapter = ChapterRepository::get_latest_chapter( get_the_ID() );
-                        ?>
+                        $story_views   = ViewTracker::format_short( ViewTracker::get_story_views( get_the_ID() ) );
+                    ?>
                         <article id="story-<?php the_ID(); ?>"
                             <?php post_class( 'es-col-12 es-col-md-4' ); ?>
                                  itemscope
@@ -24,6 +26,15 @@
                                                  alt="<?php the_title_attribute(); ?>">
                                         <?php endif; ?>
                                     </a>
+
+                                    <div class="meta-data">
+                                        <div class="meta-item es-flex es-flex-align-center es-gap-2">
+                                            <i class="es-ic-mask es-ic-mask-eye" aria-hidden="true"></i>
+                                            <span itemprop="interactionCount">
+                                                <?php echo esc_html( $story_views ); ?>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="item__content es-p-3">
@@ -83,5 +94,9 @@
         <?php endif; ?>
     </div>
 
-    <div class="es-col-12 es-col-sm-3">Sidebar</div>
+    <?php if( is_active_sidebar( 'es-sidebar' ) ): ?>
+    <div class="es-col-12 es-col-sm-3">
+        <?php dynamic_sidebar( 'es-sidebar' ); ?>
+    </div>
+    <?php endif; ?>
 </div>

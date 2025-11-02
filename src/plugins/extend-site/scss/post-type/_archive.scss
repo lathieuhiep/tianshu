@@ -17,9 +17,21 @@
       @include transition(all .25s ease-in-out);
 
       &__thumbnail {
+        position: relative;
         overflow: hidden;
         border-top-left-radius: $border-radius-lg;
         border-top-right-radius: $border-radius-lg;
+
+        .meta-data {
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          background-color: rgba(0, 0, 0, 0.6);
+          color: plugin-var('white');
+          padding: .4rem .8rem;
+          font-size: 1.4rem;
+        }
       }
 
       &__content {

@@ -15,6 +15,7 @@ $story_id = ChapterRepository::get_story_id($current_id);
 $prev_id = ChapterRepository::get_adjacent_chapter($current_id, 'prev');
 $next_id = ChapterRepository::get_adjacent_chapter($current_id, 'next');
 $chapter_number = ChapterRepository::get_chapter_number($current_id);
+$chapter_views = ViewTracker::format_short( ViewTracker::get_chapter_views( $current_id ) );
 ?>
 <!-- Single Chapter Content -->
 <div class="es-single-warp es-pt-10 es-pb-10" data-plugin="extend-site">
@@ -36,7 +37,7 @@ $chapter_number = ChapterRepository::get_chapter_number($current_id);
 
                     <div class="item item-view">
                         <span class="item__label"><?php esc_html_e('Lượt xem:', 'extend-site'); ?></span>
-                        <span class="item__value"><?php echo esc_html( ViewTracker::get_chapter_views( $current_id ) ) ?></span>
+                        <span class="item__value"><?php echo esc_html( $chapter_views ) ?></span>
                     </div>
                 </div>
 
