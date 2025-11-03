@@ -63,6 +63,10 @@
   list-style: none;
 }
 
+.#{$prefix-plugin-class}d-none {
+  display: none !important;
+}
+
 .#{$prefix-plugin-class}two-line-clamp {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -72,6 +76,20 @@
 
 .#{$prefix-plugin-class}border-bottom-1 {
   border-bottom: .1rem solid $border-color;
+}
+
+.#{$prefix-plugin-class}loading {
+  text-align: center;
+
+  .es-spinner {
+    display: inline-block;
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid #ccc;
+    border-top-color: plugin-var('primary');
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
 }
 
 // Utility to remove all margin from an element

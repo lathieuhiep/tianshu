@@ -135,11 +135,6 @@ $chapter_views = ViewTracker::format_short( ViewTracker::get_chapter_views( $cur
                  data-show-date="false">
                 <?php echo LoadChapters::render($story_id, $paged, $per_page, false, false); ?>
             </div>
-
-<!--            <div class="es-loading es-flex es-flex-column es-flex-align-center es-row-gap-2">-->
-<!--                <span class="es-spinner"></span>-->
-<!--                <span class="text-load">--><?php //esc_html_e('Đang tải danh sách chương...', 'extend-site'); ?><!--</span>-->
-<!--            </div>-->
         </div>
 
         <footer class="es-modal__footer">

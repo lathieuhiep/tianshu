@@ -5,11 +5,13 @@ namespace ExtendSite\Core;
 use ExtendSite\Ajax\IncrementView;
 use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
+use ExtendSite\Ajax\LoadRanking;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
 use ExtendSite\ElementorAddon\ElementorAddon;
 use ExtendSite\PostType\TemplateLoader;
+use ExtendSite\Widgets\Register;
 
 defined('ABSPATH') || exit;
 
@@ -27,6 +29,7 @@ class Plugin
         self::active_elementor_addon();
         self::active_custom_post_types();
         self::load_ajax();
+        self::register_widget();
     }
 
     /**
@@ -98,5 +101,11 @@ class Plugin
         LoadChapters::init();
 //        LoadChapterNeighbors::init();
         IncrementView::init();
+        LoadRanking::init();
+    }
+
+    private static function register_widget(): void
+    {
+        Register::init();
     }
 }

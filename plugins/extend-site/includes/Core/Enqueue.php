@@ -63,6 +63,22 @@ class Enqueue
             );
         }
 
+        // register script for widget
+        wp_register_script('es-widget',
+            EXTEND_SITE_URL . 'assets/js/frontend/es-widget.min.js',
+            ['jquery'],
+            EXTEND_SITE_VERSION,
+            true
+        );
+
+        wp_localize_script('es-widget', 'esWidget', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce(EXTEND_SITE_NONCE_ACTION),
+            'i18n'     => [
+                'error_message' => esc_html__('Đã xảy ra lỗi khi tải dữ liệu, vui lòng thử lại.', 'extend-site')
+            ],
+        ]);
+
         // check load libs
         if ( is_singular(ChapterPostType::SLUG) ) {
             // load select2

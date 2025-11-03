@@ -13,7 +13,7 @@ get_header();
         </h1>
 
         <div class="es-row">
-            <div class="es-col-12 es-col-md-9">
+            <div class="es-col-12<?php echo esc_attr( is_active_sidebar( 'es-sidebar' ) ? ' es-col-sm-9' : '' ); ?>">
                 <?php if ( have_posts() ) : ?>
                     <div class="es-archive-list es-author-list">
                         <div class="es-row es-row-gap-6">
@@ -73,7 +73,11 @@ get_header();
                 <?php endif; ?>
             </div>
 
-            <div class="es-col-12 es-col-md-3">Sidebar</div>
+            <?php if( is_active_sidebar( 'es-sidebar' ) ): ?>
+                <div class="es-col-12 es-col-sm-3">
+                    <?php dynamic_sidebar( 'es-sidebar' ); ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>

@@ -1532,7 +1532,7 @@ a, button {
 }
 .widget .widget-title, .widget.widget_block .wp-block-heading {
   text-transform: uppercase;
-  margin-bottom: var(--theme-spacing-2);
+  margin-bottom: var(--theme-spacing-5);
   font-size: var(--theme-fs-sm);
 }
 .widget ul {

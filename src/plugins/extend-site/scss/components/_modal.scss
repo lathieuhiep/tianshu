@@ -70,20 +70,6 @@
       --#{$prefix-plugin-class}ic-color: #{plugin-var('error')};
     }
   }
-
-  .es-loading {
-    text-align: center;
-
-    .es-spinner {
-      display: inline-block;
-      width: 3rem;
-      height: 3rem;
-      border: 3px solid #ccc;
-      border-top-color: plugin-var('primary');
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-  }
 }
 
 @keyframes spin {
