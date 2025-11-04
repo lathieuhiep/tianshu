@@ -218,7 +218,14 @@ class StoryLatestGrid extends Widget_Base
     {
         $settings = $this->get_settings_for_display();
 
+        global $wpdb;
+
+        $wpdb->timer_start();
+
         $story_ids = ChapterRepository::get_latest_story_ids($settings['limit']);
+
+        $elapsed = $wpdb->timer_stop(); // trả về số giây (float)
+        error_log(sprintf('[Perf] SQL query took %.2f ms', $elapsed * 1000));
 
         $query = new \WP_Query([
             'post_type'      => 'story',

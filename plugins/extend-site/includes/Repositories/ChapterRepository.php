@@ -219,33 +219,31 @@ class ChapterRepository
     }
 
     /**
-     * Lấy danh sách chương mới nhất của truyện
+     * Lấy danh sách truyện có chương mới cập nhật (mỗi truyện chỉ 1 chương)
+     *
      * @param int $limit
-     * @return array
-    */
+     * @return array story_id[]
+     */
     public static function get_latest_story_ids(int $limit = 10): array
     {
-        $chapters = get_posts([
-            'post_type'      => ChapterPostType::SLUG,
-            'posts_per_page' => $limit * 3, // lấy dư để lọc trùng
-            'orderby'        => 'date',
-            'order'          => 'DESC',
-            'fields'         => 'ids',
-            'no_found_rows'  => true,
-        ]);
+        global $wpdb;
 
-        $story_ids = [];
-        foreach ($chapters as $chapter_id) {
-            $story_id = (int) self::get_story_id($chapter_id);
-            if ($story_id && !in_array($story_id, $story_ids, true)) {
-                $story_ids[] = $story_id;
-            }
+        $chapter_type = ChapterPostType::SLUG;
+        $meta_key     = ChapterPostType::META_STORY_ID ?? '_chapter_story_id';
 
-            if (count($story_ids) >= $limit) {
-                break;
-            }
-        }
+        $sql = $wpdb->prepare("
+        SELECT pm.meta_value AS story_id
+        FROM {$wpdb->posts} AS p
+        INNER JOIN {$wpdb->postmeta} AS pm 
+            ON p.ID = pm.post_id AND pm.meta_key = %s
+        WHERE p.post_type = %s
+          AND p.post_status = 'publish'
+          AND pm.meta_value <> ''
+        GROUP BY pm.meta_value
+        ORDER BY MAX(p.post_date) DESC, MAX(p.ID) DESC
+        LIMIT %d", $meta_key, $chapter_type, $limit);
 
-        return $story_ids;
+        $story_ids = $wpdb->get_col($sql);
+        return array_map('intval', $story_ids);
     }
 }
