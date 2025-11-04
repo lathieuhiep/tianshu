@@ -6,8 +6,10 @@ use ExtendSite\ElementorAddon\Widgets\ContactForm;
 use ExtendSite\ElementorAddon\Widgets\HeadingEditor;
 use ExtendSite\ElementorAddon\Widgets\InfoBox;
 use ExtendSite\ElementorAddon\Widgets\IconTextGrid;
-use ExtendSite\ElementorAddon\Widgets\PostCarousel;
-use ExtendSite\ElementorAddon\Widgets\PostGrid;
+use ExtendSite\ElementorAddon\Widgets\StoryCarousel;
+use ExtendSite\ElementorAddon\Widgets\StoryGrid;
+use ExtendSite\ElementorAddon\Widgets\StoryFeaturedSlider;
+use ExtendSite\ElementorAddon\Widgets\StoryLatestGrid;
 use ExtendSite\ElementorAddon\Widgets\TestimonialSlider;
 
 defined('ABSPATH') || exit;
@@ -68,18 +70,23 @@ class ElementorAddon
      */
     public static function register_widgets($widgets_manager): void
     {
+        $widgets_manager->register(new StoryCarousel());
+        $widgets_manager->register(new StoryFeaturedSlider());
+        $widgets_manager->register(new StoryGrid());
+        $widgets_manager->register(new StoryLatestGrid());
+
         // register addon elementor here
-        $widgets_manager->register(new CarouselImages());
+//        $widgets_manager->register(new CarouselImages());
+//
+//        if (function_exists('wpcf7')) {
+//            $widgets_manager->register(new ContactForm());
+//        }
 
-        if (function_exists('wpcf7')) {
-            $widgets_manager->register(new ContactForm());
-        }
-
-        $widgets_manager->register(new HeadingEditor());
-        $widgets_manager->register(new InfoBox());
-        $widgets_manager->register(new IconTextGrid());
-        $widgets_manager->register(new PostCarousel());
-        $widgets_manager->register(new PostGrid());
-        $widgets_manager->register(new TestimonialSlider());
+//        $widgets_manager->register(new HeadingEditor());
+//        $widgets_manager->register(new InfoBox());
+//        $widgets_manager->register(new IconTextGrid());
+//        $widgets_manager->register(new PostCarousel());
+//        $widgets_manager->register(new PostGrid());
+//        $widgets_manager->register(new TestimonialSlider());
     }
 }

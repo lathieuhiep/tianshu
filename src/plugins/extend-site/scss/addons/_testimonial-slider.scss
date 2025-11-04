@@ -3,7 +3,7 @@
 @import "shared/scss/abstracts/abstracts";
 @import "../abstracts/abstracts";
 
-.#{$prefix-plugin-class-addon}addon-testimonial-slider {
+.#{$prefix-plugin-class-addon}testimonial-slider {
   --#{$prefix-plugin-class}fs-name: #{map.get($mt-font-sizes, md)};
   --#{$prefix-plugin-class}fw-name: #{map.get($mt-font-weights, bold)};
 

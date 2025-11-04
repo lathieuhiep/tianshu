@@ -1028,6 +1028,9 @@ a, button {
 .theme-ratio-1-1 .theme-ratio-thumb {
   aspect-ratio: 1 / 1;
 }
+.theme-ratio-4-5 .theme-ratio-thumb {
+  aspect-ratio: 4 / 5;
+}
 .theme-ratio-3-4 .theme-ratio-thumb {
   aspect-ratio: 3 / 4;
 }

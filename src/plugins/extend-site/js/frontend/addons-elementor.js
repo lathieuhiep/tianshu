@@ -106,16 +106,19 @@
 
     $(window).on('elementor/frontend/init', function () {
         /* Element slider */
-        elementorFrontend.hooks.addAction('frontend/element_ready/es-slides.default', InitSwiperSliders);
-
-        // post carousel slider
-        elementorFrontend.hooks.addAction('frontend/element_ready/es-post-carousel.default', InitSwiperSliders);
+        // elementorFrontend.hooks.addAction('frontend/element_ready/es-slides.default', InitSwiperSliders);
 
         // testimonial slider
-        elementorFrontend.hooks.addAction('frontend/element_ready/es-testimonial-slider.default', InitSwiperSliders);
+        // elementorFrontend.hooks.addAction('frontend/element_ready/es-testimonial-slider.default', InitSwiperSliders);
 
         // image carousel slider
-        elementorFrontend.hooks.addAction('frontend/element_ready/es-carousel-images.default', InitSwiperSliders);
+        // elementorFrontend.hooks.addAction('frontend/element_ready/es-carousel-images.default', InitSwiperSliders);
+
+        // post carousel slider
+        elementorFrontend.hooks.addAction('frontend/element_ready/es-story-carousel.default', InitSwiperSliders);
+
+        // story feature slider
+        elementorFrontend.hooks.addAction('frontend/element_ready/es-story-featured-slider.default', InitSwiperSliders);
     });
 
 })(jQuery);

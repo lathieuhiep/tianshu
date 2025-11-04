@@ -48,9 +48,6 @@ class StoryPostType extends BasePostType
         add_filter('manage_' . self::SLUG . '_posts_columns', [$this, 'add_admin_columns']);
         add_action('manage_' . self::SLUG . '_posts_custom_column', [$this, 'render_admin_columns'], 10, 2);
 
-        // (Tuỳ chọn) REST field
-        add_action('rest_api_init', [$this, 'register_rest_fields']);
-
         // register taxonomy
         add_action('init', function () {
             // story_genre
@@ -99,6 +96,9 @@ class StoryPostType extends BasePostType
                 es_add_custom_taxonomy_filter_to_cpt(self::SLUG, 'story_status');
             }
         });
+
+        // set view story default
+        add_action('save_post_' . self::SLUG, [$this, 'init_default_views'], 10, 1);
     }
 
     public function add_author_meta_box(): void
@@ -223,5 +223,21 @@ class StoryPostType extends BasePostType
             $titles[] = $link ? '<a href="' . esc_url($link) . '">' . esc_html($title) . '</a>' : esc_html($title);
         }
         echo $titles ? implode(', ', $titles) : '<em>—</em>';
+    }
+
+    /**
+     * Ensure every story has default view count = 0
+     */
+    public function init_default_views(int $post_id): void
+    {
+        // Tránh autosave / revision
+        if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
+            return;
+        }
+
+        // Nếu chưa có meta _story_view_count → gán 0
+        if (!metadata_exists('post', $post_id, self::META_STORY_VIEWS)) {
+            update_post_meta($post_id, self::META_STORY_VIEWS, 0);
+        }
     }
 }

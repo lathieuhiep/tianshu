@@ -9,6 +9,7 @@
 
 namespace ExtendSite\Repositories;
 
+use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\StoryPostType;
 use WP_Query;
 
@@ -97,5 +98,36 @@ class StoryRepository
             'orderby'        => 'date',
             'order'          => 'DESC',
         ]);
+    }
+
+    /**
+     * Get authors.
+     *
+     * @param int $story_id
+     * @return array
+     */
+    public static function get_authors(int $story_id): array {
+        $ids = self::get_author_ids($story_id);
+        if (empty($ids)) {
+            return [];
+        }
+
+        $authors = get_posts([
+            'post_type'   => AuthorPostType::SLUG,
+            'post__in'    => $ids,
+            'numberposts' => -1,
+            'orderby'     => 'post__in', // giữ thứ tự
+        ]);
+
+        $results = [];
+        foreach ($authors as $post) {
+            $results[] = [
+                'id'   => $post->ID,
+                'name' => $post->post_title,
+                'url'  => get_permalink($post),
+            ];
+        }
+
+        return $results;
     }
 }

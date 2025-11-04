@@ -8,10 +8,11 @@ use Elementor\Controls_Manager;
 use ExtendSite\ElementorAddon\Traits\HasImageSizeControl;
 use ExtendSite\ElementorAddon\Traits\HasQueryControls;
 use ExtendSite\ElementorAddon\Traits\HasPostItemControls;
+use ExtendSite\PostType\StoryPostType;
 
 defined('ABSPATH') || exit;
 
-class PostGrid extends Widget_Base
+class StoryGrid extends Widget_Base
 {
     use HasImageSizeControl;
     use HasQueryControls;
@@ -20,13 +21,13 @@ class PostGrid extends Widget_Base
     // widget name
     public function get_name(): string
     {
-        return 'es-post-grid';
+        return 'es-story-grid';
     }
 
     // widget title
     public function get_title(): string
     {
-        return esc_html__('Bài viết dạng lưới', 'extend-site');
+        return esc_html__('Truyện dạng lưới', 'extend-site');
     }
 
     // widget icon
@@ -44,17 +45,84 @@ class PostGrid extends Widget_Base
     // widget keywords
     public function get_keywords(): array
     {
-        return ['post', 'grid', 'extend site'];
+        return ['story', 'grid', 'extend site'];
     }
 
     // widget controls
     protected function register_controls(): void
     {
-        // Content query
-        $this->addQueryControls($this);
+        // Query controls
+        $this->start_controls_section(
+            'content_query',
+            [
+                'label' => esc_html__('Thiết lập truy vấn', 'extend-site'),
+                'tab' => Controls_Manager::TAB_CONTENT,
+            ]
+        );
 
-        // Post item
-        $this->addPostItemControls($this);
+        $this->add_control(
+            'taxonomy',
+            [
+                'label' => esc_html__('Chọn danh mục', 'extend-site'),
+                'type' => Controls_Manager::SELECT2,
+                'options' => es_get_tax_list(StoryPostType::TAX_SLUG),
+                'multiple' => true,
+                'label_block' => true,
+            ]
+        );
+
+        $this->add_control(
+            'tag',
+            [
+                'label' => esc_html__('Chọn tag truyện', 'extend-site'),
+                'type' => Controls_Manager::SELECT2,
+                'options' => es_get_story_tags(),
+                'multiple' => false,
+                'label_block' => true,
+            ]
+        );
+
+        $this->add_control(
+            'limit',
+            [
+                'label' => esc_html__('Số bài lấy ra', 'extend-site'),
+                'type' => Controls_Manager::NUMBER,
+                'default' => 10,
+                'min' => 1,
+                'max' => 36,
+                'step' => 1,
+            ]
+        );
+
+        $this->add_control(
+            'order_by',
+            [
+                'label' => esc_html__('Sắp xếp theo', 'extend-site'),
+                'type' => Controls_Manager::SELECT,
+                'default' => 'ID',
+                'options' => [
+                    'ID' => esc_html__('ID', 'extend-site'),
+                    'title' => esc_html__('Tiêu đề', 'extend-site'),
+                    'date' => esc_html__('Ngày đăng', 'extend-site'),
+                    'views' => esc_html__('Lượt xem', 'extend-site'),
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'order',
+            [
+                'label' => esc_html__('Sắp xếp', 'extend-site'),
+                'type' => Controls_Manager::SELECT,
+                'default' => 'DESC',
+                'options' => [
+                    'DESC' => esc_html__('Tăng dần', 'extend-site'),
+                    'ASC' => esc_html__('Giảm dần', 'extend-site'),
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
 
         // Content layout
         $this->start_controls_section(
@@ -266,15 +334,74 @@ class PostGrid extends Widget_Base
     {
         $settings = $this->get_settings_for_display();
 
-        // Query
-        $query = $this->buildPostQuery($settings);
+        // get query
+        $taxonomies = $settings['taxonomy'] ?? [];
+        $tag = $settings['tag'] ?? [];
+        $limit   = absint($settings['limit'] ?? 18);
+        $order_by = $settings['order_by'] ?? 'ID';
+        $order   = $settings['order'] ?? 'DESC';
+
+        // Lọc theo danh mục truyện (story_genre)
+        $tax_query = [];
+
+        if (!empty($taxonomies)) {
+            $tax_query[] = [
+                'taxonomy' => StoryPostType::TAX_SLUG,
+                'field'    => 'term_id',
+                'terms'    => (array) $taxonomies,
+                'operator' => 'IN',
+            ];
+        }
+
+        // Lọc theo tag (story_tag)
+        if (!empty($tag)) {
+            $tax_query[] = [
+                'taxonomy' => StoryPostType::TAG_SLUG,
+                'field'    => 'term_id',
+                'terms'    => (array) $tag,
+                'operator' => 'IN',
+            ];
+        }
+
+        // Query stories
+        $args = [
+            'post_type'      => StoryPostType::SLUG,
+            'posts_per_page' => $limit,
+            'order'          => $order,
+            'no_found_rows'  => true,
+        ];
+
+        // Nếu sắp xếp theo view
+        if ($order_by === 'views') {
+            $args['meta_key']   = StoryPostType::META_STORY_VIEWS;
+            $args['meta_type']  = 'NUMERIC';
+            $args['orderby']    = 'meta_value_num';
+        } else {
+            $args['orderby'] = $order_by;
+        }
+
+        // Chỉ thêm tax_query khi có ít nhất 1 điều kiện
+        if (!empty($tax_query)) {
+            if (count($tax_query) > 1) {
+                $tax_query = array_merge(['relation' => 'AND'], $tax_query);
+            }
+
+            $args['tax_query'] = $tax_query;
+        }
+
+        $query = new \WP_Query($args);
+
+        if ( !$query->have_posts() ) {
+            echo '<p>' . esc_html__('Không có truyện phù hợp với điều kiện.', 'extend-site') . '</p>';
+            return;
+        }
 
         if ($query->have_posts()) :
             ?>
-            <div class="es-addon-post-grid es-grid-layout">
+            <div class="es-addon-story-grid es-grid-layout">
                 <?php while ($query->have_posts()): $query->the_post(); ?>
                     <div class="item">
-                        <div class="thumbnail">
+                        <div class="thumbnail es-ratio-4-5">
                             <a class="es-ratio-thumb" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
                                 <?php
                                 if (has_post_thumbnail()) :
@@ -287,51 +414,9 @@ class PostGrid extends Widget_Base
                             </a>
                         </div>
 
-                        <?php
-                        printf(
-                            '<%1$s class="title"><a href="%2$s" rel="bookmark">%3$s</a></%1$s>',
-                            esc_attr($settings['post_heading_tag'] ?? 'h3'),
-                            esc_url(get_permalink()),
-                            esc_html(get_the_title())
-                        );
-                        ?>
-
-                        <?php if ($settings['post_show_category'] === 'yes') : ?>
-                            <div class="cats">
-                                <?php echo get_the_category_list(', '); ?>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if ($settings['post_show_excerpt'] === 'yes') : ?>
-                            <div class="desc">
-                                <p>
-                                    <?php
-                                    $excerpt_length = absint($settings['post_excerpt_length'] ?? 18);
-
-                                    $excerpt_source = has_excerpt()
-                                        ? get_the_excerpt()
-                                        : get_the_content();
-
-                                    echo esc_html(
-                                        wp_trim_words($excerpt_source, $excerpt_length, '...')
-                                    );
-                                    ?>
-                                </p>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php
-                        if ( $settings['post_show_read_more'] === 'yes' ) :
-                            $post_label = !empty($settings['post_read_more_label'])
-                                ? $settings['post_read_more_label']
-                                : esc_html__('Read more', 'extend-site');
-                            ?>
-                            <div class="read-more">
-                                <a href="<?php echo esc_url(get_permalink()); ?>" class="read-more" rel="bookmark">
-                                    <?php echo esc_html($post_label); ?>
-                                </a>
-                            </div>
-                        <?php endif; ?>
+                        <h4 class="title">
+                            <a href="<?php the_permalink(); ?>" title="<?php the_title() ?>"><?php echo the_title() ?></a>
+                        </h4>
                     </div>
                 <?php
                 endwhile;

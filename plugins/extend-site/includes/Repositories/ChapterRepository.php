@@ -217,4 +217,35 @@ class ChapterRepository
 
         return $chapters;
     }
+
+    /**
+     * Lấy danh sách chương mới nhất của truyện
+     * @param int $limit
+     * @return array
+    */
+    public static function get_latest_story_ids(int $limit = 10): array
+    {
+        $chapters = get_posts([
+            'post_type'      => ChapterPostType::SLUG,
+            'posts_per_page' => $limit * 3, // lấy dư để lọc trùng
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'fields'         => 'ids',
+            'no_found_rows'  => true,
+        ]);
+
+        $story_ids = [];
+        foreach ($chapters as $chapter_id) {
+            $story_id = (int) self::get_story_id($chapter_id);
+            if ($story_id && !in_array($story_id, $story_ids, true)) {
+                $story_ids[] = $story_id;
+            }
+
+            if (count($story_ids) >= $limit) {
+                break;
+            }
+        }
+
+        return $story_ids;
+    }
 }

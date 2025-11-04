@@ -1,0 +1,67 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class-addon}story {
+  --#{$prefix-plugin-class}pd: 2rem;
+  --#{$prefix-plugin-class}fs-title: 16px;
+  --#{$prefix-plugin-class}m-title: 0 0 8px;
+  --#{$prefix-plugin-class}m-thumbnail: 0;
+  --#{$prefix-plugin-class}r-thumbnail: #{$border-radius-lg};
+
+  padding: plugin-var('pd');
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.3);
+  border-radius: $border-radius-lg;
+  background-color: #fff;
+
+  .title {
+    margin: plugin-var('m-title');
+  }
+
+  .title, .detail {
+    font-size: plugin-var('fs-title');
+  }
+
+  .thumbnail {
+    position: relative;
+    margin: plugin-var('m-thumbnail');
+
+    .es-thumb {
+      display: block;
+      overflow: hidden;
+      border-radius: plugin-var('r-thumbnail');
+    }
+  }
+}
+
+.#{$prefix-plugin-class-addon}story-featured {
+  .story-item {
+    .thumbnail {
+      width: 96px;
+      flex: 0 0 96px;
+    }
+
+    .meta-data-author {
+      margin-top: 8px;
+    }
+  }
+}
+
+.#{$prefix-plugin-class-addon}story-carousel {
+  --#{$prefix-plugin-class}m-title: 0;
+  --#{$prefix-plugin-class}m-thumbnail: 0 0 12px;
+
+  .thumbnail {
+    .meta-data {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: plugin-var('white');
+      padding: .4rem .8rem;
+      font-size: 1.4rem;
+    }
+  }
+}
+
+.#{$prefix-plugin-class-addon}story-grid {}

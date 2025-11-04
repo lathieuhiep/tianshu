@@ -1,4 +1,7 @@
 <?php
+
+use ExtendSite\PostType\StoryPostType;
+
 defined('ABSPATH') || exit;
 
 // Get current date according to WP timezone (format Y-m-d)
@@ -35,6 +38,22 @@ function es_get_tax_list(string $taxonomy): array
         $options[$t->term_id] = $t->name;
     }
 
+    return $options;
+}
+
+// Get Story Tags
+function es_get_story_tags(): array {
+    $terms = get_terms([
+        'taxonomy'   => StoryPostType::TAG_SLUG,
+        'hide_empty' => false,
+    ]);
+
+    $options = [];
+    if (!is_wp_error($terms)) {
+        foreach ($terms as $term) {
+            $options[$term->term_id] = $term->name;
+        }
+    }
     return $options;
 }
 

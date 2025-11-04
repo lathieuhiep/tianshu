@@ -41,6 +41,7 @@
 
   .swiper-pagination {
     position: static;
+    margin-top: 1.6rem;
   }
 
   .swiper-button-prev,
@@ -89,6 +90,12 @@
     border-top-color: plugin-var('primary');
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
