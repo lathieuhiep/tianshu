@@ -70,6 +70,10 @@
                                                 </a>
                                                 <meta itemprop="position" content="<?php echo intval( $latest_chapter['number'] ); ?>">
                                             </div>
+                                        <?php else: ?>
+                                            <p class="es-text-primary">
+                                                <?php esc_html_e('Sắp ra...', 'extend-site'); ?>
+                                            </p>
                                         <?php endif; ?>
 
                                         <time datetime="<?php echo esc_attr( get_the_modified_date( 'c' ) ); ?>"

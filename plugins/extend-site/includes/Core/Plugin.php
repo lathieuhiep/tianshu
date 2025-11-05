@@ -5,7 +5,9 @@ namespace ExtendSite\Core;
 use ExtendSite\Ajax\IncrementView;
 use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
+use ExtendSite\Ajax\LoadLatestStories;
 use ExtendSite\Ajax\LoadRanking;
+use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -30,6 +32,9 @@ class Plugin
         self::active_custom_post_types();
         self::load_ajax();
         self::register_widget();
+
+        // Register hooks for LatestChapterTable
+        LatestChapterTable::register_hooks();
     }
 
     /**
@@ -102,6 +107,7 @@ class Plugin
 //        LoadChapterNeighbors::init();
         IncrementView::init();
         LoadRanking::init();
+        LoadLatestStories::init();
     }
 
     private static function register_widget(): void

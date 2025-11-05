@@ -10,6 +10,7 @@ use ExtendSite\ElementorAddon\Widgets\StoryCarousel;
 use ExtendSite\ElementorAddon\Widgets\StoryGrid;
 use ExtendSite\ElementorAddon\Widgets\StoryFeaturedSlider;
 use ExtendSite\ElementorAddon\Widgets\StoryLatestGrid;
+use ExtendSite\ElementorAddon\Widgets\StoryTaxonomyList;
 use ExtendSite\ElementorAddon\Widgets\TestimonialSlider;
 
 defined('ABSPATH') || exit;
@@ -74,6 +75,7 @@ class ElementorAddon
         $widgets_manager->register(new StoryFeaturedSlider());
         $widgets_manager->register(new StoryGrid());
         $widgets_manager->register(new StoryLatestGrid());
+        $widgets_manager->register(new StoryTaxonomyList());
 
         // register addon elementor here
 //        $widgets_manager->register(new CarouselImages());

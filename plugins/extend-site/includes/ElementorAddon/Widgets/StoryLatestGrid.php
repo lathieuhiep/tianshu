@@ -5,11 +5,11 @@ namespace ExtendSite\ElementorAddon\Widgets;
 use Elementor\Group_Control_Typography;
 use Elementor\Widget_Base;
 use Elementor\Controls_Manager;
+use ExtendSite\Ajax\LoadLatestStories;
+use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\ElementorAddon\Traits\HasImageSizeControl;
 use ExtendSite\ElementorAddon\Traits\HasQueryControls;
 use ExtendSite\ElementorAddon\Traits\HasPostItemControls;
-use ExtendSite\PostType\StoryPostType;
-use ExtendSite\Repositories\ChapterRepository;
 
 defined('ABSPATH') || exit;
 
@@ -41,6 +41,12 @@ class StoryLatestGrid extends Widget_Base
     public function get_categories(): array
     {
         return array('es-addons');
+    }
+
+    // widget scripts dependencies
+    public function get_script_depends(): array
+    {
+        return ['es-addons-elementor'];
     }
 
     // widget keywords
@@ -217,57 +223,41 @@ class StoryLatestGrid extends Widget_Base
     protected function render(): void
     {
         $settings = $this->get_settings_for_display();
+        $limit = !empty($settings['limit']) ? intval($settings['limit']) : 12;
+        $image_size = $settings['image_size'] ?? 'medium';
 
-        global $wpdb;
+        // parse instance settings
+        $config = [
+            'limit' => $limit,
+            'image_size' => $image_size
+        ];
 
-        $wpdb->timer_start();
+        // Get latest story
+        $latestStories = LatestChapterTable::get_latest_stories($limit);
 
-        $story_ids = ChapterRepository::get_latest_story_ids($settings['limit']);
-
-        $elapsed = $wpdb->timer_stop(); // trả về số giây (float)
-        error_log(sprintf('[Perf] SQL query took %.2f ms', $elapsed * 1000));
-
-        $query = new \WP_Query([
-            'post_type'      => 'story',
-            'post__in'       => $story_ids,
-            'orderby'        => 'post__in', // giữ thứ tự theo cập nhật
-            'posts_per_page' => count($story_ids),
-            'no_found_rows'  => true,
-        ]);
-
-        if ( !$query->have_posts() ) {
+        if ( empty( $latestStories ) && empty( $story_ids ) ) {
             echo '<p>' . esc_html__('Không có truyện phù hợp với điều kiện.', 'extend-site') . '</p>';
             return;
         }
 
-        if ($query->have_posts()) :
-        ?>
-            <div class="es-addon-story-grid es-grid-layout story-latest">
-                <?php while ($query->have_posts()): $query->the_post(); ?>
-                    <div class="item">
-                        <div class="thumbnail es-ratio-4-5">
-                            <a class="es-ratio-thumb" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
-                                <?php
-                                if (has_post_thumbnail()) :
-                                    the_post_thumbnail($settings['image_size']);
-                                else:
-                                    ?>
-                                    <img src="<?php echo esc_url(EXTEND_SITE_URL . 'assets/images/no-image.png'); ?>"
-                                         alt="<?php the_title(); ?>"/>
-                                <?php endif; ?>
-                            </a>
-                        </div>
-
-                        <h4 class="title">
-                            <a href="<?php the_permalink(); ?>" title="<?php the_title() ?>"><?php echo the_title() ?></a>
-                        </h4>
-                    </div>
-                <?php
-                endwhile;
-                wp_reset_postdata();
-                ?>
+        $story_ids = wp_list_pluck($latestStories, 'story_id');
+    ?>
+        <div class="es-addon-story-grid" data-config='<?php echo wp_json_encode($config, JSON_UNESCAPED_UNICODE); ?>'>
+            <div class="es-grid-layout story-latest-grid" data-story-grid>
+                <?php echo LoadLatestStories::render_view($story_ids, $image_size); ?>
             </div>
-        <?php
-        endif;
+
+            <div class="action-box es-text-center es-mt-6">
+                <div class="es-loading es-flex es-flex-column es-flex-align-center es-row-gap-2 es-mb-2" hidden>
+                    <span class="es-spinner"></span>
+                    <span class="text-load"><?php esc_html_e('Đang tải...', 'extend-site'); ?></span>
+                </div>
+
+                <button class="es-btn es-btn-primary es-btn-load-more">
+                    <?php esc_html_e('Xem thêm', 'extend-site'); ?>
+                </button>
+            </div>
+        </div>
+    <?php
     }
 }

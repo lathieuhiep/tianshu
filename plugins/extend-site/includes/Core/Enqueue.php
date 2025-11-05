@@ -61,6 +61,14 @@ class Enqueue
                 EXTEND_SITE_VERSION,
                 true
             );
+
+            wp_localize_script('es-addons-elementor', 'esAddons', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce'   => wp_create_nonce(EXTEND_SITE_NONCE_ACTION),
+                'i18n'     => [
+                    'error_message' => esc_html__('Đã xảy ra lỗi khi tải dữ liệu, vui lòng thử lại.', 'extend-site')
+                ],
+            ]);
         }
 
         // register script for widget

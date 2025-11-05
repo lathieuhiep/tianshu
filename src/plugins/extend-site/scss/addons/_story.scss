@@ -64,4 +64,88 @@
   }
 }
 
-.#{$prefix-plugin-class-addon}story-grid {}
+.#{$prefix-plugin-class-addon}story-grid {
+  --#{$prefix-plugin-class}r-item: #{$border-radius-lg};
+  --#{$prefix-plugin-class}bg-item: plugin-var('white');;
+  --#{$prefix-plugin-class}shadow-item: 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+  --#{$prefix-plugin-class}bg-status-label: #{plugin-var('error')};
+  --#{$prefix-plugin-class}color-status-label: #{plugin-var('white')};
+  --#{$prefix-plugin-class}r-status-label: #{$border-radius-lg};
+  --#{$prefix-plugin-class}fs-status-label: 16px;
+
+  .item {
+    height: 100%;
+    border-radius: plugin-var('r-item');
+    background-color: plugin-var('white');
+    box-shadow: plugin-var('shadow-item');
+    @include transition(all .25s ease-in-out);
+
+    &:hover {
+      box-shadow: 0 .5rem 1rem 0 rgba(0,0,0,.3);
+      transform: translateY(-.5rem);
+    }
+  }
+
+  .thumbnail {
+    position: relative;
+    overflow: hidden;
+    border-top-left-radius: plugin-var('r-item');
+    border-top-right-radius: plugin-var('r-item');
+
+    .meta-data {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: plugin-var('white');
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+
+    .status-label {
+      padding: 0 8px;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      min-height: 24px;
+      line-height: 24px;
+      font-size: plugin-var('fs-status-label');
+      color: plugin-var('color-status-label');
+      border-radius: plugin-var('r-status-label');
+      background-color: plugin-var('bg-status-label');
+    }
+  }
+
+  .detail {
+    @extend %flex-column;
+    flex: 1;
+
+    .title {
+      flex: 1;
+      line-height: 1.5;
+    }
+  }
+
+  .story-latest-box {
+    width: 150px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+}
+
+.#{$prefix-plugin-class-addon}story-tax-list {
+  .heading {
+    .title {
+      margin-bottom: 0;
+    }
+  }
+
+  .tax-list {
+    margin-top: 24px;
+    padding: 24px;
+    border: 2px solid plugin-var('primary');
+    border-radius: $border-radius-lg;
+  }
+}

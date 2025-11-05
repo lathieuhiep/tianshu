@@ -5,6 +5,7 @@ namespace ExtendSite\Ajax;
 use ExtendSite\PostType\StoryPostType;
 use ExtendSite\Repositories\ChapterRepository;
 use ExtendSite\Repositories\StoryRankingRepository;
+use ExtendSite\Views\ViewTracker;
 use WP_Post;
 
 defined('ABSPATH') || exit;
@@ -97,8 +98,8 @@ final class LoadRanking
                             >
                                 <a class="item-meta-link es-flex es-flex-align-center es-gap-1"
                                    href="<?php echo esc_url( $latest_chapter['url'] ); ?>"
-                                   title="<?php echo esc_attr( sprintf( esc_html__( 'Đọc chương %s truyện %s', 'extend-site' ), $latest_chapter['number'], get_the_title() ) ); ?>"
-                                   aria-label="<?php echo esc_attr( sprintf( esc_html__( 'Đọc chương %s truyện %s', 'extend-site' ), $latest_chapter['number'], get_the_title() ) ); ?>"
+                                   title="<?php echo esc_attr( sprintf( esc_html__( 'Đọc chương %s truyện %s', 'extend-site' ), $latest_chapter['number'], get_the_title( $item['id'] ) ) ); ?>"
+                                   aria-label="<?php echo esc_attr( sprintf( esc_html__( 'Đọc chương %s truyện %s', 'extend-site' ), $latest_chapter['number'], get_the_title( $item['id'] ) ) ); ?>"
                                    itemprop="url"
                                    rel="bookmark"
                                 >
@@ -118,7 +119,7 @@ final class LoadRanking
 
                         <div class="item-meta es-flex es-flex-align-center es-gap-1">
                             <i class="es-ic-mask es-ic-mask-eye"></i>
-                            <span class="view"><?php echo esc_html( $item['views'] ); ?></span>
+                            <span class="view"><?php echo esc_html( ViewTracker::format_short( $item['views'] ) ); ?></span>
                         </div>
                     </div>
                 </div>

@@ -217,33 +217,4 @@ class ChapterRepository
 
         return $chapters;
     }
-
-    /**
-     * Lấy danh sách truyện có chương mới cập nhật (mỗi truyện chỉ 1 chương)
-     *
-     * @param int $limit
-     * @return array story_id[]
-     */
-    public static function get_latest_story_ids(int $limit = 10): array
-    {
-        global $wpdb;
-
-        $chapter_type = ChapterPostType::SLUG;
-        $meta_key     = ChapterPostType::META_STORY_ID ?? '_chapter_story_id';
-
-        $sql = $wpdb->prepare("
-        SELECT pm.meta_value AS story_id
-        FROM {$wpdb->posts} AS p
-        INNER JOIN {$wpdb->postmeta} AS pm 
-            ON p.ID = pm.post_id AND pm.meta_key = %s
-        WHERE p.post_type = %s
-          AND p.post_status = 'publish'
-          AND pm.meta_value <> ''
-        GROUP BY pm.meta_value
-        ORDER BY MAX(p.post_date) DESC, MAX(p.ID) DESC
-        LIMIT %d", $meta_key, $chapter_type, $limit);
-
-        $story_ids = $wpdb->get_col($sql);
-        return array_map('intval', $story_ids);
-    }
 }
