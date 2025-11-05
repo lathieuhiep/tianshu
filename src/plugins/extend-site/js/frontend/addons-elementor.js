@@ -104,6 +104,7 @@
         }
     }
 
+    // Load latest stories via AJAX
     const LoadLatestStories = ($scope) => {
         const $container = $scope.find('.es-addon-story-grid');
         if (!$container.length) return;
@@ -170,6 +171,21 @@
         $button.on('click', loadMore);
     };
 
+    // Story taxonomy list toggle
+    const storyTaxListToggle = ($scope) => {
+        const container = $scope.find('.es-addon-story-tax-list');
+
+        if (!container.length) return;
+
+        const btnToggle = container.find('.es-btn-tax-toggle');
+        const taxList = container.find('.tax-list');
+
+        btnToggle.on('click', function() {
+            taxList.slideToggle(400);
+            $(this).find('.es-ic-mask').toggleClass('es-ic-rotate-180');
+        });
+    }
+
     $(window).on('elementor/frontend/init', function () {
         /* Element slider */
         // elementorFrontend.hooks.addAction('frontend/element_ready/es-slides.default', InitSwiperSliders);
@@ -188,6 +204,9 @@
 
         // latest stories
         elementorFrontend.hooks.addAction('frontend/element_ready/es-story-latest-grid.default', LoadLatestStories);
+
+        // story taxonomy list toggle
+        elementorFrontend.hooks.addAction('frontend/element_ready/es-story-taxonomy-list.default', storyTaxListToggle);
     });
 
 })(jQuery);

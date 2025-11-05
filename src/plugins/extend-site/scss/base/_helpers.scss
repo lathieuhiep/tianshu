@@ -99,6 +99,10 @@
   }
 }
 
+.#{$prefix-plugin-class}transition {
+    transition: all 0.4s ease-in-out;
+}
+
 // Utility to remove all margin from an element
 .#{$prefix-plugin-class}m-0 {
   margin: 0 !important;

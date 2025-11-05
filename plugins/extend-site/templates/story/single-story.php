@@ -106,8 +106,6 @@ get_header();
             wp_reset_postdata();
         endif;
         ?>
-
-        <?php TemplateLoader::part('story/parts/hot-month'); ?>
     </div>
 </div>
 

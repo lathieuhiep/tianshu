@@ -6,6 +6,7 @@ $ic-names: (
     angle-down
     angle-left
     angle-right
+    angle-up
     book
     book-open
     eye
@@ -36,4 +37,10 @@ $ic-names: (
       @include mask-image("#{$es-icon-path}/#{$name}.svg");
     }
   }
+}
+
+.#{$prefix-plugin-class}ic-rotate {
+    &-180 {
+      transform: rotate(180deg);
+    }
 }

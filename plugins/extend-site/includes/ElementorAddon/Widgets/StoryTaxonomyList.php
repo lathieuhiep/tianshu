@@ -147,8 +147,8 @@ class StoryTaxonomyList extends Widget_Base {
                 <div class="heading es-flex es-flex-justify-space-between es-flex-align-center es-gap-3">
                     <h2 class="title"><?php echo esc_html( $title ); ?></h2>
 
-                    <button type="button" class="es-btn es-btn-primary es-btn-tax-toggle">
-                        <i class="es-ic-mask es-ic-mask-angle-down"></i>
+                    <button type="button" class="es-btn es-btn-primary es-btn-sm es-btn-tax-toggle">
+                        <i class="es-ic-mask es-ic-mask-angle-up es-transition"></i>
                     </button>
                 </div>
             <?php endif; ?>
