@@ -40,6 +40,9 @@ class Plugin
 
         // Initialize search controller
         SearchController::init();
+
+        // Ensure rewrite rules are flushed on init
+        add_action('init', [__CLASS__, 'maybe_flush_rewrite'], 999);
     }
 
     /**
@@ -116,8 +119,24 @@ class Plugin
         AjaxHandler::init();
     }
 
+    /**
+     * Register widgets.
+     * @return void
+     */
     private static function register_widget(): void
     {
         Register::init();
+    }
+
+    /**
+     * Flush rewrite rules if the option is set.
+     * @return void
+     */
+    public static function maybe_flush_rewrite(): void
+    {
+        if (get_option('extend_site_flush_rewrite')) {
+            flush_rewrite_rules();
+            delete_option('extend_site_flush_rewrite');
+        }
     }
 }

@@ -18,6 +18,7 @@ use ExtendSite\DB\DBInstaller;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
+use ExtendSite\Search\SearchController;
 
 defined('ABSPATH') || exit;
 
@@ -65,7 +66,8 @@ register_activation_hook(EXTEND_SITE_FILE, function () {
         }
     }
 
-    flush_rewrite_rules();
+    // Flush rewrite rules
+    update_option('extend_site_flush_rewrite', 1);
 });
 
 // Deactivation: flush only

@@ -96,6 +96,10 @@ function es_pagination(): void
 
 // Pagination Nav Query
 function es_paging_nav_query( $query ): void {
+    if ( $query->max_num_pages <= 1 ) {
+        return;
+    }
+
     $args = array(
         'prev_text' => '<i class="es-ic-mask es-ic-mask-angle-left"></i>',
         'next_text' => '<i class="es-ic-mask es-ic-mask-angle-right"></i>',
