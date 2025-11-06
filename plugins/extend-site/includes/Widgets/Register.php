@@ -8,7 +8,13 @@ final class Register
     public static function init(): void
     {
         add_action('widgets_init', function () {
-            register_widget(RankingWidget::class);
+            foreach ([
+                RankingWidget::class,
+                SearchStoryWidget::class,
+            ] as $widget_class
+            ) {
+                register_widget($widget_class);
+            }
         });
     }
 }

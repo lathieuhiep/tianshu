@@ -10,11 +10,9 @@ get_header(); ?>
             <?php esc_html_e('Kho Truyện', 'extend-site'); ?>
         </h1>
 
-        <?php TemplateLoader::part('story/parts/content-archive'); ?>
+        <?php TemplateLoader::part('story/partials/story-term'); ?>
     </div>
 </div>
 
 <?php
-//TemplateLoader::part('story/parts/schema/archive-jsonld');
-
 get_footer();

@@ -4,6 +4,8 @@ namespace ExtendSite\Core;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
+use ExtendSite\Search\SearchController;
+use ExtendSite\Widgets\SearchStoryWidget;
 
 defined('ABSPATH') || exit;
 
@@ -43,6 +45,13 @@ class Enqueue
      */
     public static function enqueue_scripts_frontend(): void
     {
+        // load main style plugin es
+        wp_enqueue_style('es-extend-site',
+            EXTEND_SITE_URL . 'assets/css/frontend/extend-site.min.css',
+            [],
+            EXTEND_SITE_VERSION
+        );
+
         // Check if Elementor is used to build the current page
         $page_builder = es_check_elementor_builder();
 
@@ -86,38 +95,6 @@ class Enqueue
                 'error_message' => esc_html__('Đã xảy ra lỗi khi tải dữ liệu, vui lòng thử lại.', 'extend-site')
             ],
         ]);
-
-        // check load libs
-        if ( is_singular(ChapterPostType::SLUG) ) {
-            // load select2
-            wp_enqueue_style('select2',
-                EXTEND_SITE_URL . 'assets/libs/select2/select2.min.css',
-                [],
-                '4.0.13'
-            );
-
-            wp_enqueue_script('select2',
-                EXTEND_SITE_URL . 'assets/libs/select2/select2.min.js',
-                ['jquery'],
-                '4.0.13',
-                true
-            );
-        }
-
-        if ( is_singular(StoryPostType::SLUG)
-            || is_post_type_archive(StoryPostType::SLUG)
-            || is_tax('story_genre')
-            || is_tax('story_status')
-            || is_singular(ChapterPostType::SLUG)
-            || is_singular(AuthorPostType::SLUG)
-            || is_post_type_archive(AuthorPostType::SLUG)
-        ) {
-            wp_enqueue_style('es-extend-site',
-                EXTEND_SITE_URL . 'assets/css/frontend/extend-site.min.css',
-                [],
-                EXTEND_SITE_VERSION
-            );
-        }
 
         // load ajax chapters for Story Post Type and Chapter Post Type
         if ( is_singular(StoryPostType::SLUG) || is_singular(ChapterPostType::SLUG) ) {

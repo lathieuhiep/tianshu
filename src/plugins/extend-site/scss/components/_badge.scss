@@ -18,6 +18,7 @@
   line-height: plugin-var('line-height');
 
   &-primary {
+    color: plugin-var('white');
     background-color: map-get($es-colors, "primary");
     @extend %badge;
   }

@@ -22,7 +22,7 @@ class RankingWidget extends WP_Widget
     {
         parent::__construct(
             'es_ranking',
-            esc_html__('Plugin Extend Site: Bảng Xếp Hạng Truyện', 'extend-site'),
+            esc_html__('Extend Site: Bảng Xếp Hạng Truyện', 'extend-site'),
             [
                 'description' => esc_html__('Hiển thị top truyện được xem nhiều nhất theo ngày, tuần, tháng, năm.', 'extend-site'),
             ]
@@ -202,8 +202,3 @@ class RankingWidget extends WP_Widget
         return $instance;
     }
 }
-
-// Register the widget
-add_action('widgets_init', function() {
-    register_widget(RankingWidget::class);
-});

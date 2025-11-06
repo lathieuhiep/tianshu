@@ -13,6 +13,8 @@ use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
 use ExtendSite\ElementorAddon\ElementorAddon;
 use ExtendSite\PostType\TemplateLoader;
+use ExtendSite\Search\AjaxHandler;
+use ExtendSite\Search\SearchController;
 use ExtendSite\Widgets\Register;
 
 defined('ABSPATH') || exit;
@@ -35,6 +37,9 @@ class Plugin
 
         // Register hooks for LatestChapterTable
         LatestChapterTable::register_hooks();
+
+        // Initialize search controller
+        SearchController::init();
     }
 
     /**
@@ -108,6 +113,7 @@ class Plugin
         IncrementView::init();
         LoadRanking::init();
         LoadLatestStories::init();
+        AjaxHandler::init();
     }
 
     private static function register_widget(): void

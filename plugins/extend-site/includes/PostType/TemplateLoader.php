@@ -79,6 +79,8 @@ class TemplateLoader
         return $template;
     }
 
+    protected static array $stack = [];
+
     /**
      * Load a partial template file from plugin templates.
      *
@@ -92,12 +94,21 @@ class TemplateLoader
     public static function part(string $slug, array $args = []): void {
         $file = trailingslashit(EXTEND_SITE_PATH) . 'templates/' . ltrim($slug, '/') . '.php';
 
-        if (file_exists($file)) {
-            load_template($file, true, $args);
-        } else {
+        if (in_array($file, self::$stack, true)) {
             if (WP_DEBUG) {
-                trigger_error(sprintf('[ExtendSite] Template part not found: %s', esc_html($file)), E_USER_WARNING);
+                trigger_error("[ExtendSite] Recursive include detected: $file", E_USER_WARNING);
             }
+            return;
         }
+
+        self::$stack[] = $file;
+
+        if (file_exists($file)) {
+            global $post;
+            extract($args, EXTR_SKIP);
+            include $file;
+        }
+
+        array_pop(self::$stack);
     }
 }

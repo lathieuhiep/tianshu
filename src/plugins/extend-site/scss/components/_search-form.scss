@@ -1,0 +1,94 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../abstracts/abstracts";
+
+.#{$prefix-plugin-class}search-autocomplete-wrapper {
+  --#{$prefix-plugin-class}results-pd: 1.2rem;
+  --#{$prefix-plugin-class}results-max-h: 290px;
+  --#{$prefix-plugin-class}results-radius: 8px;
+  --#{$prefix-plugin-class}results-border-color: #{$border-color};
+  --#{$prefix-plugin-class}results-box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --#{$prefix-plugin-class}results-bk: #{plugin-var('white')};
+
+  position: relative;
+
+  .results-autocomplete {
+    padding: plugin-var('results-pd');
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    overflow-y: auto;
+    visibility: hidden;
+    max-height: plugin-var('results-max-h');
+    border: 1px solid plugin-var('results-border-color');
+    border-radius: plugin-var('results-radius');
+    box-shadow: plugin-var('results-box-shadow');
+    background-color: plugin-var('results-bk');
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    scrollbar-width: thin;
+
+    &.active {
+      --#{$prefix-plugin-class}results-box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+
+      visibility: visible;
+      transform: translateY(2px);
+    }
+
+    .es-search-results {
+      &__item {
+        &:not(:last-child) {
+          margin-bottom: 1rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid $border-color;
+        }
+
+        .story-image {
+          width: 80px;
+          height: 80px;
+          flex: 0 0 80px;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+          }
+        }
+      }
+    }
+  }
+}
+
+.#{$prefix-plugin-class}search-form {
+  --#{$prefix-plugin-class}pd-input: 0 12px;
+  --#{$prefix-plugin-class}w-input: 100%;
+  --#{$prefix-plugin-class}h-input: 40px;
+  --#{$prefix-plugin-class}radius-input: 8px;
+  --#{$prefix-plugin-class}border-color-input: #{$border-color};
+
+  --#{$prefix-plugin-class}color-btn: #{plugin-var('white')};
+  --#{$prefix-plugin-class}border-btn: #{plugin-var('primary')};
+  --#{$prefix-plugin-class}bk-btn: #{plugin-var('primary')};
+
+  position: relative;
+  display: flex;
+
+  .#{$prefix-plugin-class}search-input {
+    padding: plugin-var('pd-input');
+    width: plugin-var('w-input');
+    height: plugin-var('h-input');
+    border: 1px solid plugin-var('border-color-input');
+    border-top-left-radius: plugin-var('radius-input');
+    border-bottom-left-radius: plugin-var('radius-input');
+  }
+
+  .#{$prefix-plugin-class}search-button {
+    flex: 0 0 auto;
+    color: plugin-var('color-btn');
+    border: 1px solid plugin-var('border-btn');
+    border-top-right-radius: plugin-var('radius-input');
+    border-bottom-right-radius: plugin-var('radius-input');
+    background-color: plugin-var('bk-btn');
+  }
+}
