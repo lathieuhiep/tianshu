@@ -1,7 +1,7 @@
 <?php
 namespace ExtendSite\Search;
 
-use WP_Query;
+defined('ABSPATH') || exit;
 
 /**
  * Controller for handling story search page requests.

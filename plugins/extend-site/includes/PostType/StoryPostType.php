@@ -17,6 +17,7 @@ class StoryPostType extends BasePostType
     public const PLURAL = 'Truyện';
     public const TAX_NAME = 'Danh mục truyện';
     public const META_STORY_VIEWS   = '_story_view_count'; // số lượt xem truyện
+    public const META_CHAPTER_COUNT = '_chapter_count';    // tổng số chương
 
     // name file template
     public const TEMPLATE_SINGLE = 'story/single-story.php';
@@ -97,10 +98,12 @@ class StoryPostType extends BasePostType
             }
         });
 
-        // set view story default
+        // set default metas
         add_action('save_post_' . self::SLUG, [$this, 'init_default_views'], 10, 1);
+        add_action('save_post_' . self::SLUG, [$this, 'init_default_chapter_count'], 10, 1);
     }
 
+    /** Meta box chọn tác giả **/
     public function add_author_meta_box(): void
     {
         add_meta_box(
@@ -113,9 +116,7 @@ class StoryPostType extends BasePostType
         );
     }
 
-    /*
-     * Render meta box Tác giả
-     * */
+    /** Render meta box tác giả **/
     public function render_author_meta_box(\WP_Post $post): void
     {
         wp_nonce_field('story_authors_save', 'story_authors_nonce');
@@ -123,7 +124,6 @@ class StoryPostType extends BasePostType
         $selected = get_post_meta($post->ID, self::META_AUTHOR_IDS, true);
         $selected = is_array($selected) ? array_map('intval', $selected) : [];
 
-        // Lấy danh sách tác giả (giới hạn 300; cần hơn thì tính AJAX select2 sau)
         $authors = get_posts([
             'post_type' => 'story_author',
             'posts_per_page' => 300,
@@ -147,12 +147,9 @@ class StoryPostType extends BasePostType
         echo '</select>';
     }
 
-    /*
-     * Lưu meta box Tác giả
-     * */
+    /** Lưu meta box tác giả **/
     public function save_author_meta(int $post_id, \WP_Post $post): void
     {
-        // Nonce & perms
         if (!isset($_POST['story_authors_nonce']) || !wp_verify_nonce($_POST['story_authors_nonce'], 'story_authors_save')) {
             return;
         }
@@ -166,10 +163,11 @@ class StoryPostType extends BasePostType
             return;
         }
 
-        $ids = isset($_POST['story_author_ids']) && is_array($_POST['story_author_ids']) ? array_map('intval', $_POST['story_author_ids']) : [];
+        $ids = isset($_POST['story_author_ids']) && is_array($_POST['story_author_ids'])
+            ? array_map('intval', $_POST['story_author_ids'])
+            : [];
         $ids = array_values(array_unique(array_filter($ids)));
 
-        // Bảo vệ: chỉ giữ ID post type 'story_author'
         if ($ids) {
             $valid = get_posts([
                 'post_type' => 'story_author',
@@ -187,9 +185,7 @@ class StoryPostType extends BasePostType
         }
     }
 
-    /*
-     * Thêm cột Tác giả vào danh sách truyện
-     * */
+    /** Thêm cột tác giả & tổng chương **/
     public function add_admin_columns(array $cols): array
     {
         $new = [];
@@ -197,47 +193,58 @@ class StoryPostType extends BasePostType
             $new[$k] = $v;
             if ($k === 'title') {
                 $new['story_authors'] = esc_html__('Tác giả truyện', 'extend-site');
+                $new['chapter_count'] = esc_html__('Tổng chương', 'extend-site');
             }
         }
         return $new;
     }
 
-    /*
-     * * Render nội dung cột Tác giả trong danh sách truyện
-     * */
+    /** Hiển thị cột tác giả & tổng chương **/
     public function render_admin_columns(string $col, int $post_id): void
     {
-        if ($col !== 'story_authors') return;
+        switch ($col) {
+            case 'story_authors':
+                $ids = get_post_meta($post_id, self::META_AUTHOR_IDS, true);
+                $ids = is_array($ids) ? $ids : [];
+                if (empty($ids)) {
+                    echo '<em>—</em>';
+                    return;
+                }
+                $titles = [];
+                foreach ($ids as $aid) {
+                    if (get_post_type($aid) !== 'story_author') continue;
+                    $title = get_the_title($aid) ?: ('#' . (int)$aid);
+                    $link = get_edit_post_link($aid);
+                    $titles[] = $link
+                        ? '<a href="' . esc_url($link) . '">' . esc_html($title) . '</a>'
+                        : esc_html($title);
+                }
+                echo $titles ? implode(', ', $titles) : '<em>—</em>';
+                break;
 
-        $ids = get_post_meta($post_id, self::META_AUTHOR_IDS, true);
-        $ids = is_array($ids) ? $ids : [];
-        if (empty($ids)) {
-            echo '<em>—</em>';
-            return;
+            case 'chapter_count':
+                echo (int) get_post_meta($post_id, self::META_CHAPTER_COUNT, true);
+                break;
         }
-        $titles = [];
-        foreach ($ids as $aid) {
-            if (get_post_type($aid) !== 'story_author') continue;
-            $title = get_the_title($aid) ?: ('#' . (int)$aid);
-            $link = get_edit_post_link($aid);
-            $titles[] = $link ? '<a href="' . esc_url($link) . '">' . esc_html($title) . '</a>' : esc_html($title);
-        }
-        echo $titles ? implode(', ', $titles) : '<em>—</em>';
     }
 
-    /**
-     * Ensure every story has default view count = 0
-     */
+    /** Mặc định meta view = 0 **/
     public function init_default_views(int $post_id): void
     {
-        // Tránh autosave / revision
-        if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
-            return;
-        }
+        if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) return;
 
-        // Nếu chưa có meta _story_view_count → gán 0
         if (!metadata_exists('post', $post_id, self::META_STORY_VIEWS)) {
             update_post_meta($post_id, self::META_STORY_VIEWS, 0);
+        }
+    }
+
+    /** Mặc định meta tổng chương = 0 **/
+    public function init_default_chapter_count(int $post_id): void
+    {
+        if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) return;
+
+        if (!metadata_exists('post', $post_id, self::META_CHAPTER_COUNT)) {
+            update_post_meta($post_id, self::META_CHAPTER_COUNT, 0);
         }
     }
 }

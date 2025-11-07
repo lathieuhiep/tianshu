@@ -26,8 +26,10 @@ use ExtendSite\PostType\TemplateLoader;
     </div>
 
     <?php if( is_active_sidebar( 'es-sidebar' ) ): ?>
-        <div class="es-col-12 es-col-sm-3">
-            <?php dynamic_sidebar( 'es-sidebar' ); ?>
-        </div>
+        <aside class="es-col-12 es-col-sm-3">
+            <div class="sidebar-warp es-sticky-top">
+                <?php dynamic_sidebar( 'es-sidebar' ); ?>
+            </div>
+        </aside>
     <?php endif; ?>
 </div>

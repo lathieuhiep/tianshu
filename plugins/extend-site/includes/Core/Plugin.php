@@ -2,6 +2,7 @@
 
 namespace ExtendSite\Core;
 
+use ExtendSite\Admin\MenuPage;
 use ExtendSite\Ajax\IncrementView;
 use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
@@ -30,6 +31,7 @@ class Plugin
         self::load_text_domain();
         self::active_core();
         self::include_files();
+        self::active_menu_page_admin();
         self::active_elementor_addon();
         self::active_custom_post_types();
         self::load_ajax();
@@ -81,6 +83,15 @@ class Plugin
         // hooks
         require_once EXTEND_SITE_PATH . 'hooks/cpt-hooks.php';
         require_once EXTEND_SITE_PATH . 'hooks/sidebar.php';
+    }
+
+    /**
+     * Load the admin menu page.
+     * @return void
+     */
+    private static function active_menu_page_admin(): void
+    {
+        MenuPage::init();
     }
 
     /**

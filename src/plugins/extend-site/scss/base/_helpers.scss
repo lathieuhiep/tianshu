@@ -103,6 +103,17 @@
     transition: all 0.4s ease-in-out;
 }
 
+.#{$prefix-plugin-class}custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: plugin-var('primary')#e0e0e0;
+}
+
+.#{$prefix-plugin-class}sticky-top {
+  position: sticky;
+  top: 10px;
+  z-index: 10;
+}
+
 // Utility to remove all margin from an element
 .#{$prefix-plugin-class}m-0 {
   margin: 0 !important;

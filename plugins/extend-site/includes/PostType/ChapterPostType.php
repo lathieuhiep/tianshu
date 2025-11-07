@@ -10,7 +10,7 @@ class ChapterPostType extends BasePostType
     public const SINGULAR = 'chương';
     public const PLURAL = 'Chương';
     public const META_STORY_ID = '_chapter_story_id';   // liên kết tới story (post ID)
-    public const META_NUMBER = '_chapter_number';     // số thứ tự chương
+    public const META_NUMBER = '_chapter_number';       // số thứ tự chương
     public const META_CHAPTER_VIEWS = '_chapter_view_count'; // số lượt xem chương
 
     // (tuỳ chọn) tên file template nếu bạn dùng TemplateLoader
@@ -48,7 +48,7 @@ class ChapterPostType extends BasePostType
                 $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
                 if ($story_id && ($story = get_post($story_id))) {
                     // tạo permalink có dạng /ten-truyen/chuong/chuong-1/
-                    $permalink = home_url( sprintf('%s/chuong/%s', $story->post_name, $post->post_name) );
+                    $permalink = home_url(sprintf('%s/chuong/%s', $story->post_name, $post->post_name));
                 }
             }
             return $permalink;
@@ -62,10 +62,16 @@ class ChapterPostType extends BasePostType
                 'top'
             );
         });
+
+        // Cập nhật tổng chương cho truyện khi có thay đổi
+        add_action('save_post_' . self::SLUG, [$this, 'update_story_chapter_count_on_save'], 20, 2);
+        add_action('transition_post_status', [$this, 'handle_chapter_status_change'], 10, 3);
+        add_action('before_delete_post', [$this, 'decrease_story_chapter_count']);
     }
 
     /** Thay thế %story% trong permalink chương */
-    public function filter_permalink(string $permalink, \WP_Post $post): string {
+    public function filter_permalink(string $permalink, \WP_Post $post): string
+    {
         if ($post->post_type !== self::SLUG) {
             return $permalink;
         }
@@ -97,13 +103,13 @@ class ChapterPostType extends BasePostType
     {
         wp_nonce_field('chapter_meta_save', 'chapter_meta_nonce');
 
-        $story_id = (int)get_post_meta($post->ID, self::META_STORY_ID, true);
-        $number = (string)get_post_meta($post->ID, self::META_NUMBER, true);
+        $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
+        $number = (string) get_post_meta($post->ID, self::META_NUMBER, true);
 
-        // Lấy danh sách truyện (giới hạn 200, có thể nâng/đổi sang AJAX select2 sau)
+        // Lấy danh sách truyện (giới hạn 200)
         $stories = get_posts([
             'post_type' => 'story',
-            'posts_per_page' => 200,
+            'posts_per_page' => -1,
             'post_status' => ['publish', 'draft', 'pending', 'future', 'private'],
             'orderby' => 'title',
             'order' => 'ASC',
@@ -113,15 +119,20 @@ class ChapterPostType extends BasePostType
         echo '<p><label for="chapter_story_id"><strong>' . esc_html__('Thuộc truyện', 'extend-site') . '</strong></label></p>';
         echo '<select id="chapter_story_id" name="chapter_story_id" class="widefat">';
         echo '<option value="0">' . esc_html__('— Chọn truyện —', 'extend-site') . '</option>';
+
         foreach ($stories as $sid) {
             $title = get_the_title($sid);
+            $count = (int) get_post_meta($sid, StoryPostType::META_CHAPTER_COUNT, true);
+
             printf(
-                '<option value="%d"%s>%s</option>',
-                (int)$sid,
+                '<option value="%d"%s>%s — (%d chương)</option>',
+                (int) $sid,
                 selected($story_id, $sid, false),
-                esc_html($title ?: ('#' . $sid))
+                esc_html($title ?: ('#' . $sid)),
+                $count
             );
         }
+
         echo '</select>';
 
         echo '<p style="margin-top:10px;"><label for="chapter_number"><strong>' . esc_html__('Số chương', 'extend-site') . '</strong></label></p>';
@@ -130,7 +141,7 @@ class ChapterPostType extends BasePostType
             esc_attr($number)
         );
 
-        echo '<p class="description">' . esc_html__('Dùng để sắp xếp chương theo thứ tự trong truyện. Có thể trùng tiêu đề nhưng hạn chế trùng số.', 'extend-site') . '</p>';
+        echo '<p class="description">' . esc_html__('Dùng để sắp xếp chương theo thứ tự trong truyện.', 'extend-site') . '</p>';
     }
 
     /** Lưu meta box */
@@ -147,24 +158,20 @@ class ChapterPostType extends BasePostType
         }
 
         // story_id
-        $story_id = isset($_POST['chapter_story_id']) ? (int)$_POST['chapter_story_id'] : 0;
+        $story_id = isset($_POST['chapter_story_id']) ? (int) $_POST['chapter_story_id'] : 0;
         if ($story_id > 0 && get_post_type($story_id) !== 'story') {
-            $story_id = 0; // bảo vệ: chỉ nhận ID là post type 'story'
+            $story_id = 0;
         }
         update_post_meta($post_id, self::META_STORY_ID, $story_id);
 
         // number
-        $number = isset($_POST['chapter_number']) ? (int)$_POST['chapter_number'] : 0;
-        if ($number < 0) {
-            $number = 0;
-        }
-        update_post_meta($post_id, self::META_NUMBER, $number);
+        $number = isset($_POST['chapter_number']) ? (int) $_POST['chapter_number'] : 0;
+        update_post_meta($post_id, self::META_NUMBER, max(0, $number));
     }
 
     /** Admin columns */
     public function add_admin_columns(array $cols): array
     {
-        // Chèn sau cột Title
         $new = [];
         foreach ($cols as $key => $label) {
             $new[$key] = $label;
@@ -180,7 +187,7 @@ class ChapterPostType extends BasePostType
     public function render_admin_columns(string $col, int $post_id): void
     {
         if ($col === 'chapter_story') {
-            $sid = (int)get_post_meta($post_id, self::META_STORY_ID, true);
+            $sid = (int) get_post_meta($post_id, self::META_STORY_ID, true);
             if ($sid) {
                 $title = get_the_title($sid);
                 $link = get_edit_post_link($sid);
@@ -190,18 +197,17 @@ class ChapterPostType extends BasePostType
             }
         } elseif ($col === 'chapter_number') {
             $n = get_post_meta($post_id, self::META_NUMBER, true);
-            echo $n !== '' ? esc_html((string)$n) : '<em>—</em>';
+            echo $n !== '' ? esc_html((string) $n) : '<em>—</em>';
         }
     }
 
-    /** Đánh dấu cột Số chương là có thể sắp xếp được */
+    /** Sắp xếp cột Số chương */
     public function sortable_columns(array $cols): array
     {
         $cols['chapter_number'] = 'chapter_number';
         return $cols;
     }
 
-    /** Xử lý sắp xếp cột Số chương */
     public function handle_admin_sorting(\WP_Query $q): void
     {
         if (!is_admin() || !$q->is_main_query() || $q->get('post_type') !== self::SLUG) {
@@ -211,5 +217,59 @@ class ChapterPostType extends BasePostType
             $q->set('meta_key', self::META_NUMBER);
             $q->set('orderby', 'meta_value_num');
         }
+    }
+
+    /* ==========================================================
+     * CẬP NHẬT _chapter_count CHO TRUYỆN
+     * ========================================================== */
+
+    /** Khi lưu chương publish mới → tăng tổng chương */
+    public function update_story_chapter_count_on_save(int $chapter_id, \WP_Post $post): void
+    {
+        if ($post->post_status !== 'publish') {
+            return;
+        }
+
+        $story_id = (int) get_post_meta($chapter_id, self::META_STORY_ID, true);
+        if (!$story_id) return;
+
+        $count = (int) get_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, true);
+        update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, $count + 1);
+    }
+
+    /** Khi thay đổi trạng thái chương (ẩn / khôi phục) */
+    public function handle_chapter_status_change(string $new_status, string $old_status, \WP_Post $post): void
+    {
+        if ($post->post_type !== self::SLUG || $new_status === $old_status) return;
+
+        $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
+        if (!$story_id) return;
+
+        $count = (int) get_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, true);
+
+        // publish → trạng thái khác => giảm
+        if ($old_status === 'publish' && $new_status !== 'publish') {
+            update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, max(0, $count - 1));
+        }
+
+        // trạng thái khác → publish => tăng
+        if ($old_status !== 'publish' && $new_status === 'publish') {
+            update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, $count + 1);
+        }
+    }
+
+    /** Khi xóa vĩnh viễn chương → giảm tổng chương */
+    public function decrease_story_chapter_count(int $post_id): void
+    {
+        if (get_post_type($post_id) !== self::SLUG) return;
+
+        $post = get_post($post_id);
+        if (!$post || $post->post_status !== 'publish') return;
+
+        $story_id = (int) get_post_meta($post_id, self::META_STORY_ID, true);
+        if (!$story_id) return;
+
+        $count = (int) get_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, true);
+        update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, max(0, $count - 1));
     }
 }

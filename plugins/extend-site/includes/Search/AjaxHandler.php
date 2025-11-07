@@ -1,8 +1,7 @@
 <?php
 namespace ExtendSite\Search;
 
-use ExtendSite\PostType\StoryPostType;
-use WP_Query;
+defined('ABSPATH') || exit;
 
 class AjaxHandler {
     public const ACTION = 'es_search_story';

@@ -2,9 +2,7 @@
 
 namespace ExtendSite\Search;
 
-if (!defined('ABSPATH')) {
-    exit;
-}
+defined('ABSPATH') || exit;
 
 /**
  * Renders a reusable search form component.
@@ -55,7 +53,7 @@ class SearchForm
             <form class="es-search-form" role="search" method="get" action="<?php echo esc_url($args['action']); ?>">
                 <input type="text"
                        name="q"
-                       class="es-search-input"
+                       class="es-search-input es-input"
                        placeholder="<?php echo esc_attr($args['placeholder']); ?>"
                        value="<?php echo esc_attr($args['value']); ?>"
                        aria-label="<?php echo esc_attr($args['placeholder']); ?>"
@@ -73,7 +71,7 @@ class SearchForm
                 <?php endif; ?>
             </form>
 
-            <div class="results-autocomplete">
+            <div class="results-autocomplete es-custom-scrollbar">
                 <div class="es-loading es-flex es-flex-column es-flex-align-center es-row-gap-2" hidden>
                     <span class="es-spinner"></span>
                     <span class="text-load"><?php esc_html_e('Đang tìm...', 'extend-site'); ?></span>
