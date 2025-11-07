@@ -152,3 +152,34 @@ function es_display_time_ago( int|string|null $time = null ): string {
 
     return sprintf( '%s trước', $diff );
 }
+
+
+/**
+ * Lấy nhãn (title) của menu tương ứng với URL hiện tại.
+ */
+function es_get_current_menu_label(): ?string
+{
+    // Lấy URL hiện tại (loại bỏ query string)
+    $current_url = home_url(add_query_arg([], $GLOBALS['wp']->request));
+
+    // Lấy toàn bộ menu (thay 'primary' bằng location thật)
+    $locations = get_nav_menu_locations();
+    if (empty($locations['primary'])) {
+        return null;
+    }
+
+    $menu_items = wp_get_nav_menu_items($locations['primary']);
+    if (!$menu_items) {
+        return null;
+    }
+
+    foreach ($menu_items as $item) {
+        // So sánh URL (chuẩn hóa để tránh slash thừa)
+        $item_url = trailingslashit($item->url);
+        if (trailingslashit($current_url) === $item_url) {
+            return $item->title;
+        }
+    }
+
+    return null;
+}
