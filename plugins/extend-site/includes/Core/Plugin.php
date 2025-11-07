@@ -16,6 +16,7 @@ use ExtendSite\ElementorAddon\ElementorAddon;
 use ExtendSite\PostType\TemplateLoader;
 use ExtendSite\Search\AjaxHandler;
 use ExtendSite\Search\SearchController;
+use ExtendSite\Search\SearchShortcode;
 use ExtendSite\Widgets\Register;
 
 defined('ABSPATH') || exit;
@@ -42,6 +43,9 @@ class Plugin
 
         // Initialize search controller
         SearchController::init();
+
+        // Register shortcode
+        add_action('init', [__CLASS__, 'register_shortcode']);
 
         // Ensure rewrite rules are flushed on init
         add_action('init', [__CLASS__, 'maybe_flush_rewrite'], 999);
@@ -137,6 +141,15 @@ class Plugin
     private static function register_widget(): void
     {
         Register::init();
+    }
+
+    /**
+     * Register shortcodes.
+     * @return void
+     */
+    public static function register_shortcode(): void
+    {
+        SearchShortcode::init();
     }
 
     /**

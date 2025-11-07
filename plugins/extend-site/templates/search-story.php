@@ -29,14 +29,14 @@ if ( !isset($query)
             <?php TemplateLoader::part('parts/filter-active-bar'); ?>
         </div>
 
-        <div class="es-row">
-            <div class="es-col-12 es-col-sm-3">
+        <div class="es-row es-row-gap-6">
+            <div class="es-col-12 es-col-md-4 es-col-xl-3">
                 <div class="es-filter-box es-sticky-top">
                     <?php TemplateLoader::part('parts/form-search-advanced'); ?>
                 </div>
             </div>
 
-            <div class="es-col-12 es-col-sm-9">
+            <div class="es-col-12 es-col-md-8 es-col-xl-9">
                 <div class="es-badge es-badge-primary es-fs-md es-mb-6">
                     <?php
                     printf(esc_html__('Tìm thấy %s truyện', 'extend-site'), esc_html( ViewTracker::format_full( $query->found_posts ) ));

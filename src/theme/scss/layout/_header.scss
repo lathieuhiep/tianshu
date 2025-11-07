@@ -39,10 +39,8 @@
         }
       }
 
-      .search-form-story {
-        .search-field {
-          --#{$prefix-theme}width-field: 38rem;
-        }
+      .es-input {
+        --es-w-input: 38rem;
       }
     }
   }

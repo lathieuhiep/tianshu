@@ -125,10 +125,16 @@
       flex: 1;
       line-height: 1.5;
     }
+
+    &__info {
+      @media (max-width: 480px) {
+        flex-direction: column;
+      }
+    }
   }
 
   .story-latest-box {
-    width: 150px;
+    max-width: 150px;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;

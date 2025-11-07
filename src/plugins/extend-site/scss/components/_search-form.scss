@@ -13,8 +13,7 @@
   width: plugin-var('w-input');
   height: plugin-var('h-input');
   border: 1px solid plugin-var('border-color-input');
-  border-top-left-radius: plugin-var('radius-input');
-  border-bottom-left-radius: plugin-var('radius-input');
+  border-radius: plugin-var('radius-input');
 }
 
 // Search Autocomplete
@@ -78,20 +77,49 @@
 
 // Search Form
 .#{$prefix-plugin-class}search-form {
-  --#{$prefix-plugin-class}color-btn: #{plugin-var('white')};
-  --#{$prefix-plugin-class}border-btn: #{plugin-var('primary')};
-  --#{$prefix-plugin-class}bk-btn: #{plugin-var('primary')};
-
   position: relative;
-  display: flex;
 
-  .#{$prefix-plugin-class}search-button {
-    flex: 0 0 auto;
-    color: plugin-var('color-btn');
-    border: 1px solid plugin-var('border-btn');
-    border-top-right-radius: plugin-var('radius-input');
-    border-bottom-right-radius: plugin-var('radius-input');
-    background-color: plugin-var('bk-btn');
+  &.has-text {
+    --#{$prefix-plugin-class}color-btn: #{plugin-var('white')};
+    --#{$prefix-plugin-class}border-btn: #{plugin-var('primary')};
+    --#{$prefix-plugin-class}bk-btn: #{plugin-var('primary')};
+    --#{$prefix-plugin-class}radius-btn: #{$border-radius-lg};
+
+    display: flex;
+
+    .#{$prefix-plugin-class}input {
+      flex: 1 1 auto;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .#{$prefix-plugin-class}search-button {
+      flex: 0 0 auto;
+      color: plugin-var('color-btn');
+      border: 1px solid plugin-var('border-btn');
+      border-top-right-radius: plugin-var('radius-btn');
+      border-bottom-right-radius: plugin-var('radius-btn');
+      background-color: plugin-var('bk-btn');
+    }
+  }
+
+  &.has-icon {
+    .#{$prefix-plugin-class}input {
+      padding-left: 42px;
+    }
+
+    .#{$prefix-plugin-class}search-button {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 40px;
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      @extend %flex-align-center;
+    }
   }
 }
 
@@ -160,6 +188,7 @@
       font-weight: bold;
       margin-left: .25rem;
       line-height: 1;
+
       &:hover {
         color: #c00;
       }

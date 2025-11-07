@@ -2,8 +2,8 @@
 use ExtendSite\PostType\TemplateLoader;
 ?>
 
-<div class="es-row">
-    <div class="es-col-12<?php echo esc_attr( is_active_sidebar( 'es-sidebar' ) ? ' es-col-sm-9' : '' ); ?>">
+<div class="es-row es-row-gap-6">
+    <div class="es-col-12<?php echo esc_attr( is_active_sidebar( 'es-sidebar' ) ? ' es-col-md-8 es-col-xl-9' : '' ); ?>">
         <?php
         if ( have_posts() ) : ?>
             <div class="es-archive-list es-story-list">
@@ -26,7 +26,7 @@ use ExtendSite\PostType\TemplateLoader;
     </div>
 
     <?php if( is_active_sidebar( 'es-sidebar' ) ): ?>
-        <aside class="es-col-12 es-col-sm-3">
+        <aside class="es-col-12 es-col-md-4 es-col-xl-3">
             <div class="sidebar-warp es-sticky-top">
                 <?php dynamic_sidebar( 'es-sidebar' ); ?>
             </div>

@@ -75,4 +75,115 @@ class SearchHelper {
             ],
         };
     }
+
+    /**
+     * Get all active filters for current search.
+     *
+     * @return array<int, array{label: string, url: string}>
+     */
+    public static function get_active_filters(): array {
+        $filters = [];
+
+        // Helper nội bộ: tạo URL khi bỏ 1 filter
+        $remove_arg = function ($key, $value = null): string {
+            $args = $_GET;
+            if (!isset($args[$key])) {
+                return add_query_arg([], home_url('/' . SearchController::SLUG . '/'));
+            }
+            if ($value === null) {
+                unset($args[$key]);
+            } else {
+                if (is_array($args[$key])) {
+                    $args[$key] = array_diff($args[$key], [$value]);
+                    if (empty($args[$key])) unset($args[$key]);
+                } elseif ((string)$args[$key] === (string)$value) {
+                    unset($args[$key]);
+                }
+            }
+            return add_query_arg($args, home_url('/' . SearchController::SLUG . '/'));
+        };
+
+        // --- Keyword ---
+        if (!empty($_GET['q'])) {
+            $filters[] = [
+                'label' => sprintf(
+                    '%s <span class="es-filter-value">“%s”</span>',
+                    esc_html__('Từ khóa:', 'extend-site'),
+                    esc_html($_GET['q'])
+                ),
+                'url' => $remove_arg('q'),
+            ];
+        }
+
+        // --- Genres ---
+        if (!empty($_GET['genre']) && is_array($_GET['genre'])) {
+            $genres = get_terms([
+                'taxonomy'   => StoryPostType::TAX_SLUG,
+                'include'    => array_map('intval', $_GET['genre']),
+                'hide_empty' => false,
+            ]);
+            if ($genres && !is_wp_error($genres)) {
+                foreach ($genres as $term) {
+                    $filters[] = [
+                        'label' => sprintf(
+                            '%s <span class="es-filter-value">%s</span>',
+                            esc_html__('Thể loại:', 'extend-site'),
+                            esc_html($term->name)
+                        ),
+                        'url' => $remove_arg('genre', (string)$term->term_id),
+                    ];
+                }
+            }
+        }
+
+        // --- Status ---
+        if (!empty($_GET['status'])) {
+            $term = get_term((int) $_GET['status'], StoryPostType::STATUS_TAX);
+            if ($term && !is_wp_error($term)) {
+                $filters[] = [
+                    'label' => sprintf(
+                        '%s <span class="es-filter-value">%s</span>',
+                        esc_html__('Tình trạng:', 'extend-site'),
+                        esc_html($term->name)
+                    ),
+                    'url' => $remove_arg('status'),
+                ];
+            }
+        }
+
+        // --- Chapters ---
+        if (!empty($_GET['chapters'])) {
+            $ranges = self::get_chapter_ranges();
+            $label  = $ranges[$_GET['chapters']] ?? '';
+            if ($label) {
+                $filters[] = [
+                    'label' => sprintf(
+                        '%s <span class="es-filter-value">%s</span>',
+                        esc_html__('Số chương:', 'extend-site'),
+                        esc_html($label)
+                    ),
+                    'url' => $remove_arg('chapters'),
+                ];
+            }
+        }
+
+        // --- Sort ---
+        $sort_key = $_GET['sort'] ?? 'latest';
+        $sorts    = self::get_sort_options();
+        if (!empty($_GET['sort']) && $sort_key !== 'latest') {
+            $label = $sorts[$sort_key] ?? '';
+            if ($label) {
+                $filters[] = [
+                    'label' => sprintf(
+                        '%s <span class="es-filter-value">%s</span>',
+                        esc_html__('Sắp xếp:', 'extend-site'),
+                        esc_html($label)
+                    ),
+                    'url' => $remove_arg('sort'),
+                ];
+            }
+        }
+
+        return $filters;
+    }
 }

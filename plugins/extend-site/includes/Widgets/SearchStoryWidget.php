@@ -55,7 +55,8 @@ class SearchStoryWidget extends WP_Widget
         // Render form search
         SearchForm::render('autocomplete', [
             'placeholder' => $instance['placeholder'] ?? '',
-            'show_button' => !empty($instance['show_button'])
+            'show_button' => !empty($instance['show_button']),
+            'button_display' => $instance['button_display'] ?? 'text'
         ]);
 
         echo $args['after_widget'];
@@ -113,6 +114,23 @@ class SearchStoryWidget extends WP_Widget
                     <?php esc_html_e('Hiển thị nút tìm kiếm', 'extend-site'); ?>
                 </label>
             </p>
+
+            <!--button_display field-->
+            <p>
+                <label for="<?php echo esc_attr($this->get_field_id('button_display')); ?>">
+                    <?php esc_html_e('Kiểu nút:', 'extend-site'); ?>
+                </label><br>
+
+                <select id="<?php echo esc_attr($this->get_field_id('button_display')); ?>"
+                        name="<?php echo esc_attr($this->get_field_name('button_display')); ?>">
+                    <option value="text" <?php selected(($instance['button_display'] ?? 'text'), 'text'); ?>>
+                        <?php esc_html_e('Chỉ hiện chữ', 'extend-site'); ?>
+                    </option>
+                    <option value="icon" <?php selected(($instance['button_display'] ?? 'text'), 'icon'); ?>>
+                        <?php esc_html_e('Chỉ hiện icon', 'extend-site'); ?>
+                    </option>
+                </select>
+            </p>
         <?php
     }
 
@@ -130,6 +148,9 @@ class SearchStoryWidget extends WP_Widget
         $instance['title'] = sanitize_text_field($new_instance['title'] ?? '');
         $instance['placeholder'] = sanitize_text_field($new_instance['placeholder'] ?? '');
         $instance['show_button'] = !empty($new_instance['show_button']);
+        $instance['button_display'] = in_array($new_instance['button_display'] ?? 'text', ['text', 'icon'], true)
+                ? $new_instance['button_display']
+                : 'text';
 
         return $instance;
     }

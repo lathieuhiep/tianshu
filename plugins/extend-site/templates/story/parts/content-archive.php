@@ -7,7 +7,7 @@ $story_views   = ViewTracker::format_short( ViewTracker::get_story_views( get_th
 ?>
 
 <article id="story-<?php the_ID(); ?>"
-    <?php post_class( 'es-col-12 es-col-md-4' ); ?>
+    <?php post_class( 'es-col-12 es-col-sm-6 es-col-md-6 es-col-xl-4' ); ?>
          itemscope
          itemtype="https://schema.org/Book">
     <div class="item es-flex es-flex-column">

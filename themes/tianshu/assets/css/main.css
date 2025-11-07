@@ -1107,8 +1107,8 @@ a, button {
   --theme-ic-width: 2rem;
   --theme-ic-height: 2rem;
 }
-.main-header__top .search-bar .search-form-story .search-field {
-  --theme-width-field: 38rem;
+.main-header__top .search-bar .es-input {
+  --es-w-input: 38rem;
 }
 .main-header__warp {
   position: relative;
@@ -2042,25 +2042,6 @@ form.wpcf7-form p:has(.wpcf7-submit), .comments-area .comment-form .comment-form
 .main-warp, .comments-area .comment-form {
   display: flex;
   flex-direction: column;
-}
-
-.search-form-story {
-  position: relative;
-}
-.search-form-story .search-field {
-  --theme-width-field: 100%;
-  --theme-height-field: 4rem;
-  padding: 0 1rem 0 3.6rem;
-  border: 0.1rem solid var(--theme-border);
-  border-radius: 0.8rem;
-  width: var(--theme-width-field);
-  height: var(--theme-height-field);
-}
-.search-form-story .btn-search {
-  position: absolute;
-  top: 0;
-  left: 1.2rem;
-  bottom: 0;
 }
 
 .modal-search-mobile .modal-content {

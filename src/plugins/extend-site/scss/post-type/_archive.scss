@@ -45,10 +45,17 @@
       }
 
       .es-story-latest {
-        width: 15rem;
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
+
+        @media (min-width: 992px) {
+          width: 15rem;
+        }
+
+        @media (max-width: 991px) {
+          width: 10rem;
+        }
       }
 
       &:hover {
