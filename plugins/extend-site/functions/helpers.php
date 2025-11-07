@@ -157,29 +157,45 @@ function es_display_time_ago( int|string|null $time = null ): string {
 /**
  * Lấy nhãn (title) của menu tương ứng với URL hiện tại.
  */
-function es_get_current_menu_label(): ?string
-{
-    // Lấy URL hiện tại (loại bỏ query string)
+function es_get_current_menu_label(): ?string {
+    // Lấy URL hiện tại (loại bỏ query string, phân trang)
     $current_url = home_url(add_query_arg([], $GLOBALS['wp']->request));
+    $current_url = preg_replace('#/page/[0-9]+/#', '/', trailingslashit($current_url));
 
-    // Lấy toàn bộ menu (thay 'primary' bằng location thật)
+    // Lấy danh sách location
     $locations = get_nav_menu_locations();
-    if (empty($locations['primary'])) {
+    if (empty($locations)) {
         return null;
     }
 
-    $menu_items = wp_get_nav_menu_items($locations['primary']);
-    if (!$menu_items) {
-        return null;
-    }
+    $matched_label = null;
+    $matched_length = 0;
 
-    foreach ($menu_items as $item) {
-        // So sánh URL (chuẩn hóa để tránh slash thừa)
-        $item_url = trailingslashit($item->url);
-        if (trailingslashit($current_url) === $item_url) {
-            return $item->title;
+    // Duyệt qua tất cả menu
+    foreach ($locations as $menu_id) {
+        $menu_items = wp_get_nav_menu_items($menu_id);
+        if (!$menu_items) continue;
+
+        foreach ($menu_items as $item) {
+            $item_url = trailingslashit($item->url);
+
+            // Bỏ qua link Trang chủ (chính xác hoặc gần chính xác)
+            if ($item_url === trailingslashit(home_url('/'))) {
+                continue;
+            }
+
+            // Nếu URL hiện tại bắt đầu bằng item_url (match prefix)
+            if (strpos($current_url, $item_url) === 0) {
+                $length = strlen($item_url);
+
+                // Ưu tiên URL dài hơn (match sâu hơn)
+                if ($length > $matched_length) {
+                    $matched_label = $item->title;
+                    $matched_length = $length;
+                }
+            }
         }
     }
 
-    return null;
+    return $matched_label;
 }
