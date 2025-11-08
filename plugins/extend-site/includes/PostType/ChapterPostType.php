@@ -22,6 +22,7 @@ class ChapterPostType extends BasePostType
             'label' => esc_html__('Chương', 'extend-site'),
             'has_archive' => false,
             'hierarchical' => false, // KHÔNG dùng post_parent
+            'show_in_menu' => 'edit.php?post_type=story',
             'supports' => ['title', 'editor', 'author', 'revisions'],
             'menu_icon' => 'dashicons-media-text',
             'rewrite' => [

@@ -20,6 +20,7 @@ class AuthorPostType extends BasePostType
         $args = array_replace_recursive([
             'has_archive' => true,
             'hierarchical' => false,
+            'show_in_menu' => 'edit.php?post_type=story',
             'supports' => ['title', 'editor', 'thumbnail', 'excerpt', 'revisions'],
             'menu_icon' => 'dashicons-admin-users',
             'rewrite' => ['slug' => 'tac-gia', 'with_front' => false],
