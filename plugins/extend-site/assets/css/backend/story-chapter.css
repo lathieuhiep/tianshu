@@ -13,15 +13,23 @@
 .story-filter-notice .notice-info {
     margin-bottom: 0;
     padding: 8px 12px;
+}
+
+.story-filter-notice .notice-info__data {
     display: flex;
     align-items: center;
     gap: 8px;
     justify-content: space-between;
 }
 
-.story-filter-notice .notice-info p {
+.story-filter-notice .notice-info__data p {
     margin: 0;
     padding: 0;
+}
+
+.story-filter-notice .notice-search {
+    margin-top: 8px;
+    margin-bottom: 0;
 }
 
 .meta-box-sortables .story-chapter-actions {

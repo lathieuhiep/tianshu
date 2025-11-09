@@ -10,6 +10,7 @@ namespace ExtendSite\Admin;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\Repositories\ChapterRepository;
 use WP_Post;
+use WP_Query;
 
 defined('ABSPATH') || exit;
 
@@ -33,6 +34,9 @@ class StoryChapterLink {
 
         // Trong sidebar của chương
         add_action('post_submitbox_misc_actions', [__CLASS__, 'show_chapter_story_box']);
+
+        // Preserve story_id filter in search box
+        add_action('restrict_manage_posts', [__CLASS__, 'preserve_story_id_in_search']);
     }
 
     /** -------------------------
@@ -98,7 +102,7 @@ class StoryChapterLink {
     /** -------------------------
      *  Danh sách chương (admin)
      * ------------------------- */
-    public static function filter_chapters_by_story(\WP_Query $query): void {
+    public static function filter_chapters_by_story(WP_Query $query): void {
         if (!is_admin() || !$query->is_main_query()) {
             return;
         }
@@ -109,14 +113,15 @@ class StoryChapterLink {
         }
 
         $story_id = isset($_GET['story_id']) ? (int) $_GET['story_id'] : 0;
+
         if ($story_id > 0) {
-            $query->set('meta_query', [
-                [
-                    'key' => ChapterPostType::META_STORY_ID,
-                    'value' => $story_id,
-                    'compare' => '=',
-                ],
-            ]);
+            $meta_query = (array) $query->get('meta_query');
+            $meta_query[] = [
+                'key'     => ChapterPostType::META_STORY_ID,
+                'value'   => $story_id,
+                'compare' => '=',
+            ];
+            $query->set('meta_query', $meta_query);
         }
     }
 
@@ -147,23 +152,34 @@ class StoryChapterLink {
         <div class="wrap">
             <div class="story-filter-notice">
                 <div class="notice notice-info inline">
-                    <p>
-                        <span class="dashicons dashicons-book-alt"></span>
-                        <?= sprintf(
-                            __('Danh sách chương của truyện: <a href="%s"><strong>%s</strong></a>', 'extend-site'),
-                            esc_url($story_edit_url),
-                            $story_title
-                        ); ?>
-                    </p>
+                    <div class="notice-info__data">
+                        <p>
+                            <span class="dashicons dashicons-book-alt"></span>
+                            <?= sprintf(
+                                __('Danh sách chương của truyện: <a href="%s"><strong>%s</strong></a>', 'extend-site'),
+                                esc_url($story_edit_url),
+                                $story_title
+                            ); ?>
+                        </p>
 
-                    <p>
-                        <a href="<?= esc_url($add_url); ?>" class="button button-primary">
-                            <?= esc_html__('Thêm chương mới', 'extend-site'); ?>
-                        </a>
-                        <a href="<?= esc_url($all_url); ?>" class="button">
-                            <?= esc_html__('Xem tất cả chương', 'extend-site'); ?>
-                        </a>
-                    </p>
+                        <p>
+                            <a href="<?= esc_url($add_url); ?>" class="button button-primary">
+                                <?= esc_html__('Thêm chương mới', 'extend-site'); ?>
+                            </a>
+                            <a href="<?= esc_url($all_url); ?>" class="button">
+                                <?= esc_html__('Xem tất cả chương', 'extend-site'); ?>
+                            </a>
+                        </p>
+                    </div>
+
+                    <?php
+                    if (!empty($_GET['s'])) {
+                        printf(
+                            '<p class="notice-search">%s</p>',
+                            sprintf(__('Kết quả tìm kiếm trong truyện: “%s”', 'extend-site'), $story_title)
+                        );
+                    }
+                    ?>
                 </div>
             </div>
         </div>
@@ -245,5 +261,17 @@ class StoryChapterLink {
             </p>
         </div>
         <?php
+    }
+
+    /**
+     * Giữ lại story_id trong form tìm kiếm để không bị mất khi search.
+     */
+    public static function preserve_story_id_in_search(string $post_type): void {
+        if ($post_type !== 'chapter' || empty($_GET['story_id'])) {
+            return;
+        }
+
+        $story_id = (int) $_GET['story_id'];
+        echo '<input type="hidden" name="story_id" value="' . esc_attr($story_id) . '">';
     }
 }
