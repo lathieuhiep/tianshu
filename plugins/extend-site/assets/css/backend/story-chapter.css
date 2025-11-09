@@ -1,0 +1,30 @@
+.wp-list-table .column-chapters .story-chapter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.wrap:has(.story-filter-notice) {
+    position: sticky;
+    top: 32px;
+    z-index: 2;
+    margin-top: 36px;
+}
+
+.story-filter-notice .notice-info {
+    margin-bottom: 0;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.story-filter-notice .notice-info p {
+    margin: 0;
+    padding: 0;
+}
+
+.meta-box-sortables .story-chapter-actions {
+    display: flex;
+    gap: 8px;
+}

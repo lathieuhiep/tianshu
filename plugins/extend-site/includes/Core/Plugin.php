@@ -3,6 +3,7 @@
 namespace ExtendSite\Core;
 
 use ExtendSite\Admin\MenuPage;
+use ExtendSite\Admin\StoryChapterLink;
 use ExtendSite\Ajax\IncrementView;
 use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
@@ -49,6 +50,9 @@ class Plugin
 
         // Ensure rewrite rules are flushed on init
         add_action('init', [__CLASS__, 'maybe_flush_rewrite'], 999);
+
+        // Initialize Story-Chapter link in admin
+        StoryChapterLink::init();
     }
 
     /**

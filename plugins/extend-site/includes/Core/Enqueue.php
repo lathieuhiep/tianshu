@@ -37,8 +37,24 @@ class Enqueue
     /**
      * Enqueue scripts backend
      */
-    public static function enqueue_scripts_backend()
-    {}
+    public static function enqueue_scripts_backend(): void
+    {
+        // load main style plugin es
+        $screen = get_current_screen();
+
+
+        if (!$screen || !in_array($screen->post_type, ['story', 'chapter'], true)) {
+            return;
+        }
+
+        // load admin style for Story Post Type
+        wp_enqueue_style(
+            'es-admin-story-chapter',
+            EXTEND_SITE_URL . 'assets/css/backend/story-chapter.css',
+            [],
+            EXTEND_SITE_VERSION
+        );
+    }
 
     /**
      * Enqueue scripts frontend

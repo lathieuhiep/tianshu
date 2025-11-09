@@ -3,6 +3,7 @@
 namespace ExtendSite\Repositories;
 
 use ExtendSite\PostType\ChapterPostType;
+use WP_Query;
 
 defined('ABSPATH') || exit;
 
@@ -17,7 +18,7 @@ class ChapterRepository
      */
     public static function get_edge_chapter(int $story_id, string $order = 'ASC'): ?array
     {
-        $q = new \WP_Query([
+        $q = new WP_Query([
             'post_type' => ChapterPostType::SLUG,
             'fields' => 'ids',
             'posts_per_page' => 1,
@@ -82,7 +83,7 @@ class ChapterRepository
         $compare = $direction === 'prev' ? '<' : '>';
         $order = $direction === 'prev' ? 'DESC' : 'ASC';
 
-        $query = new \WP_Query([
+        $query = new WP_Query([
             'post_type' => ChapterPostType::SLUG,
             'fields' => 'ids',
             'posts_per_page' => 1,
@@ -118,7 +119,7 @@ class ChapterRepository
             return [];
         }
 
-        $query = new \WP_Query([
+        $query = new WP_Query([
             'post_type'      => ChapterPostType::SLUG,
             'fields'         => 'ids',
             'posts_per_page' => -1,
@@ -177,7 +178,7 @@ class ChapterRepository
         $min = max(1, $current_number - $range);
         $max = $current_number + $range;
 
-        $query = new \WP_Query([
+        $query = new WP_Query([
             'post_type' => ChapterPostType::SLUG,
             'post_status' => 'publish',
             'meta_query' => [
@@ -216,5 +217,48 @@ class ChapterRepository
         }
 
         return $chapters;
+    }
+
+    /**
+     * Get the highest chapter number for a story.
+     *
+     * @param int $story_id
+     * @return int
+     */
+    public static function get_max_number_by_story(int $story_id): int {
+        global $wpdb;
+
+        if ($story_id <= 0) {
+            return 0;
+        }
+
+        $sql = "
+            SELECT MAX(CAST(pm.meta_value AS UNSIGNED))
+            FROM {$wpdb->postmeta} pm
+            INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+            WHERE pm.meta_key = %s
+              AND p.post_type = 'chapter'
+              AND p.post_status IN ('publish', 'draft')
+              AND EXISTS (
+                  SELECT 1 FROM {$wpdb->postmeta} pm2
+                  WHERE pm2.post_id = p.ID
+                    AND pm2.meta_key = '_chapter_story_id'
+                    AND pm2.meta_value = %d
+              )
+        ";
+
+        $max = (int) $wpdb->get_var($wpdb->prepare($sql, '_chapter_number', $story_id));
+
+        return $max ?: 0;
+    }
+
+    /**
+     * Get next chapter number for a story.
+     *
+     * @param int $story_id
+     * @return int
+     */
+    public static function get_next_number_by_story(int $story_id): int {
+        return self::get_max_number_by_story($story_id) + 1;
     }
 }
