@@ -11,6 +11,9 @@ package-lock.json
 !plugins/extend-site/
 !plugins/extend-site/**
 
+!plugins/extend-affiliate-ads/
+!plugins/extend-affiliate-ads/**
+
 !themes/
 !themes/tianshu/
 !themes/tianshu/**

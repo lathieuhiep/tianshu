@@ -1,0 +1,11 @@
+#affiliate-ads-repeater .ad-item td {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+#affiliate-ads-repeater input.regular-text {
+    width: 28%;
+    margin-right: 6px;
+}
+#affiliate-ads-repeater .remove-ad {
+    margin-left: 6px;
+}
