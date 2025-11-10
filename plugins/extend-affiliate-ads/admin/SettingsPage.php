@@ -12,14 +12,13 @@ defined('ABSPATH') || exit;
 class SettingsPage {
 
     public const MENU_SLUG = 'extend-affiliate-ads';
-    public const OPTION_KEY = 'extend_affiliate_ads_settings';
+    public const OPTION_KEY = 'extend_affiliate_ads_data';
 
     /**
      * Init admin hooks.
      */
     public static function init(): void {
         add_action('admin_menu', [__CLASS__, 'register_menu']);
-        add_action('admin_init', [__CLASS__, 'register_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
     }
 
@@ -35,32 +34,6 @@ class SettingsPage {
             self::MENU_SLUG . '-settings',
             [__CLASS__, 'render_page']
         );
-    }
-
-    /**
-     * Register option & section.
-     */
-    public static function register_settings(): void {
-        register_setting(self::OPTION_KEY, self::OPTION_KEY, [
-            'sanitize_callback' => [__CLASS__, 'sanitize_options'],
-        ]);
-    }
-
-    /**
-     * Sanitize before save.
-     */
-    public static function sanitize_options(array $input): array {
-        $clean = [];
-        if (!empty($input['ads']) && is_array($input['ads'])) {
-            foreach ($input['ads'] as $ad) {
-                $clean['ads'][] = [
-                    'image' => esc_url_raw($ad['image'] ?? ''),
-                    'link'  => esc_url_raw($ad['link'] ?? ''),
-                    'label' => sanitize_text_field($ad['label'] ?? ''),
-                ];
-            }
-        }
-        return $clean;
     }
 
     /**
@@ -104,8 +77,12 @@ class SettingsPage {
      * Render settings page.
      */
     public static function render_page(): void {
-        $options = get_option(self::OPTION_KEY, []);
-        $ads     = $options['ads'] ?? [];
+        $options = get_option(
+            self::OPTION_KEY,
+            ['ttl' => 10, 'ads' => []]
+        );
+
         include EXTEND_AFFILIATE_ADS_PATH . 'admin/views/settings-page.php';
     }
+
 }

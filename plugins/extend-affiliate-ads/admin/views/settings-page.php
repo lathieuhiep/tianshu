@@ -6,7 +6,7 @@
  */
 
 // Lấy dữ liệu quảng cáo đã lưu
-$settings = get_option('extend_affiliate_ads_settings', []);
+$settings = get_option('extend_affiliate_ads_data', []);
 $ads = $settings['ads'] ?? [];
 ?>
 
@@ -34,14 +34,14 @@ $ads = $settings['ads'] ?? [];
             <!-- TTL global -->
             <div class="ttl-setting">
                 <?php
-                $ttl_value = (int) get_option('extend_affiliate_ads_ttl', 10);
+                $ttl_value = !empty($settings['ttl']) ? (int) $settings['ttl'] : 10;
                 ?>
                 <label for="extend_affiliate_ads_ttl" class="ttl-label">
                     <?php esc_html_e('TTL (Time To Live):', 'extend-affiliate-ads'); ?>
                 </label>
                 <input type="number"
                        id="extend_affiliate_ads_ttl"
-                       name="extend_affiliate_ads_ttl"
+                       name="extend_affiliate_ads_data[ttl]"
                        value="<?php echo esc_attr($ttl_value); ?>"
                        min="1"
                        step="1"

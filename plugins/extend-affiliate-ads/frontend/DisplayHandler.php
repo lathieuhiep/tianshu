@@ -84,7 +84,7 @@ class DisplayHandler {
         }
 
         // Lấy option gốc
-        $settings = get_option('extend_affiliate_ads_settings', []);
+        $settings = get_option('extend_affiliate_ads_data', []);
         $ads = $settings['ads'] ?? [];
 
         // TTL cache (phút → giây)

@@ -7,19 +7,20 @@
  */
 
 $ad = $ad ?? [];
+$is_active = ( isset($ad['active']) && (int)$ad['active'] === 1 ) || (empty($ad) && ! $is_template);
 ?>
 <div id="ad-item-<?php echo esc_attr($index); ?>"
     class="ad-item"
      aria-label="<?php esc_attr_e('Mục quảng cáo', 'extend-affiliate-ads'); ?>">
     <div class="ad-fields">
         <input type="text"
-               name="extend_affiliate_ads_settings[ads][<?php echo esc_attr($index); ?>][label]"
+               name="extend_affiliate_ads_data[ads][<?php echo esc_attr($index); ?>][label]"
                value="<?php echo esc_attr($ad['label'] ?? ''); ?>"
                placeholder="<?php esc_attr_e('Tiêu đề quảng cáo', 'extend-affiliate-ads'); ?>"
                class="regular-text" aria-label="<?php esc_attr_e('Tiêu đề quảng cáo', 'extend-affiliate-ads'); ?>" />
 
         <input type="url"
-               name="extend_affiliate_ads_settings[ads][<?php echo esc_attr($index); ?>][link]"
+               name="extend_affiliate_ads_data[ads][<?php echo esc_attr($index); ?>][link]"
                value="<?php echo esc_attr($ad['link'] ?? ''); ?>"
                placeholder="<?php esc_attr_e('Liên kết affiliate', 'extend-affiliate-ads'); ?>"
                class="regular-text" aria-label="<?php esc_attr_e('Liên kết affiliate', 'extend-affiliate-ads'); ?>" />
@@ -27,12 +28,12 @@ $ad = $ad ?? [];
         <div class="ad-image-field">
             <div class="group-option">
                 <input type="hidden"
-                       name="extend_affiliate_ads_settings[ads][<?php echo esc_attr($index); ?>][image_id]"
+                       name="extend_affiliate_ads_data[ads][<?php echo esc_attr($index); ?>][image_id]"
                        class="ad-image-id"
                        value="<?php echo esc_attr($ad['image_id'] ?? 0); ?>" />
 
                 <input type="text"
-                       name="extend_affiliate_ads_settings[ads][<?php echo esc_attr($index); ?>][image]"
+                       name="extend_affiliate_ads_data[ads][<?php echo esc_attr($index); ?>][image]"
                        value="<?php echo esc_attr($ad['image'] ?? ''); ?>"
                        placeholder="<?php esc_attr_e('Đường dẫn ảnh', 'extend-affiliate-ads'); ?>"
                        class="regular-text ad-image-url" aria-label="" />
@@ -52,10 +53,13 @@ $ad = $ad ?? [];
 
     <div class="ad-actions">
         <label class="ad-toggle">
+            <input type="hidden"
+                   name="extend_affiliate_ads_data[ads][<?php echo esc_attr($index); ?>][active]"
+                   value="0">
             <input type="checkbox"
-                   name="extend_affiliate_ads_settings[ads][<?php echo esc_attr($index); ?>][active]"
-                   value="1"
-                <?php checked(isset($ad['active']) && (int)$ad['active'] === 1); ?> />
+                   name="extend_affiliate_ads_data[ads][<?php echo esc_attr($index); ?>][active]"
+                   value="1" <?php checked(1, $is_active); ?> />
+
 
             <?php esc_html_e('Kích hoạt', 'extend-affiliate-ads'); ?>
         </label>

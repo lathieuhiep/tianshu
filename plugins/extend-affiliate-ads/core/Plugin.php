@@ -28,7 +28,7 @@ class Plugin {
             AdminSettingsHandler::init();
         } else {
             // Frontend hooks (nếu có) sẽ đặt ở đây
-            DisplayHandler::init();
+//            DisplayHandler::init();
         }
     }
 
