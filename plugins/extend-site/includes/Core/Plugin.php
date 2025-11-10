@@ -9,6 +9,7 @@ use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\Ajax\LoadLatestStories;
 use ExtendSite\Ajax\LoadRanking;
+use ExtendSite\Ajax\SearchSelect2;
 use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
@@ -130,6 +131,10 @@ class Plugin
      */
     private static function load_ajax(): void
     {
+        // ajax admin
+        SearchSelect2::init();
+
+        // ajax frontend
         LoadChapters::init();
 //        LoadChapterNeighbors::init();
         IncrementView::init();

@@ -130,4 +130,15 @@ class StoryRepository
 
         return $results;
     }
+
+    /**
+     * Get total chapter count for the current story.
+     *
+     * @param int $story_id Story post ID.
+     * @return int Chapter count.
+     */
+    public static function get_chapter_total(int $story_id): int
+    {
+        return (int) get_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, true);
+    }
 }

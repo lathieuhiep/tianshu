@@ -39,21 +39,51 @@ class Enqueue
      */
     public static function enqueue_scripts_backend(): void
     {
-        // load main style plugin es
         $screen = get_current_screen();
 
-
+        // Kiểm tra an toàn
         if (!$screen || !in_array($screen->post_type, ['story', 'chapter'], true)) {
             return;
         }
 
-        // load admin style for Story Post Type
+        // Enqueue Select2
+        wp_enqueue_style(
+            'select2',
+            EXTEND_SITE_URL . 'assets/vendor/select2/select2.min.css',
+            [],
+            '4.0.13'
+        );
+
+        wp_enqueue_script(
+            'select2',
+            EXTEND_SITE_URL . 'assets/vendor/select2/select2.min.js',
+            ['jquery'],
+            '4.0.13',
+            true
+        );
+
+        // Enqueue style backend story/chapter
         wp_enqueue_style(
             'es-admin-story-chapter',
             EXTEND_SITE_URL . 'assets/css/backend/story-chapter.css',
             [],
             EXTEND_SITE_VERSION
         );
+
+        // Enqueue script backend
+        wp_enqueue_script(
+            'es-admin-story-chapter',
+            EXTEND_SITE_URL . 'assets/js/extend-site.min.js',
+            ['jquery', 'select2'],
+            EXTEND_SITE_VERSION,
+            true
+        );
+
+        // Localize script cho AJAX
+        wp_localize_script('es-admin-story-chapter', 'esAdminStoryChapter', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('es_admin_common')
+        ]);
     }
 
     /**

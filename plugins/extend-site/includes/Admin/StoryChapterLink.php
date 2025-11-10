@@ -211,7 +211,7 @@ class StoryChapterLink {
      * @param bool    $update  Có phải đang cập nhật hay không
      * @return void
     */
-    public static function assign_story_to_new_chapter(int $post_id, \WP_Post $post, bool $update): void {
+    public static function assign_story_to_new_chapter(int $post_id, WP_Post $post, bool $update): void {
         if ($update) {
             return;
         }
@@ -241,7 +241,6 @@ class StoryChapterLink {
         }
 
         $story_id = ChapterRepository::get_story_id($post->ID);
-
         if ($story_id <= 0) {
             return;
         }
@@ -253,11 +252,33 @@ class StoryChapterLink {
 
         $story_title = esc_html(get_the_title($story));
         $story_url   = get_edit_post_link($story_id);
+
+        // URL hành động
+        $add_url  = admin_url("post-new.php?post_type=chapter&story_id={$story_id}");
+        $list_url = admin_url("edit.php?post_type=chapter&story_id={$story_id}");
+
+        // Kiểm tra trạng thái
+        $is_draft = in_array($post->post_status, ['auto-draft', 'draft'], true);
         ?>
         <div class="misc-pub-section">
             <p>
                 <span class="dashicons dashicons-book-alt"></span>
-                <?= sprintf(__('Thuộc truyện: <a href="%s"><strong>%s</strong></a>', 'extend-site'), esc_url($story_url), $story_title); ?>
+                <?= sprintf(
+                    __('Thuộc truyện: <a href="%s"><strong>%s</strong></a>', 'extend-site'),
+                    esc_url($story_url),
+                    $story_title
+                ); ?>
+            </p>
+
+            <p class="chapter-story-actions">
+                <?php if (!$is_draft) : ?>
+                    <a href="<?= esc_url($add_url); ?>" class="button button-small button-primary">
+                        <?= esc_html__('Thêm chương mới', 'extend-site'); ?>
+                    </a>
+                <?php endif; ?>
+                <a href="<?= esc_url($list_url); ?>" class="button button-small">
+                    <?= esc_html__('Danh sách chương', 'extend-site'); ?>
+                </a>
             </p>
         </div>
         <?php

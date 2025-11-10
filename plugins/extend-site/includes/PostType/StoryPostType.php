@@ -2,6 +2,7 @@
 
 namespace ExtendSite\PostType;
 
+use WP_Post;
 use function es_add_custom_taxonomy_filter_to_cpt;
 
 defined('ABSPATH') || exit;
@@ -116,50 +117,78 @@ class StoryPostType extends BasePostType
         );
     }
 
-    /** Render meta box tác giả **/
-    public function render_author_meta_box(\WP_Post $post): void
-    {
+    /**
+     * Render meta box chọn tác giả cho truyện
+     *
+     * @param WP_Post $post
+     */
+    public function render_author_meta_box(WP_Post $post): void {
         wp_nonce_field('story_authors_save', 'story_authors_nonce');
 
-        $selected = get_post_meta($post->ID, self::META_AUTHOR_IDS, true);
-        $selected = is_array($selected) ? array_map('intval', $selected) : [];
+        // Lấy danh sách ID tác giả đã lưu
+        $selected_ids = get_post_meta($post->ID, self::META_AUTHOR_IDS, true);
+        $selected_ids = is_array($selected_ids) ? array_map('intval', $selected_ids) : [];
 
-        $authors = get_posts([
-            'post_type' => 'story_author',
-            'posts_per_page' => 300,
-            'post_status' => ['publish', 'draft', 'pending', 'future', 'private'],
-            'orderby' => 'title',
-            'order' => 'ASC',
-            'fields' => 'ids',
-        ]);
-
-        echo '<p><small>' . esc_html__('Chọn một hoặc nhiều tác giả cho truyện này.', 'extend-site') . '</small></p>';
-        echo '<select name="story_author_ids[]" id="story_author_ids" class="widefat" multiple size="8">';
-        foreach ($authors as $aid) {
-            $title = get_the_title($aid) ?: ('#' . $aid);
-            printf(
-                '<option value="%d"%s>%s</option>',
-                (int)$aid,
-                selected(in_array((int)$aid, $selected, true), true, false),
-                esc_html($title)
-            );
+        // Lấy danh sách tác giả đã chọn để hiển thị trong select
+        $selected_posts = [];
+        if ($selected_ids) {
+            $selected_posts = get_posts([
+                'post_type'      => 'story_author',
+                'post__in'       => $selected_ids,
+                'orderby'        => 'post__in',
+                'fields'         => ['ID', 'post_title'],
+                'no_found_rows'  => true,
+            ]);
         }
-        echo '</select>';
+
+        // Biến placeholder
+        $placeholder = esc_attr__('Nhập tên tác giả...', 'extend-site');
+        ?>
+
+        <div class="es-meta-field es-meta-authors">
+            <p class="description">
+                <?php esc_html_e('Chọn một hoặc nhiều tác giả. Bạn có thể nhập để tìm kiếm.', 'extend-site'); ?>
+            </p>
+
+            <select
+                name="story_author_ids[]"
+                id="story_author_ids"
+                class="widefat"
+                multiple
+                data-es-ajax-select
+                data-es-type="author"
+                data-placeholder="<?php echo $placeholder; ?>"
+                aria-label="<?php echo $placeholder; ?>"
+            >
+                <?php if (!empty($selected_posts)) : ?>
+                    <?php foreach ($selected_posts as $author) : ?>
+                        <option value="<?php echo esc_attr($author->ID); ?>" selected>
+                            <?php echo esc_html($author->post_title ?: ('#' . $author->ID)); ?>
+                        </option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </select>
+        </div>
+
+        <?php
     }
 
-    /** Lưu meta box tác giả **/
-    public function save_author_meta(int $post_id, \WP_Post $post): void
+    /**
+     * Lưu meta box tác giả cho truyện
+     *
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     * @return void
+     */
+    public function save_author_meta(int $post_id, WP_Post $post): void
     {
-        if (!isset($_POST['story_authors_nonce']) || !wp_verify_nonce($_POST['story_authors_nonce'], 'story_authors_save')) {
-            return;
-        }
-        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-            return;
-        }
-        if (!current_user_can('edit_post', $post_id)) {
-            return;
-        }
-        if ($post->post_type !== self::SLUG) {
+        if (
+            empty($_POST['story_authors_nonce']) ||
+            !wp_verify_nonce($_POST['story_authors_nonce'], 'story_authors_save') ||
+            (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) ||
+            !current_user_can('edit_post', $post_id) ||
+            $post->post_type !== self::SLUG
+        ) {
             return;
         }
 
@@ -174,7 +203,10 @@ class StoryPostType extends BasePostType
                 'post__in' => $ids,
                 'posts_per_page' => -1,
                 'fields' => 'ids',
+                'no_found_rows' => true,
+                'cache_results' => false,
             ]);
+
             $ids = array_values(array_intersect($ids, array_map('intval', $valid)));
         }
 

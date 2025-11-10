@@ -335,7 +335,7 @@ const buildStyleCPTPluginExtendSite = () => {
 
 const buildJPluginExtendSite = () => {
     return buildJsPipeline({
-        input: `${paths.plugins.es.js}*/**.js`,
+        input: `${paths.plugins.es.js}**/*.js`,
         output: `${paths.output.plugins.es.js}`
     })
 }
@@ -413,7 +413,7 @@ const watchTask = () => {
         `${paths.plugins.es.scss}post-type/**/*.scss`
     ], buildStyleCPTPluginExtendSite)
 
-    watch([`${paths.plugins.es.js}*/**.js`], buildJPluginExtendSite)
+    watch([`${paths.plugins.es.js}**/*.js`], buildJPluginExtendSite)
 
     // theme watch
     watch([

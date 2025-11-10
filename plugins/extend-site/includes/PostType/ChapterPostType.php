@@ -2,6 +2,9 @@
 
 namespace ExtendSite\PostType;
 
+use ExtendSite\Repositories\StoryRepository;
+use WP_Post;
+
 defined('ABSPATH') || exit;
 
 class ChapterPostType extends BasePostType
@@ -44,25 +47,10 @@ class ChapterPostType extends BasePostType
         add_action('pre_get_posts', [$this, 'handle_admin_sorting']);
 
         // Permalink tùy chỉnh để có dạng /story-slug/chuong/chapter-slug
-        add_filter('post_type_link', function ($permalink, $post) {
-            if ($post->post_type === self::SLUG) {
-                $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
-                if ($story_id && ($story = get_post($story_id))) {
-                    // tạo permalink có dạng /ten-truyen/chuong/chuong-1/
-                    $permalink = home_url(sprintf('%s/chuong/%s', $story->post_name, $post->post_name));
-                }
-            }
-            return $permalink;
-        }, 10, 2);
+        add_filter('post_type_link', [$this, 'filter_permalink'], 10, 2);
 
         // Thay thế %story% trong permalink chương
-        add_action('init', function () {
-            add_rewrite_rule(
-                '^([^/]+)/chuong/([^/]+)/?$',
-                'index.php?chapter=$matches[2]',
-                'top'
-            );
-        });
+        add_action('init', [$this, 'register_chapter_rewrite_rule']);
 
         // Cập nhật tổng chương cho truyện khi có thay đổi
         add_action('save_post_' . self::SLUG, [$this, 'update_story_chapter_count_on_save'], 20, 2);
@@ -70,20 +58,33 @@ class ChapterPostType extends BasePostType
         add_action('before_delete_post', [$this, 'decrease_story_chapter_count']);
     }
 
-    /** Thay thế %story% trong permalink chương */
-    public function filter_permalink(string $permalink, \WP_Post $post): string
+    /** Đăng ký rewrite rule cho permalink chương */
+    public function register_chapter_rewrite_rule(): void
     {
+        add_rewrite_rule(
+            '^([^/]+)/chuong/([^/]+)/?$',
+            'index.php?chapter=$matches[2]',
+            'top'
+        );
+    }
+
+    /** Thay thế %story% trong permalink chương */
+    public function filter_permalink(string $permalink, WP_Post $post): string {
         if ($post->post_type !== self::SLUG) {
             return $permalink;
         }
 
         $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
         if (!$story_id) {
-            return str_replace('%story%', 'unknown-story', $permalink);
+            return $permalink;
         }
 
-        $story_slug = get_post_field('post_name', $story_id);
-        return str_replace('%story%', $story_slug, $permalink);
+        $story = get_post($story_id);
+        if (!$story) {
+            return $permalink;
+        }
+
+        return home_url(sprintf('%s/chuong/%s', $story->post_name, $post->post_name));
     }
 
     /** Meta boxes */
@@ -100,53 +101,66 @@ class ChapterPostType extends BasePostType
     }
 
     /** Hiển thị meta box */
-    public function render_meta_box(\WP_Post $post): void
+    public function render_meta_box(WP_Post $post): void
     {
         wp_nonce_field('chapter_meta_save', 'chapter_meta_nonce');
 
         $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
-        $number = (string) get_post_meta($post->ID, self::META_NUMBER, true);
+        $number   = (string) get_post_meta($post->ID, self::META_NUMBER, true);
+        $selected_story = $story_id ? get_post($story_id) : null;
+        $placeholder = esc_attr__('Nhập tên truyện...', 'extend-site');
+        ?>
+        <p>
+            <label for="chapter_story_id">
+                <strong><?php esc_html_e('Thuộc truyện', 'extend-site'); ?></strong>
+            </label>
+        </p>
 
-        // Lấy danh sách truyện (giới hạn 200)
-        $stories = get_posts([
-            'post_type' => 'story',
-            'posts_per_page' => -1,
-            'post_status' => ['publish', 'draft', 'pending', 'future', 'private'],
-            'orderby' => 'title',
-            'order' => 'ASC',
-            'fields' => 'ids',
-        ]);
+        <select
+            id="chapter_story_id"
+            name="chapter_story_id"
+            class="widefat"
+            data-es-ajax-select
+            data-es-type="story"
+            data-placeholder="<?php echo $placeholder; ?>"
+            aria-label="<?php echo $placeholder; ?>"
+        >
+            <?php if ($selected_story): ?>
+                <?php
+                $title = get_the_title($selected_story->ID);
+                $count = StoryRepository::get_chapter_total($selected_story->ID);
+                ?>
+                <option value="<?php echo esc_attr($selected_story->ID); ?>" selected>
+                    <?php echo esc_html($title ?: ('#' . $selected_story->ID)); ?>
+                    — (<?php echo esc_html($count); ?> <?php esc_html_e('chương', 'extend-site'); ?>)
+                </option>
+            <?php endif; ?>
+        </select>
 
-        echo '<p><label for="chapter_story_id"><strong>' . esc_html__('Thuộc truyện', 'extend-site') . '</strong></label></p>';
-        echo '<select id="chapter_story_id" name="chapter_story_id" class="widefat">';
-        echo '<option value="0">' . esc_html__('— Chọn truyện —', 'extend-site') . '</option>';
+        <p>
+            <label for="chapter_number">
+                <strong><?php esc_html_e('Số chương', 'extend-site'); ?></strong>
+            </label>
+        </p>
 
-        foreach ($stories as $sid) {
-            $title = get_the_title($sid);
-            $count = (int) get_post_meta($sid, StoryPostType::META_CHAPTER_COUNT, true);
+        <input
+            type="number"
+            min="1"
+            step="1"
+            id="chapter_number"
+            name="chapter_number"
+            class="small-text"
+            value="<?php echo esc_attr($number); ?>"
+        />
 
-            printf(
-                '<option value="%d"%s>%s — (%d chương)</option>',
-                (int) $sid,
-                selected($story_id, $sid, false),
-                esc_html($title ?: ('#' . $sid)),
-                $count
-            );
-        }
-
-        echo '</select>';
-
-        echo '<p style="margin-top:10px;"><label for="chapter_number"><strong>' . esc_html__('Số chương', 'extend-site') . '</strong></label></p>';
-        printf(
-            '<input type="number" min="1" step="1" id="chapter_number" name="chapter_number" class="small-text" value="%s" />',
-            esc_attr($number)
-        );
-
-        echo '<p class="description">' . esc_html__('Dùng để sắp xếp chương theo thứ tự trong truyện.', 'extend-site') . '</p>';
+        <p class="description">
+            <?php esc_html_e('Dùng để sắp xếp chương theo thứ tự trong truyện.', 'extend-site'); ?>
+        </p>
+        <?php
     }
 
     /** Lưu meta box */
-    public function save_meta(int $post_id, \WP_Post $post): void
+    public function save_meta(int $post_id, WP_Post $post): void
     {
         if (!isset($_POST['chapter_meta_nonce']) || !wp_verify_nonce($_POST['chapter_meta_nonce'], 'chapter_meta_save')) {
             return;
@@ -225,7 +239,7 @@ class ChapterPostType extends BasePostType
      * ========================================================== */
 
     /** Khi lưu chương publish mới → tăng tổng chương */
-    public function update_story_chapter_count_on_save(int $chapter_id, \WP_Post $post): void
+    public function update_story_chapter_count_on_save(int $chapter_id, WP_Post $post): void
     {
         if ($post->post_status !== 'publish') {
             return;
@@ -239,7 +253,7 @@ class ChapterPostType extends BasePostType
     }
 
     /** Khi thay đổi trạng thái chương (ẩn / khôi phục) */
-    public function handle_chapter_status_change(string $new_status, string $old_status, \WP_Post $post): void
+    public function handle_chapter_status_change(string $new_status, string $old_status, WP_Post $post): void
     {
         if ($post->post_type !== self::SLUG || $new_status === $old_status) return;
 
