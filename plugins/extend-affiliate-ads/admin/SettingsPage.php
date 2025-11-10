@@ -67,8 +67,6 @@ class SettingsPage {
      * Enqueue admin CSS/JS for repeater.
      */
     public static function enqueue_assets(string $hook_suffix): void {
-        error_log('Affiliate Ads hook: ' . $hook_suffix);
-
         if (str_contains($hook_suffix, self::MENU_SLUG)) {
             wp_enqueue_style(
                 'extend-affiliate-ads-admin',
@@ -77,17 +75,28 @@ class SettingsPage {
                 EXTEND_AFFILIATE_ADS_VERSION
             );
 
+
+            // load media uploader
+            wp_enqueue_media();
+
+            // load repeater JS
             wp_enqueue_script(
                 'extend-affiliate-ads-admin',
-                EXTEND_AFFILIATE_ADS_URL . 'admin/js/repeater.js',
+                EXTEND_AFFILIATE_ADS_URL . 'admin/js/affiliate-ads-admin.js',
                 ['jquery'],
                 EXTEND_AFFILIATE_ADS_VERSION,
                 true
             );
 
-            wp_localize_script('extend-affiliate-ads-admin', 'ExtendAffiliateAds', [
-                'addItemText' => esc_html__('Add new Ad', 'extend-affiliate-ads'),
-            ]);
+            // Truyền biến PHP → JS (dùng để phân biệt ảnh nội bộ / ảnh ngoài)
+            $upload_dir = wp_upload_dir();
+            wp_localize_script(
+                'extend-affiliate-ads-admin',
+                'extendAffiliateAds',
+                [
+                    'uploadsBaseUrl' => trailingslashit( $upload_dir['baseurl'] ),
+                ]
+            );
         }
     }
 

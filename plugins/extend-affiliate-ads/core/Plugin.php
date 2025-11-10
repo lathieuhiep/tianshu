@@ -7,7 +7,9 @@
 
 namespace ExtendAffiliateAds\Core;
 
+use ExtendAffiliateAds\Admin\AdminSettingsHandler;
 use ExtendAffiliateAds\Admin\SettingsPage;
+use ExtendAffiliateAds\Frontend\DisplayHandler;
 
 defined('ABSPATH') || exit;
 
@@ -22,6 +24,11 @@ class Plugin {
         if (is_admin()) {
             // Gọi sớm hơn để admin_enqueue_scripts có hiệu lực
             add_action('init', [SettingsPage::class, 'init']);
+
+            AdminSettingsHandler::init();
+        } else {
+            // Frontend hooks (nếu có) sẽ đặt ở đây
+            DisplayHandler::init();
         }
     }
 
