@@ -1,0 +1,150 @@
+/* --- Tổng thể trang --- */
+.extend-referrals-settings .description {
+    color: #555;
+    margin-bottom: 1rem;
+    max-width: 800px;
+}
+
+.extend-referrals-settings .action-top {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #dcdcdc;
+    border-radius: 6px;
+}
+
+.extend-referrals-settings .action-top .ttl-setting .note {
+    margin: 12px 0 0 0;
+}
+
+/* Thanh công cụ (toolbar) */
+.extend-referrals-settings .ads-toolbar {
+    margin-bottom: 12px;
+}
+
+.extend-referrals-settings .toggle-all-ads {
+    background-color: #007cba;
+    color: #fff;
+    border: 1px solid #007cba;
+    transition: background-color 0.2s ease;
+}
+.extend-referrals-settings .toggle-all-ads:hover {
+    color: #fff;
+    background-color: #005a9c;
+}
+
+/* Danh sách quảng cáo */
+.extend-referrals-settings .affiliate-ads-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px; /* spacing giữa các ad-item */
+}
+
+/* Mỗi quảng cáo */
+.extend-referrals-settings .ad-item {
+    display: grid;
+    grid-template-columns: 1fr auto; /* trái: input, phải: hành động */
+    align-items: flex-start;
+    gap: 24px;
+    background: #fff;
+    border: 1px solid #dcdcdc;
+    border-radius: 6px;
+    padding: 12px;
+    transition: border-color 0.2s ease, background-color 0.25s ease, opacity 0.25s ease;
+}
+
+.extend-referrals-settings .ad-item:hover {
+    border-color: #007cba;
+}
+
+.extend-referrals-settings .ad-item--inactive .ad-fields {
+    opacity: 0.6;
+}
+
+.extend-referrals-settings .ad-item--inactive .ad-fields input:focus {
+    border-color: #8c8f94;
+    box-shadow: none;
+    outline: none;
+}
+
+.extend-referrals-settings .ad-item--inactive .ad-fields button {
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.extend-referrals-settings .ad-item--inactive input[disabled] {
+    cursor: not-allowed;
+}
+
+/* Khối input */
+.extend-referrals-settings .ad-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.extend-referrals-settings .ad-fields input {
+    width: 100%;
+}
+
+.extend-referrals-settings .ad-fields .ad-image-field .group-option {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.extend-referrals-settings .ad-fields .ad-image-field .ad-image-preview {
+    margin-top: 12px;
+}
+
+.extend-referrals-settings .ad-fields .ad-image-field .ad-image-preview img {
+    padding: 12px;
+    max-width: 90px;
+    width: 100%;
+    border: 1px solid #dcdcdc;
+    border-radius: 4px;
+}
+
+/* Khối hành động */
+.extend-referrals-settings .ad-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-width: 140px;
+}
+
+.extend-referrals-settings .ad-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #23282d;
+    white-space: nowrap;
+}
+
+.extend-referrals-settings .remove-ad {
+    border-color: #d63638;
+    color: #fff;
+    background-color: #d63638;
+    transition: all 0.2s ease;
+}
+.extend-referrals-settings .remove-ad:hover {
+    background: #d63638;
+    color: #fff;
+}
+
+.extend-referrals-settings .submit {
+    text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+    .extend-referrals-settings .ad-item {
+        grid-template-columns: 1fr;
+    }
+    .extend-referrals-settings .ad-actions {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
