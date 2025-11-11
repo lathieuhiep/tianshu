@@ -148,3 +148,31 @@
         align-items: center;
     }
 }
+
+
+/* --- Trang Quy tắc Hiển thị --- */
+.extend-referrals-display-rules .er-actions {
+    margin: 1em 0;
+    display: flex;
+    gap: 0.5em;
+}
+
+.extend-referrals-display-rules .er-post-type-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.extend-referrals-display-rules .er-post-type-item {
+    margin-bottom: 6px;
+}
+
+.extend-referrals-display-rules .er-label-text {
+    font-weight: 500;
+    margin-left: 4px;
+}
+
+.extend-referrals-display-rules .er-slug {
+    color: #777;
+    font-size: 0.9em;
+}

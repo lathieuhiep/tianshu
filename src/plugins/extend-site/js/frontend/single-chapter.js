@@ -37,6 +37,11 @@
         const chapterID = parseInt($chapter.data('chapter-id'), 10);
         if (!chapterID) return;
 
+        // Kiểm tra TTL hợp lệ
+        if (typeof esSingleChapterAjax.ttl_valid !== 'undefined' && !esSingleChapterAjax.ttl_valid) {
+            return;
+        }
+
         /**
          * Giới hạn thời gian giữa 2 view hợp lệ (ms)
          * Mặc định: 1 giờ = 3600000 ms
@@ -79,7 +84,6 @@
 
         // ----- Delay ngẫu nhiên để chống spam bot -----
         const delay = 5000 + Math.random() * 5000; // 5–10s
-        console.info(`[VIEW] Chapter ${chapterID}: sending after ${delay.toFixed(0)}ms`);
 
         // ----- Gửi view sau delay -----
         setTimeout(async () => {
@@ -97,7 +101,6 @@
                     security: esSingleChapterAjax.nonce
                 },
                 success: function (res) {
-                    console.log(res);
                     if (res.success) {
                         console.info(`View counted: ${res.data.message}`);
                         // Ghi thời gian sau khi gửi thành công

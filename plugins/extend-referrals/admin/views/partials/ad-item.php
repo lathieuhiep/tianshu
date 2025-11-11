@@ -6,7 +6,7 @@
  * @var bool   $is_template
  */
 
-use ExtendReferrals\Repository\SettingsRepository;
+use ExtendReferrals\Admin\Pages\AdsSettingsPage;
 
 defined('ABSPATH') || exit;
 
@@ -14,7 +14,7 @@ defined('ABSPATH') || exit;
 $ad = $ad ?? [];
 
 // name attribute based on index
-$name_control = SettingsRepository::field_name("[ads][$index]");
+$name_control = AdsSettingsPage::field_name("[ads][$index]");
 
 // trạng thái kích hoạt
 $is_active = isset($ad['active'])

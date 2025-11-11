@@ -10,7 +10,7 @@
 
 namespace ExtendReferrals\Core;
 
-use ExtendReferrals\Repository\SettingsRepository;
+use ExtendReferrals\Admin\Pages\AdsSettingsPage;
 
 defined('ABSPATH') || exit;
 
@@ -25,10 +25,10 @@ class TTLManager {
      * @return int
      */
     public static function get_ttl(): int {
-        $options = SettingsRepository::get_options();
-        $ttl = isset($options['ttl']) ? (int) $options['ttl'] : SettingsRepository::TTL_DEFAULT;
+        $options = AdsSettingsPage::get_options();
+        $ttl = isset($options['ttl']) ? (int) $options['ttl'] : AdsSettingsPage::TTL_DEFAULT;
 
-        return $ttl > 0 ? $ttl : SettingsRepository::TTL_DEFAULT; // fallback 10 phút
+        return $ttl > 0 ? $ttl : AdsSettingsPage::TTL_DEFAULT; // fallback 10 phút
     }
 
     /**

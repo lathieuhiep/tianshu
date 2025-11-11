@@ -1,20 +1,20 @@
 <?php
-/**
- * Quản lý lưu dữ liệu thiết lập Affiliate Ads bằng Settings API.
- *
- * @package ExtendReferrals\Admin
- */
+namespace ExtendReferrals\Admin\Pages;
 
-namespace ExtendReferrals\Repository;
+use ExtendReferrals\Repository\AdsCache;
 
 defined('ABSPATH') || exit;
 
-class SettingsRepository {
-
-    public const OPTION_GROUP = 'extend_affiliate_ads_settings';
-    public const OPTION_KEY = 'extend_affiliate_ads_data';
+class AdsSettingsPage
+{
+    public const OPTION_GROUP = 'extend_referrals_ads_settings';
+    public const OPTION_KEY = 'extend_referrals_ads_data';
     public const TTL_DEFAULT = 10; // phút
 
+    /**
+     * Init Ads Settings Page hooks.
+     * @return void
+     */
     public static function init(): void {
         add_action('admin_init', [__CLASS__, 'register_settings']);
 
@@ -27,7 +27,8 @@ class SettingsRepository {
     }
 
     /**
-     * Đăng ký setting theo chuẩn WordPress.
+     * register setting options.
+     * @return void
      */
     public static function register_settings(): void {
         register_setting(
@@ -35,16 +36,16 @@ class SettingsRepository {
             self::OPTION_KEY,
             [
                 'sanitize_callback' => [__CLASS__, 'sanitize_settings'],
-                'default' => ['ttl' => 10, 'ads' => []],
+                'default' => ['ttl' => self::TTL_DEFAULT, 'ads' => []],
             ]
         );
 
     }
 
     /**
-     * Lọc và chuẩn hóa dữ liệu quảng cáo trước khi lưu.
+     * filter and sanitize ads data before save.
      *
-     * @param array $input Dữ liệu gửi từ form.
+     * @param array $input.
      * @return array
      */
     public static function sanitize_settings(array $input): array {
@@ -80,17 +81,17 @@ class SettingsRepository {
         }
 
         return [
-            'ttl' => max(1, (int)($input['ttl'] ?? 10)),
+            'ttl' => max(1, (int)($input['ttl'] ?? self::TTL_DEFAULT)),
             'ads' => $ads,
         ];
     }
 
     /**
-     * Lấy thiết lập hiện tại.
+     * get saved options.
      */
     public static function get_options(): array
     {
-        $defaults = ['ttl' => 10, 'ads' => []];
+        $defaults = ['ttl' => self::TTL_DEFAULT, 'ads' => []];
 
         $options  = get_option(self::OPTION_KEY, $defaults);
 
@@ -98,12 +99,23 @@ class SettingsRepository {
     }
 
     /**
-     * Tạo tên trường input dựa trên đường dẫn.
+     * create field name for settings array.
      *
-     * @param string $path Đường dẫn con trong mảng thiết lập.
+     * @param string $path
      * @return string
      */
     public static function field_name(string $path): string {
         return self::OPTION_KEY . $path;
+    }
+
+    /**
+     * Render the Ads Settings Page.
+     * @return void
+     */
+    public static function render_page(): void
+    {
+        $options = self::get_options();
+
+        include EXTEND_REFERRALS_PATH . 'admin/views/ads-page.php';
     }
 }

@@ -3,11 +3,8 @@
 
     /**
      * Gửi AJAX set TTL cookie khi người dùng click quảng cáo.
-     * Thêm log chi tiết để debug.
      */
     function setAffiliateTTL() {
-        console.log('[DEBUG] Sending AJAX to:', ExtendReferrals.ajax_url);
-
         return $.ajax({
             url: ExtendReferrals.ajax_url,
             type: 'POST',
@@ -15,41 +12,42 @@
             data: {
                 action: 'extend_referrals_set_ttl',
                 nonce: ExtendReferrals.nonce
-            },
-            success: function (res) {
-                console.log('[DEBUG] AJAX success response:', res);
-            },
-            error: function (xhr, status, error) {
-                console.error('[DEBUG] AJAX error:', status, error);
-                console.error('[DEBUG] Response text:', xhr.responseText);
             }
         });
     }
 
     /**
-     * Mở link affiliate
+     * Khi click quảng cáo
      */
-    function openAffiliateLink(link) {
-        console.log('[DEBUG] Opening link:', link);
-        window.open(link, '_blank');
+    function handleAffiliateClick(link) {
+        // Gửi TTL request song song
+        setAffiliateTTL()
+            .done((res) => {
+                smoothReload();
+            })
+            .fail((xhr, status, error) => {
+                smoothReload();
+            });
     }
 
     /**
-     * Khi click quảng cáo
+     * Reload mượt mà (giữ nguyên vị trí cuộn)
      */
-    function handleAffiliateClick(e, link) {
-        e.preventDefault();
-        console.log('[DEBUG] Clicked link:', link);
-        setAffiliateTTL()
-            .done((res) => console.log('[DEBUG] TTL set done', res))
-            .fail((xhr, status, error) => console.warn('[DEBUG] TTL set fail', status, error));
-        openAffiliateLink(link);
+    function smoothReload() {
+        const scrollY = window.scrollY; // Lưu lại vị trí hiện tại
+
+        // Reload nội dung (mềm hơn hard reload)
+        window.location.replace(window.location.href);
+
+        // Sau khi reload, browser tự giữ scroll (do dùng replace thay vì reload)
+        // Tuy nhiên để chắc chắn hơn (Safari, Firefox cũ):
+        setTimeout(() => window.scrollTo(0, scrollY), 300);
     }
 
     $(document).ready(function () {
-        $(document).on('click', '[data-affiliate-click]', function (e) {
+        $(document).on('click', '[data-affiliate-click]', function () {
             const link = $(this).attr('href') || '';
-            handleAffiliateClick(e, link);
+            handleAffiliateClick(link);
         });
     });
 

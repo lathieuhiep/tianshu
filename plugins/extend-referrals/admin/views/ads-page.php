@@ -6,9 +6,9 @@
  */
 
 // Lấy dữ liệu quảng cáo đã lưu
-use ExtendReferrals\Repository\SettingsRepository;
+use ExtendReferrals\Admin\Pages\AdsSettingsPage;
 
-$settings = SettingsRepository::get_options();
+$settings = AdsSettingsPage::get_options();
 $ads = $settings['ads'] ?? [];
 
 // Giá trị TTL global
@@ -16,14 +16,14 @@ $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
 ?>
 
 <div class="wrap extend-referrals-settings">
-    <h1><?php echo esc_html__('Cài đặt quảng cáo Affiliate', 'extend-referrals'); ?></h1>
+    <h1><?php echo esc_html__('Cài đặt quảng cáo', 'extend-referrals'); ?></h1>
 
     <p class="description">
         <?php echo esc_html__('Thêm, chỉnh sửa hoặc tạm tắt các quảng cáo hiển thị trên website. Mỗi quảng cáo gồm tiêu đề, liên kết, ảnh và trạng thái kích hoạt.', 'extend-referrals'); ?>
     </p>
 
     <form method="post" action="options.php">
-        <?php settings_fields(SettingsRepository::OPTION_GROUP); ?>
+        <?php settings_fields(AdsSettingsPage::OPTION_GROUP); ?>
 
         <div class="action-top">
             <!-- Thanh công cụ quảng cáo -->
@@ -38,18 +38,20 @@ $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
 
             <!-- TTL global -->
             <div class="ttl-setting">
-                <label for="extend_affiliate_ads_ttl" class="ttl-label">
+                <label for="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '_ttl'; ?>" class="ttl-label">
                     <?php esc_html_e('TTL (Time To Live):', 'extend-referrals'); ?>
                 </label>
 
                 <input type="number"
-                       id="extend_affiliate_ads_ttl"
-                       name="extend_affiliate_ads_data[ttl]"
+                       id="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '_ttl'; ?>"
+                       name="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '[ttl]'; ?>"
                        value="<?php echo esc_attr($ttl_value); ?>"
                        min="1"
                        step="1"
                        class="small-text" />
+
                 <span class="ttl-unit"><?php esc_html_e('phút', 'extend-referrals'); ?></span>
+
                 <p class="note">
                     <?php esc_html_e('Thời gian cache quảng cáo. Mặc định 10 phút. Giảm giá trị này nếu bạn thường xuyên cập nhật nội dung quảng cáo.', 'extend-referrals'); ?>
                 </p>

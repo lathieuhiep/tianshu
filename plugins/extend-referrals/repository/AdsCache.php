@@ -1,6 +1,8 @@
 <?php
 namespace ExtendReferrals\Repository;
 
+use ExtendReferrals\Admin\Pages\AdsSettingsPage;
+
 defined('ABSPATH') || exit;
 
 class AdsCache {
@@ -12,7 +14,7 @@ class AdsCache {
             return $cached;
         }
 
-        $settings = SettingsRepository::get_options();
+        $settings = AdsSettingsPage::get_options();
         $ads = array_filter($settings['ads'] ?? [], fn($ad) => !empty($ad['active']));
         set_transient(self::TRANSIENT_KEY, $ads, MINUTE_IN_SECONDS * (int)($settings['ttl'] ?? 10));
         return $ads;
