@@ -5,14 +5,24 @@
  * @package ExtendAffiliateAds\Admin
  */
 
-namespace ExtendAffiliateAds\Admin;
+namespace ExtendAffiliateAds\Repository;
 
 defined('ABSPATH') || exit;
 
-class AdminSettingsHandler {
+class SettingsRepository {
+
+    public const OPTION_GROUP = 'extend_affiliate_ads_settings';
+    public const OPTION_KEY = 'extend_affiliate_ads_data';
 
     public static function init(): void {
         add_action('admin_init', [__CLASS__, 'register_settings']);
+
+        // Xóa cache khi lưu cài đặt Affiliate Ads
+        add_action('update_option_' . self::OPTION_KEY, function () {
+            if (class_exists('\ExtendAffiliateAds\Repository\AdsCache')) {
+                AdsCache::clear();
+            }
+        }, 10, 0);
     }
 
     /**
@@ -20,8 +30,8 @@ class AdminSettingsHandler {
      */
     public static function register_settings(): void {
         register_setting(
-            'extend_affiliate_ads_settings',
-            'extend_affiliate_ads_data',
+            self::OPTION_GROUP,
+            self::OPTION_KEY,
             [
                 'sanitize_callback' => [__CLASS__, 'sanitize_settings'],
                 'default' => ['ttl' => 10, 'ads' => []],
@@ -36,9 +46,7 @@ class AdminSettingsHandler {
      * @param array $input Dữ liệu gửi từ form.
      * @return array
      */
-    public static function sanitize_settings($input): array {
-        error_log('=== RAW $_POST ===');
-        error_log(print_r($input, true));
+    public static function sanitize_settings(array $input): array {
         $ads = [];
 
         if (!empty($input['ads']) && is_array($input['ads'])) {
@@ -70,13 +78,6 @@ class AdminSettingsHandler {
             }
         }
 
-        error_log('=== SANITIZE RESULT ===');
-        error_log(print_r(
-            [
-                'ttl' => max(1, (int)($input['ttl'] ?? 10)),
-                'ads' => $ads,
-            ], true));
-
         return [
             'ttl' => max(1, (int)($input['ttl'] ?? 10)),
             'ads' => $ads,
@@ -84,10 +85,24 @@ class AdminSettingsHandler {
     }
 
     /**
-     * Chuẩn hóa giá trị TTL (phải >= 1).
+     * Lấy thiết lập hiện tại.
      */
-    public static function sanitize_ttl($ttl): int {
-        $ttl = (int) $ttl;
-        return max(1, $ttl);
+    public static function get_options(): array
+    {
+        $defaults = ['ttl' => 10, 'ads' => []];
+
+        $options  = get_option(self::OPTION_KEY, $defaults);
+
+        return wp_parse_args($options, $defaults);
+    }
+
+    /**
+     * Tạo tên trường input dựa trên đường dẫn.
+     *
+     * @param string $path Đường dẫn con trong mảng thiết lập.
+     * @return string
+     */
+    public static function field_name(string $path): string {
+        return self::OPTION_KEY . $path;
     }
 }

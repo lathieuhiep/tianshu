@@ -7,12 +7,13 @@
 
 namespace ExtendAffiliateAds\Admin;
 
+use ExtendAffiliateAds\Repository\SettingsRepository;
+
 defined('ABSPATH') || exit;
 
 class SettingsPage {
 
     public const MENU_SLUG = 'extend-affiliate-ads';
-    public const OPTION_KEY = 'extend_affiliate_ads_data';
 
     /**
      * Init admin hooks.
@@ -77,10 +78,7 @@ class SettingsPage {
      * Render settings page.
      */
     public static function render_page(): void {
-        $options = get_option(
-            self::OPTION_KEY,
-            ['ttl' => 10, 'ads' => []]
-        );
+        $options = SettingsRepository::get_options();
 
         include EXTEND_AFFILIATE_ADS_PATH . 'admin/views/settings-page.php';
     }

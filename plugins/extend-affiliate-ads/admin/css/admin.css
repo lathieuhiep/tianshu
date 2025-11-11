@@ -57,9 +57,19 @@
     border-color: #007cba;
 }
 
-.extend-affiliate-ads-settings .ad-item--inactive {
+.extend-affiliate-ads-settings .ad-item--inactive .ad-fields {
     opacity: 0.6;
-    background: #f9f9f9;
+}
+
+.extend-affiliate-ads-settings .ad-item--inactive .ad-fields input:focus {
+    border-color: #8c8f94;
+    box-shadow: none;
+    outline: none;
+}
+
+.extend-affiliate-ads-settings .ad-item--inactive .ad-fields button {
+    pointer-events: none;
+    cursor: not-allowed;
 }
 
 .extend-affiliate-ads-settings .ad-item--inactive input[disabled] {
@@ -114,12 +124,17 @@
 
 .extend-affiliate-ads-settings .remove-ad {
     border-color: #d63638;
-    color: #d63638;
+    color: #fff;
+    background-color: #d63638;
     transition: all 0.2s ease;
 }
 .extend-affiliate-ads-settings .remove-ad:hover {
     background: #d63638;
     color: #fff;
+}
+
+.extend-affiliate-ads-settings .submit {
+    text-align: right;
 }
 
 /* Responsive */

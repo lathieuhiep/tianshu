@@ -6,8 +6,13 @@
  */
 
 // Lấy dữ liệu quảng cáo đã lưu
-$settings = get_option('extend_affiliate_ads_data', []);
+use ExtendAffiliateAds\Repository\SettingsRepository;
+
+$settings = SettingsRepository::get_options();
 $ads = $settings['ads'] ?? [];
+
+// Giá trị TTL global
+$ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
 ?>
 
 <div class="wrap extend-affiliate-ads-settings">
@@ -18,7 +23,7 @@ $ads = $settings['ads'] ?? [];
     </p>
 
     <form method="post" action="options.php">
-        <?php settings_fields('extend_affiliate_ads_settings'); ?>
+        <?php settings_fields(SettingsRepository::OPTION_GROUP); ?>
 
         <div class="action-top">
             <!-- Thanh công cụ quảng cáo -->
@@ -33,12 +38,10 @@ $ads = $settings['ads'] ?? [];
 
             <!-- TTL global -->
             <div class="ttl-setting">
-                <?php
-                $ttl_value = !empty($settings['ttl']) ? (int) $settings['ttl'] : 10;
-                ?>
                 <label for="extend_affiliate_ads_ttl" class="ttl-label">
                     <?php esc_html_e('TTL (Time To Live):', 'extend-affiliate-ads'); ?>
                 </label>
+
                 <input type="number"
                        id="extend_affiliate_ads_ttl"
                        name="extend_affiliate_ads_data[ttl]"
@@ -88,6 +91,8 @@ $ads = $settings['ads'] ?? [];
     <?php
     $index = '__INDEX__';
     $is_template = true;
+    $ad = [];
+
     include EXTEND_AFFILIATE_ADS_PATH . 'admin/views/partials/ad-item.php';
     ?>
 </template>

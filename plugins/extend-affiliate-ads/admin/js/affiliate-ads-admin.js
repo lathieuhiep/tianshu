@@ -67,9 +67,15 @@
             const inputs = adItem.find('.ad-fields input');
             const isActive = checkbox.is(':checked');
 
-            inputs.prop('disabled', !isActive);
+            // Với các input text, url, number: chuyển sang readonly
+            inputs.each(function () {
+                const type = $(this).attr('type');
+                if (['text', 'url', 'number', 'hidden'].includes(type)) {
+                    $(this).prop('readonly', !isActive);
+                }
+            });
 
-            // Hiệu ứng mờ (nếu muốn)
+            // Hiệu ứng mờ toàn khối
             adItem.toggleClass('ad-item--inactive', !isActive);
         },
 
