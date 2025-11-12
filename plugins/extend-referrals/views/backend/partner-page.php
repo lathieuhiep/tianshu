@@ -15,7 +15,7 @@ $ads = $settings['ads'] ?? [];
 $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
 ?>
 
-<div class="wrap extend-referrals-settings">
+<div class="er-partner-settings wrap">
     <h1><?php echo esc_html__('Cài đặt quảng cáo', 'extend-referrals'); ?></h1>
 
     <p class="description">
@@ -27,7 +27,7 @@ $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
 
         <div class="action-top">
             <!-- Thanh công cụ quảng cáo -->
-            <div class="ads-toolbar">
+            <div class="toolbar">
                 <button type="button" class="button toggle-all-ads">
                     <?php esc_html_e('Tắt tất cả quảng cáo', 'extend-referrals'); ?>
                 </button>
@@ -38,23 +38,29 @@ $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
 
             <!-- TTL global -->
             <div class="ttl-setting">
-                <label for="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '_ttl'; ?>" class="ttl-label">
-                    <?php esc_html_e('TTL (Time To Live):', 'extend-referrals'); ?>
-                </label>
+                <div class="ttl-setting__options">
+                    <label for="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '_ttl'; ?>" class="ttl-label">
+                        <?php esc_html_e('TTL (Time To Live):', 'extend-referrals'); ?>
+                    </label>
 
-                <input type="number"
-                       id="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '_ttl'; ?>"
-                       name="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '[ttl]'; ?>"
-                       value="<?php echo esc_attr($ttl_value); ?>"
-                       min="1"
-                       step="1"
-                       class="small-text" />
+                    <input type="number"
+                           id="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '_ttl'; ?>"
+                           name="<?php echo esc_attr( AdsSettingsPage::OPTION_KEY ) . '[ttl]'; ?>"
+                           value="<?php echo esc_attr($ttl_value); ?>"
+                           min="1"
+                           step="1"
+                           class="small-text" />
 
-                <span class="ttl-unit"><?php esc_html_e('phút', 'extend-referrals'); ?></span>
+                    <span class="ttl-unit"><?php esc_html_e('phút', 'extend-referrals'); ?></span>
+                </div>
 
                 <p class="note">
                     <?php esc_html_e('Thời gian cache quảng cáo. Mặc định 10 phút. Giảm giá trị này nếu bạn thường xuyên cập nhật nội dung quảng cáo.', 'extend-referrals'); ?>
                 </p>
+            </div>
+
+            <div class="save-top">
+                <?php submit_button(esc_html__('Lưu thay đổi', 'extend-referrals')); ?>
             </div>
         </div>
 
@@ -64,7 +70,7 @@ $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
                 <?php foreach ($ads as $index => $ad) : ?>
                     <?php
                     $is_template = false;
-                    include EXTEND_REFERRALS_PATH . 'admin/views/partials/ad-item.php';
+                    include EXTEND_REFERRALS_PATH . 'views/backend/partials/partner-item.php';
                     ?>
                 <?php endforeach; ?>
             <?php else : ?>
@@ -72,7 +78,7 @@ $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
                 // Nếu chưa có quảng cáo nào → hiển thị 1 ô trống đầu tiên
                 $index = 0;
                 $is_template = false;
-                include EXTEND_REFERRALS_PATH . 'admin/views/partials/ad-item.php';
+                include EXTEND_REFERRALS_PATH . 'views/backend/partials/partner-item.php';
                 ?>
             <?php endif; ?>
         </div>
@@ -84,7 +90,9 @@ $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
             </button>
         </p>
 
-        <?php submit_button(esc_html__('Lưu thay đổi', 'extend-referrals')); ?>
+        <div class="save-bottom">
+            <?php submit_button(esc_html__('Lưu thay đổi', 'extend-referrals')); ?>
+        </div>
     </form>
 </div>
 
@@ -95,6 +103,6 @@ $ttl_value = isset($settings['ttl']) ? (int) $settings['ttl'] : 10;
     $is_template = true;
     $ad = [];
 
-    include EXTEND_REFERRALS_PATH . 'admin/views/partials/ad-item.php';
+    include EXTEND_REFERRALS_PATH . 'views/backend/partials/partner-item.php';
     ?>
 </template>

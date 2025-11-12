@@ -37,10 +37,10 @@ class AdsManager
          * Cho phép theme override file view
          * Tìm file trong: yourtheme/extend-referrals/ad-item.php
          */
-        $template = locate_template('extend-referrals/ad-item.php');
+        $template = locate_template('extend-referrals/partner-info.php');
 
         if (!$template || !file_exists($template)) {
-            $template = EXTEND_REFERRALS_PATH . 'views/ad-item.php';
+            $template = EXTEND_REFERRALS_PATH . 'views/frontend/partner-info.php';
         }
 
         // Biến $ad sẽ được sử dụng bên trong file view

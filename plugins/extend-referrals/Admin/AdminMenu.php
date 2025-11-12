@@ -32,7 +32,7 @@ class AdminMenu {
             self::PARENT_SLUG,
             [AdsSettingsPage::class, 'render_page'],
             'dashicons-megaphone',
-            9
+            10
         );
 
         // Submenus

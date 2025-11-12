@@ -27,7 +27,7 @@ $er-transition-normal: 0.2s ease;
 $er-transition-slow: 0.3s ease;
 
 // --- Tổng thể trang ---
-.extend-referrals-settings {
+.er-partner-settings {
     h1 {
         margin-bottom: $er-spacing-md;
         font-size: 23px;
@@ -38,7 +38,6 @@ $er-transition-slow: 0.3s ease;
     .description {
         color: $er-color-text;
         margin-bottom: $er-spacing-xl;
-        max-width: 800px;
         font-size: 14px;
         line-height: 1.6;
     }
@@ -58,6 +57,7 @@ $er-transition-slow: 0.3s ease;
         }
 
         .ttl-setting {
+            margin-top: 24px;
             display: flex;
             flex-direction: column;
             gap: $er-spacing-sm;
@@ -66,7 +66,6 @@ $er-transition-slow: 0.3s ease;
                 font-weight: 600;
                 color: $er-color-text-dark;
                 font-size: 14px;
-                margin-bottom: $er-spacing-xs;
             }
 
             > div,
@@ -78,11 +77,11 @@ $er-transition-slow: 0.3s ease;
             }
 
             input[type="number"] {
-                width: auto;
-                min-width: 80px;
+                max-width: 100px;
             }
 
             .ttl-unit {
+                display: inline-block;
                 color: $er-color-text-muted;
                 font-size: 13px;
             }
@@ -95,10 +94,17 @@ $er-transition-slow: 0.3s ease;
                 font-style: italic;
             }
         }
+
+        .save-top {
+            .submit {
+                margin: 24px 0 0;
+                padding: 0;
+            }
+        }
     }
 
     // Thanh công cụ (toolbar)
-    .ads-toolbar {
+    .toolbar {
         display: flex;
         align-items: center;
         gap: $er-spacing-md;
@@ -138,7 +144,7 @@ $er-transition-slow: 0.3s ease;
     }
 
     // Mỗi quảng cáo
-    .ad-item {
+    .partner-item {
         display: grid;
         grid-template-columns: 1fr auto;
         align-items: flex-start;
@@ -181,7 +187,7 @@ $er-transition-slow: 0.3s ease;
                 background: $er-color-text-muted;
             }
 
-            .ad-fields {
+            .fields {
                 opacity: 0.65;
 
                 input {
@@ -212,7 +218,7 @@ $er-transition-slow: 0.3s ease;
     }
 
     // Khối input
-    .ad-fields {
+    .fields {
         display: flex;
         flex-direction: column;
         gap: $er-spacing-md;
@@ -239,7 +245,7 @@ $er-transition-slow: 0.3s ease;
             }
         }
 
-        .ad-image-field {
+        .image-field {
             margin-top: $er-spacing-xs;
 
             .group-option {
@@ -252,12 +258,12 @@ $er-transition-slow: 0.3s ease;
                     display: none;
                 }
 
-                .ad-image-url {
+                .image-url {
                     flex: 1;
                     min-width: 200px;
                 }
 
-                .select-ad-image {
+                .select-image {
                     white-space: nowrap;
                     transition: all $er-transition-fast;
 
@@ -267,7 +273,7 @@ $er-transition-slow: 0.3s ease;
                 }
             }
 
-            .ad-image-preview {
+            .image-preview {
                 margin-top: $er-spacing-md;
                 display: inline-block;
 
@@ -293,7 +299,7 @@ $er-transition-slow: 0.3s ease;
     }
 
     // Khối hành động
-    .ad-actions {
+    .actions {
         display: flex;
         flex-direction: column;
         align-items: flex-end;
@@ -302,7 +308,7 @@ $er-transition-slow: 0.3s ease;
         padding-top: $er-spacing-xs;
     }
 
-    .ad-toggle {
+    .toggle {
         display: flex;
         align-items: center;
         gap: $er-spacing-sm;
@@ -382,21 +388,23 @@ $er-transition-slow: 0.3s ease;
     }
 
     // Nút submit
-    .submit {
-        text-align: right;
-        margin-top: $er-spacing-xl;
-        padding-top: $er-spacing-lg;
-        border-top: 1px solid $er-color-border;
+    .save-bottom {
+        .submit {
+            text-align: right;
+            margin-top: $er-spacing-xl;
+            padding-top: $er-spacing-lg;
+            border-top: 1px solid $er-color-border;
+        }
     }
 
     // Responsive
     @media (max-width: 782px) {
-        .ad-item {
+        .partner-item {
             grid-template-columns: 1fr;
             gap: $er-spacing-md;
         }
 
-        .ad-actions {
+        .actions {
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
@@ -423,21 +431,21 @@ $er-transition-slow: 0.3s ease;
             padding: $er-spacing-md;
         }
 
-        .ad-item {
+        .partner-item {
             padding: $er-spacing-md;
         }
 
-        .ad-fields {
-            .ad-image-field {
+        .fields {
+            .image-field {
                 .group-option {
                     flex-direction: column;
                     align-items: stretch;
 
-                    .ad-image-url {
+                    .image-url {
                         min-width: auto;
                     }
 
-                    .select-ad-image {
+                    .select-image {
                         width: 100%;
                     }
                 }
@@ -576,16 +584,6 @@ $er-transition-slow: 0.3s ease;
         padding: 2px 6px;
         border-radius: $er-border-radius-sm;
         font-weight: 400;
-    }
-
-    // Form wrapper styling
-    form {
-        .submit {
-            margin-top: $er-spacing-xl;
-            padding-top: $er-spacing-lg;
-            border-top: 1px solid $er-color-border;
-            text-align: right;
-        }
     }
 
     // Responsive

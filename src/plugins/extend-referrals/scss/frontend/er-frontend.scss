@@ -8,7 +8,7 @@ $er-spacing-md: 16px;
 $er-spacing-lg: 24px;
 $er-font-size-base: 18px;
 $er-font-size-small: 14px;
-$er-max-width-ad: 600px;
+$er-max-width-ad: 800px;
 $er-max-width-banner: 320px;
 $er-border-radius: 6px;
 $er-shadow: 0 2px 6px $er-color-shadow;
@@ -18,7 +18,7 @@ $er-scale-hover: 1.02;
 $er-breakpoint-mobile: 480px;
 
 // --- Extend Referrals: Frontend Ads Style ---
-.es-ad {
+.er-partner-info {
     text-align: center;
     margin: $er-spacing-lg auto;
     padding: $er-spacing-md;

@@ -71,6 +71,6 @@ class DisplayRulesPage
         $post_types = Helpers::get_all_post_types();
         $selected   = self::get_options();
 
-        include EXTEND_REFERRALS_PATH . 'admin/views/display-rules-page.php';
+        include EXTEND_REFERRALS_PATH . 'views/backend/display-rules-page.php';
     }
 }

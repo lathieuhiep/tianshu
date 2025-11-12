@@ -5,13 +5,13 @@
  * @var array $ad
  */
 ?>
-<div class="es-ad">
-    <p class="es-ad__desc">
+<div class="er-partner-info">
+    <p class="er-partner-info__desc">
         Mời Quý độc giả <strong>CLICK</strong> vào <strong>LIÊN KẾT HOẶC ẢNH</strong> bên dưới<br>
         <span class="highlight"><?php echo esc_html($ad['sub_title']); ?></span> để tiếp tục đọc toàn bộ chương truyện!
     </p>
 
-    <p class="es-ad__link">
+    <p class="er-partner-info__link">
         <a href="<?php echo esc_url($ad['link']); ?>"
            data-affiliate-click="1"
            target="_blank">
@@ -22,12 +22,12 @@
     <a href="<?php echo esc_url($ad['link']); ?>"
        data-affiliate-click="1"
        target="_blank"
-       class="es-ad__banner">
+       class="er-partner-info__image">
         <img src="<?php echo esc_url($ad['image']); ?>"
              alt="<?php echo esc_attr($ad['label']); ?>" />
     </a>
 
-    <p class="es-ad__footer">
+    <p class="er-partner-info__footer">
         Đội ngũ chúng tôi xin chân thành cảm ơn!
     </p>
 </div>

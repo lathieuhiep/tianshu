@@ -19,11 +19,8 @@ class Plugin {
      * Init plugin hooks.
      */
     public static function init(): void {
-        if (is_admin()) {
-            // Admin hooks
-            add_action('init', [AdminMenu::class, 'init']);
-            add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin']);
-        }
+        add_action('init', [AdminMenu::class, 'init']);
+        add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin']);
 
         if (! is_admin()) {
             // Frontend hooks

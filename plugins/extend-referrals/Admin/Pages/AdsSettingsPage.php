@@ -123,6 +123,6 @@ class AdsSettingsPage
     {
         $options = self::get_options();
 
-        include EXTEND_REFERRALS_PATH . 'admin/views/ads-page.php';
+        include EXTEND_REFERRALS_PATH . 'views/backend/partner-page.php';
     }
 }

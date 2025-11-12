@@ -30,20 +30,20 @@
             self.toggleAllBtn.on('click', () => self.toggleAll());
 
             // Khi bật/tắt từng quảng cáo
-            self.list.on('change', '.ad-toggle input', function () {
+            self.list.on('change', '.toggle-check input', function () {
                 self.toggleAdInputs($(this));
             });
         },
 
         addAd() {
-            const index = this.list.find('.ad-item').length;
+            const index = this.list.find('.partner-item').length;
             const newItem = this.template.replace(/__INDEX__/g, index);
             this.list.append(newItem);
             this.updateToggleAllVisibility();
         },
 
         removeAd(button) {
-            const ad = button.closest('.ad-item');
+            const ad = button.closest('.partner-item');
             ad.fadeOut(200, () => {
                 ad.remove();
                 this.updateToggleAllVisibility();
@@ -51,7 +51,7 @@
         },
 
         toggleAll() {
-            const checkboxes = this.list.find('.ad-toggle input[type="checkbox"]');
+            const checkboxes = this.list.find('.toggle-check input[type="checkbox"]');
             const anyActive = checkboxes.filter(':checked').length > 0;
             const newState = !anyActive;
             checkboxes.prop('checked', newState);
@@ -63,8 +63,8 @@
         },
 
         toggleAdInputs(checkbox) {
-            const adItem = checkbox.closest('.ad-item');
-            const inputs = adItem.find('.ad-fields input');
+            const adItem = checkbox.closest('.partner-item');
+            const inputs = adItem.find('.fields input');
             const isActive = checkbox.is(':checked');
 
             // Với các input text, url, number: chuyển sang readonly
@@ -76,11 +76,11 @@
             });
 
             // Hiệu ứng mờ toàn khối
-            adItem.toggleClass('ad-item--inactive', !isActive);
+            adItem.toggleClass('partner-item--inactive', !isActive);
         },
 
         updateToggleAllVisibility() {
-            const count = this.list.find('.ad-item').length;
+            const count = this.list.find('.partner-item').length;
             if (count === 0) {
                 this.toggleAllBtn.hide();
             } else {
@@ -101,10 +101,10 @@
         }
 
         const $button   = $(e.currentTarget);
-        const $field    = $button.closest('.ad-image-field');
-        const $input    = $field.find('.ad-image-url');
-        const $inputId  = $field.find('.ad-image-id');
-        const $preview  = $field.find('.ad-image-preview');
+        const $field    = $button.closest('.image-field');
+        const $input    = $field.find('.image-url');
+        const $inputId  = $field.find('.image-id');
+        const $preview  = $field.find('.image-preview');
 
         const frame = wp.media({
             frame: 'select',
@@ -142,14 +142,14 @@
     };
 
     // --- Gắn sự kiện chọn ảnh ---
-    $(document).on('click', '.select-ad-image', openMediaFrame);
+    $(document).on('click', '.select-image', openMediaFrame);
 
     // --- Cập nhật preview khi paste URL thủ công ---
-    $(document).on('change', '.ad-image-url', function () {
+    $(document).on('change', '.image-url', function () {
         const $input   = $(this);
-        const $field   = $input.closest('.ad-image-field');
-        const $inputId = $field.find('.ad-image-id');
-        const $preview = $field.find('.ad-image-preview');
+        const $field   = $input.closest('.image-field');
+        const $inputId = $field.find('.image-id');
+        const $preview = $field.find('.image-preview');
         const url      = $input.val().trim();
 
         if (url) {
