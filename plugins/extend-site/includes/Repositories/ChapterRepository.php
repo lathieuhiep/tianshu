@@ -159,7 +159,7 @@ class ChapterRepository
             return 0;
         }
 
-        $number = get_post_meta( $chapter_id, '_chapter_number', true );
+        $number = get_post_meta( $chapter_id, ChapterPostType::META_NUMBER, true );
 
         return $number ? (int) $number : 0;
     }

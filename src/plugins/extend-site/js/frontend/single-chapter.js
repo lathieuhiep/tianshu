@@ -1,11 +1,12 @@
 (function ($) {
     'use strict';
 
-    // Modal danh sách chương
+    /**
+     * Modal danh sách chương
+     */
     const modalChapterList = () => {
         $(document).on('click', '.es-btn-chapter-list', function (e) {
             e.preventDefault();
-
             const $modal = $('#es-chapter-modal');
             $modal.addClass('active').attr('aria-hidden', 'false');
             $('body').addClass('es-modal-open');
@@ -31,22 +32,22 @@
         });
     };
 
-    // Theo dõi lượt xem chương
+    /**
+     * Theo dõi lượt xem chương
+     */
     const viewTracker = async () => {
         const $chapter = $('.es-post');
         const chapterID = parseInt($chapter.data('chapter-id'), 10);
+        const chapterNumber = parseInt(esSingleChapterAjax.chapter_number || 0, 10);
+
         if (!chapterID) return;
 
-        // Kiểm tra TTL hợp lệ
-        if (typeof esSingleChapterAjax.ttl_valid !== 'undefined' && !esSingleChapterAjax.ttl_valid) {
+        // Chỉ bỏ qua khi TTL hết hạn & chương > 1
+        if (typeof esSingleChapterAjax.ttl_valid !== 'undefined' && !esSingleChapterAjax.ttl_valid && chapterNumber > 1) {
             return;
         }
 
-        /**
-         * Giới hạn thời gian giữa 2 view hợp lệ (ms)
-         * Mặc định: 1 giờ = 3600000 ms
-         * Khi test có thể giảm xuống 10000 (10 giây)
-         */
+        // Giới hạn thời gian giữa 2 view hợp lệ (ms)
         const TIME_LIMIT_MS = 60 * 60 * 1000; // 1h
 
         // ----- Tạo fingerprint duy nhất -----
@@ -103,7 +104,6 @@
                 success: function (res) {
                     if (res.success) {
                         console.info(`View counted: ${res.data.message}`);
-                        // Ghi thời gian sau khi gửi thành công
                         localStorage.setItem(key, Date.now().toString());
                     } else {
                         console.warn(`Skipped (server): ${res.data.message}`);
@@ -111,13 +111,13 @@
                 },
                 error: function (xhr, status, error) {
                     console.error('AJAX Error:', status, error);
-                    console.log('🧾 Response text:', xhr.responseText);
+                    console.log('Response text:', xhr.responseText);
                 },
             });
         }, delay);
     };
 
-    // Khởi tạo tất cả
+    // 🔹 Khởi tạo tất cả
     $(function () {
         modalChapterList();
         viewTracker();

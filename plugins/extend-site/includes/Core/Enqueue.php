@@ -4,6 +4,7 @@ namespace ExtendSite\Core;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
+use ExtendSite\Repositories\ChapterRepository;
 
 defined('ABSPATH') || exit;
 
@@ -195,6 +196,7 @@ class Enqueue
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce(EXTEND_SITE_NONCE_ACTION),
                 'ttl_valid' => !class_exists('\ExtendReferrals\Core\TTLManager') || !\ExtendReferrals\Core\TTLManager::is_expired(),
+                'chapter_number' => ChapterRepository::get_chapter_number(get_the_ID()),
             ]);
         }
 
