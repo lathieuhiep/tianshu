@@ -8,6 +8,7 @@
 namespace ExtendReferrals\Core;
 
 use ExtendReferrals\Admin\AdminMenu;
+use ExtendReferrals\Admin\Pages\DisplayRulesPage;
 use ExtendReferrals\Ajax\SetTTL;
 
 defined('ABSPATH') || exit;
@@ -75,6 +76,21 @@ class Plugin {
      * Enqueue frontend assets.
      */
     public static function enqueue_frontend(): void {
+        if (!is_singular()) {
+            return;
+        }
+
+        // Lấy post type hiện tại
+        $post_type = get_post_type();
+
+        // Lấy danh sách post type được phép hiển thị quảng cáo
+        $allowed_types = DisplayRulesPage::get_options();
+
+        // Nếu post type không nằm trong danh sách, bỏ qua luôn
+        if (!in_array($post_type, $allowed_types, true)) {
+            return;
+        }
+
         // load styles
         wp_enqueue_style(
             'er-frontend',
