@@ -1,0 +1,206 @@
+// --- Biến ---
+$er-color-primary: #007cba;
+$er-color-primary-hover: #005a9c;
+$er-color-danger: #d63638;
+$er-color-text: #555;
+$er-color-text-dark: #23282d;
+$er-color-text-muted: #777;
+$er-color-border: #dcdcdc;
+$er-color-border-focus: #8c8f94;
+$er-color-bg: #fff;
+$er-spacing-sm: 6px;
+$er-spacing-md: 12px;
+$er-spacing-lg: 24px;
+$er-border-radius-sm: 4px;
+$er-border-radius-md: 6px;
+$er-transition-fast: 0.2s ease;
+$er-transition-normal: 0.25s ease;
+
+// --- Tổng thể trang ---
+.extend-referrals-settings {
+    .description {
+        color: $er-color-text;
+        margin-bottom: 1rem;
+        max-width: 800px;
+    }
+
+    .action-top {
+        margin-bottom: $er-spacing-md;
+        padding: $er-spacing-md;
+        background: $er-color-bg;
+        border: 1px solid $er-color-border;
+        border-radius: $er-border-radius-md;
+
+        .ttl-setting .note {
+            margin: $er-spacing-md 0 0 0;
+        }
+    }
+
+    // Thanh công cụ (toolbar)
+    .ads-toolbar {
+        margin-bottom: $er-spacing-md;
+    }
+
+    .toggle-all-ads {
+        background-color: $er-color-primary;
+        color: $er-color-bg;
+        border: 1px solid $er-color-primary;
+        transition: background-color $er-transition-fast;
+
+        &:hover {
+            color: $er-color-bg;
+            background-color: $er-color-primary-hover;
+        }
+    }
+
+    // Danh sách quảng cáo
+    .affiliate-ads-list {
+        display: flex;
+        flex-direction: column;
+        gap: $er-spacing-lg; // spacing giữa các ad-item
+    }
+
+    // Mỗi quảng cáo
+    .ad-item {
+        display: grid;
+        grid-template-columns: 1fr auto; // trái: input, phải: hành động
+        align-items: flex-start;
+        gap: $er-spacing-lg;
+        background: $er-color-bg;
+        border: 1px solid $er-color-border;
+        border-radius: $er-border-radius-md;
+        padding: $er-spacing-md;
+        transition: border-color $er-transition-fast, background-color $er-transition-normal, opacity $er-transition-normal;
+
+        &:hover {
+            border-color: $er-color-primary;
+        }
+
+        &--inactive {
+            .ad-fields {
+                opacity: 0.6;
+
+                input:focus {
+                    border-color: $er-color-border-focus;
+                    box-shadow: none;
+                    outline: none;
+                }
+
+                button {
+                    pointer-events: none;
+                    cursor: not-allowed;
+                }
+            }
+
+            input[disabled] {
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    // Khối input
+    .ad-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        input {
+            width: 100%;
+        }
+
+        .ad-image-field {
+            .group-option {
+                display: flex;
+                align-items: center;
+                gap: $er-spacing-lg;
+            }
+
+            .ad-image-preview {
+                margin-top: $er-spacing-md;
+
+                img {
+                    padding: $er-spacing-md;
+                    max-width: 90px;
+                    width: 100%;
+                    border: 1px solid $er-color-border;
+                    border-radius: $er-border-radius-sm;
+                }
+            }
+        }
+    }
+
+    // Khối hành động
+    .ad-actions {
+        display: flex;
+        align-items: center;
+        gap: $er-spacing-lg;
+        min-width: 140px;
+    }
+
+    .ad-toggle {
+        display: flex;
+        align-items: center;
+        gap: $er-spacing-sm;
+        font-size: 13px;
+        color: $er-color-text-dark;
+        white-space: nowrap;
+    }
+
+    .remove-ad {
+        border-color: $er-color-danger;
+        color: $er-color-bg;
+        background-color: $er-color-danger;
+        transition: all $er-transition-fast;
+
+        &:hover {
+            background: $er-color-danger;
+            color: $er-color-bg;
+        }
+    }
+
+    .submit {
+        text-align: right;
+    }
+
+    // Responsive
+    @media (max-width: 700px) {
+        .ad-item {
+            grid-template-columns: 1fr;
+        }
+
+        .ad-actions {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+    }
+}
+
+// --- Trang Quy tắc Hiển thị ---
+.extend-referrals-display-rules {
+    .er-actions {
+        margin: 1em 0;
+        display: flex;
+        gap: 0.5em;
+    }
+
+    .er-post-type-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .er-post-type-item {
+        margin-bottom: $er-spacing-sm;
+    }
+
+    .er-label-text {
+        font-weight: 500;
+        margin-left: 4px;
+    }
+
+    .er-slug {
+        color: $er-color-text-muted;
+        font-size: 0.9em;
+    }
+}

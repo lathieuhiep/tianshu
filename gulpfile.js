@@ -18,6 +18,7 @@ const isDev = (process.env.NODE_ENV === 'development');
 
 // Biến đại diện cho tên plugin và theme
 const pluginExtendSite = 'extend-site';
+const pluginExtendReferrals = 'extend-referrals';
 const themeName = 'tianshu';
 
 // function build scss pipeline
@@ -69,6 +70,10 @@ const paths = {
         es: {
             scss: `src/plugins/${pluginExtendSite}/scss/`,
             js: `src/plugins/${pluginExtendSite}/js/`
+        },
+        er: {
+            scss: `src/plugins/${pluginExtendReferrals}/scss/`,
+            js: `src/plugins/${pluginExtendReferrals}/js/`
         }
     },
     shared: {
@@ -89,6 +94,10 @@ const paths = {
                 css: `plugins/${pluginExtendSite}/assets/css/`,
                 js: `plugins/${pluginExtendSite}/assets/js/`,
                 libs: `plugins/${pluginExtendSite}/assets/libs/`
+            },
+            er: {
+                css: `plugins/${pluginExtendReferrals}/assets/css/`,
+                js: `plugins/${pluginExtendReferrals}/assets/js/`
             }
         }
     }
@@ -341,6 +350,24 @@ const buildJPluginExtendSite = () => {
 }
 
 /*
+** Plugin Extend Referrals
+* */
+const buildStylePluginExtendReferrals = () => {
+    return buildScssPipeline({
+        input: `${paths.plugins.er.scss}**/*.scss`,
+        output: `${paths.output.plugins.er.css}`
+    })
+}
+
+const buildJsPluginExtendReferrals = () => {
+    return buildJsPipeline({
+        input: `${paths.plugins.er.js}**/*.js`,
+        output: `${paths.output.plugins.er.js}`
+    })
+}
+
+
+/*
 Task build project
 * */
 const buildProject = async () => {
@@ -407,13 +434,21 @@ const watchTask = () => {
         `${paths.plugins.es.scss}addons-elementor.scss`
     ], buildStyleAddonsPluginExtendSite)
 
-
     watch([
         `${paths.plugins.es.scss}abstracts/*.scss`,
         `${paths.plugins.es.scss}post-type/**/*.scss`
     ], buildStyleCPTPluginExtendSite)
 
     watch([`${paths.plugins.es.js}**/*.js`], buildJPluginExtendSite)
+
+    /*
+    ** plugin extend referrals watch
+    * */
+    watch([
+        `${paths.plugins.er.scss}**/*.scss`
+    ], buildStylePluginExtendReferrals)
+
+    watch([`${paths.plugins.er.js}**/*.js`], buildJsPluginExtendReferrals)
 
     // theme watch
     watch([

@@ -41,7 +41,7 @@ class Plugin {
         if (str_contains($hook_suffix, AdminMenu::PARENT_SLUG)) {
             wp_enqueue_style(
                 'extend-referrals-admin',
-                EXTEND_REFERRALS_URL . 'admin/css/admin.css',
+                EXTEND_REFERRALS_URL . 'assets/css/backend/er-admin.min.css',
                 [],
                 EXTEND_REFERRALS_VERSION
             );
@@ -53,7 +53,7 @@ class Plugin {
             // load repeater JS
             wp_enqueue_script(
                 'extend-referrals-admin',
-                EXTEND_REFERRALS_URL . 'admin/js/affiliate-ads-admin.js',
+                EXTEND_REFERRALS_URL . 'assets/js/backend/er-admin.min.js',
                 ['jquery'],
                 EXTEND_REFERRALS_VERSION,
                 true
@@ -78,7 +78,7 @@ class Plugin {
         // load styles
         wp_enqueue_style(
             'er-frontend',
-            EXTEND_REFERRALS_URL . 'assets/css/er-frontend.css',
+            EXTEND_REFERRALS_URL . 'assets/css/frontend/er-frontend.min.css',
             [],
             EXTEND_REFERRALS_VERSION
         );
@@ -86,7 +86,7 @@ class Plugin {
         // load script
         wp_enqueue_script(
             'er-frontend',
-            EXTEND_REFERRALS_URL . 'assets/js/er-frontend.js',
+            EXTEND_REFERRALS_URL . 'assets/js/frontend/er-frontend.min.js',
             ['jquery'],
             EXTEND_REFERRALS_VERSION,
             true

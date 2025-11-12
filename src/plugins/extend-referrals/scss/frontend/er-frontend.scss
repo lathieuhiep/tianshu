@@ -1,0 +1,74 @@
+// --- Biến ---
+$er-color-text: #444;
+$er-color-link: #c00;
+$er-color-footer: #0073aa;
+$er-color-shadow: rgba(0, 0, 0, 0.1);
+$er-spacing-sm: 12px;
+$er-spacing-md: 16px;
+$er-spacing-lg: 24px;
+$er-font-size-base: 16px;
+$er-font-size-small: 14px;
+$er-max-width-ad: 600px;
+$er-max-width-banner: 320px;
+$er-border-radius: 6px;
+$er-shadow: 0 2px 6px $er-color-shadow;
+$er-transition: transform 0.2s ease;
+$er-line-height: 1.5;
+$er-scale-hover: 1.02;
+$er-breakpoint-mobile: 480px;
+
+// --- Extend Referrals: Frontend Ads Style ---
+.es-ad {
+    text-align: center;
+    margin: $er-spacing-lg auto;
+    padding: $er-spacing-md;
+    max-width: $er-max-width-ad;
+
+    &__desc {
+        font-size: $er-font-size-base;
+        color: $er-color-text;
+        margin-bottom: $er-spacing-sm;
+        line-height: $er-line-height;
+    }
+
+    &__link {
+        a {
+            font-weight: bold;
+            color: $er-color-link;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    &__banner {
+        img {
+            max-width: $er-max-width-banner;
+            height: auto;
+            border-radius: $er-border-radius;
+            box-shadow: $er-shadow;
+            transition: $er-transition;
+        }
+
+        &:hover img {
+            transform: scale($er-scale-hover);
+        }
+    }
+
+    &__footer {
+        margin-top: $er-spacing-sm;
+        font-size: $er-font-size-small;
+        color: $er-color-footer;
+    }
+
+    // Responsive
+    @media (max-width: $er-breakpoint-mobile) {
+        padding: $er-spacing-sm;
+
+        &__desc {
+            font-size: $er-font-size-small;
+        }
+    }
+}
