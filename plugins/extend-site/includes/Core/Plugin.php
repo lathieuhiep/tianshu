@@ -5,7 +5,6 @@ namespace ExtendSite\Core;
 use ExtendSite\Admin\MenuPage;
 use ExtendSite\Admin\StoryChapterLink;
 use ExtendSite\Ajax\IncrementView;
-use ExtendSite\Ajax\LoadChapterNeighbors;
 use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\Ajax\LoadLatestStories;
 use ExtendSite\Ajax\LoadRanking;

@@ -37,6 +37,8 @@ class StoryChapterLink {
 
         // Preserve story_id filter in search box
         add_action('restrict_manage_posts', [__CLASS__, 'preserve_story_id_in_search']);
+
+        add_action('admin_head', [__CLASS__, 'hide_add_new_button_everywhere']);
     }
 
     /** -------------------------
@@ -294,5 +296,34 @@ class StoryChapterLink {
 
         $story_id = (int) $_GET['story_id'];
         echo '<input type="hidden" name="story_id" value="' . esc_attr($story_id) . '">';
+    }
+
+    /**
+     * Ẩn nút "Thêm mới" ở trang chỉnh sửa chương cụ thể.
+     */
+    public static function hide_add_new_button_everywhere(): void {
+        $screen = get_current_screen();
+        if (! $screen || $screen->post_type !== 'chapter') {
+            return;
+        }
+
+        // 1️⃣ Ẩn ở trang chỉnh sửa chương cụ thể
+        if ($screen->base === 'post') {
+            echo '<style>
+            .page-title-action,
+            #wp-admin-bar-new-chapter { display: none !important; }
+        </style>';
+            return;
+        }
+
+        // 2️⃣ Ẩn ở danh sách chương có story_id (ví dụ: edit.php?post_type=chapter&story_id=123)
+        if ($screen->base === 'edit' && !empty($_GET['story_id'])) {
+            echo '<style>
+            .page-title-action,
+            #wp-admin-bar-new-chapter { display: none !important; }
+        </style>';
+        }
+
+        // 3️⃣ Ngược lại: ở danh sách chung (edit.php?post_type=chapter) thì giữ nguyên (hiện bình thường)
     }
 }
