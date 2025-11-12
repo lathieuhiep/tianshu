@@ -36,6 +36,13 @@ $ad_item_class = $is_active ? 'ad-item' : 'ad-item ad-item--inactive';
                class="regular-text" aria-label="<?php esc_attr_e('Tiêu đề quảng cáo', 'extend-referrals'); ?>"
                 <?php echo esc_attr($readonly); ?> />
 
+        <input type="text"
+               name="<?php echo esc_attr( $name_control . '[sub_title]' ); ?>"
+               value="<?php echo esc_attr($ad['sub_title'] ?? ''); ?>"
+               placeholder="<?php esc_attr_e('Tiêu đề phụ', 'extend-referrals'); ?>"
+               class="regular-text" aria-label="<?php esc_attr_e('Tiêu đề quảng cáo', 'extend-referrals'); ?>"
+            <?php echo esc_attr($readonly); ?> />
+
         <input type="url"
                name="<?php echo esc_attr( $name_control . '[link]' ); ?>"
                value="<?php echo esc_attr($ad['link'] ?? ''); ?>"

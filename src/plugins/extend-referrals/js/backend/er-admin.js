@@ -165,4 +165,25 @@
         }
     });
 
+    // --- Form quy tắc hiển thị ---
+    const initDisplayRulesForm = () => {
+        const $form = $('.er-display-rules-form');
+        if (!$form.length) return;
+
+        const $checkboxes = $form.find('input[type="checkbox"]');
+        const $selectAllBtn = $form.find('.er-select-all');
+        const $unselectAllBtn = $form.find('.er-unselect-all');
+
+        $selectAllBtn.on('click', (e) => {
+            e.preventDefault();
+            $checkboxes.prop('checked', true);
+        });
+
+        $unselectAllBtn.on('click', (e) => {
+            e.preventDefault();
+            $checkboxes.prop('checked', false);
+        });
+    };
+    initDisplayRulesForm();
+
 })(jQuery);

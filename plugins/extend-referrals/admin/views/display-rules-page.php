@@ -63,23 +63,3 @@ defined('ABSPATH') || exit;
         <?php submit_button(esc_html__('Lưu thay đổi', 'extend-referrals')); ?>
     </form>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const form = document.querySelector('.er-display-rules-form');
-        if (!form) return;
-
-        const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-        const selectAllBtn = form.querySelector('.er-select-all');
-        const unselectAllBtn = form.querySelector('.er-unselect-all');
-
-        if (selectAllBtn && unselectAllBtn) {
-            selectAllBtn.addEventListener('click', () => {
-                checkboxes.forEach(cb => cb.checked = true);
-            });
-            unselectAllBtn.addEventListener('click', () => {
-                checkboxes.forEach(cb => cb.checked = false);
-            });
-        }
-    });
-</script>

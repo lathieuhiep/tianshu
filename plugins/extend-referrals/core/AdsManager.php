@@ -1,20 +1,23 @@
 <?php
+
 namespace ExtendReferrals\Core;
 
 use ExtendReferrals\Repository\AdsCache;
 
 defined('ABSPATH') || exit;
 
-class AdsManager {
+class AdsManager
+{
 
-    public static function inject_ads_into_content(string $content): string {
+    public static function inject_ads_into_content(string $content): string
+    {
         // Kiểm tra điều kiện hiển thị
-        if (! DisplayRules::should_display()) {
+        if (!DisplayRules::should_display()) {
             return $content;
         }
 
         // Nếu TTL còn hiệu lực → không hiển thị
-        if (! TTLManager::is_expired()) {
+        if (!TTLManager::is_expired()) {
             return $content;
         }
 
@@ -36,13 +39,14 @@ class AdsManager {
          */
         $template = locate_template('extend-referrals/ad-item.php');
 
-        if (! $template || ! file_exists($template)) {
+        if (!$template || !file_exists($template)) {
             $template = EXTEND_REFERRALS_PATH . 'views/ad-item.php';
         }
 
         // Biến $ad sẽ được sử dụng bên trong file view
         $ad = [
-            'link'  => esc_url($ad['link']),
+            'sub_title' => esc_html($ad['sub_title']),
+            'link' => esc_url($ad['link']),
             'image' => esc_url($ad['image']),
             'label' => esc_html($ad['label']),
         ];

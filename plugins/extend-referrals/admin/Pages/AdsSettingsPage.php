@@ -1,4 +1,5 @@
 <?php
+
 namespace ExtendReferrals\Admin\Pages;
 
 use ExtendReferrals\Repository\AdsCache;
@@ -15,7 +16,8 @@ class AdsSettingsPage
      * Init Ads Settings Page hooks.
      * @return void
      */
-    public static function init(): void {
+    public static function init(): void
+    {
         add_action('admin_init', [__CLASS__, 'register_settings']);
 
         // Xóa cache khi lưu cài đặt Affiliate Ads
@@ -30,7 +32,8 @@ class AdsSettingsPage
      * register setting options.
      * @return void
      */
-    public static function register_settings(): void {
+    public static function register_settings(): void
+    {
         register_setting(
             self::OPTION_GROUP,
             self::OPTION_KEY,
@@ -45,19 +48,21 @@ class AdsSettingsPage
     /**
      * filter and sanitize ads data before save.
      *
-     * @param array $input.
+     * @param array $input .
      * @return array
      */
-    public static function sanitize_settings(array $input): array {
+    public static function sanitize_settings(array $input): array
+    {
         $ads = [];
 
         if (!empty($input['ads']) && is_array($input['ads'])) {
             foreach ($input['ads'] as $index => $ad) {
-                $label    = sanitize_text_field($ad['label'] ?? '');
-                $link     = esc_url_raw($ad['link'] ?? '');
-                $image    = esc_url_raw($ad['image'] ?? '');
+                $label = sanitize_text_field($ad['label'] ?? '');
+                $sub_title = sanitize_text_field($ad['sub_title'] ?? '');
+                $link = esc_url_raw($ad['link'] ?? '');
+                $image = esc_url_raw($ad['image'] ?? '');
                 $image_id = isset($ad['image_id']) ? absint($ad['image_id']) : 0;
-                $active   = !empty($ad['active']) ? 1 : 0;
+                $active = !empty($ad['active']) ? 1 : 0;
 
                 // Nếu URL nội bộ mà chưa có ID → tự tìm ID
                 if ($image && !$image_id) {
@@ -70,11 +75,12 @@ class AdsSettingsPage
                 // Chỉ lưu những quảng cáo có dữ liệu hợp lệ
                 if ($label || $link || $image) {
                     $ads[$index] = [
-                        'label'    => $label,
-                        'link'     => $link,
-                        'image'    => $image,
+                        'label' => $label,
+                        'sub_title' => $sub_title,
+                        'link' => $link,
+                        'image' => $image,
                         'image_id' => $image_id,
-                        'active'   => $active,
+                        'active' => $active,
                     ];
                 }
             }
@@ -93,7 +99,7 @@ class AdsSettingsPage
     {
         $defaults = ['ttl' => self::TTL_DEFAULT, 'ads' => []];
 
-        $options  = get_option(self::OPTION_KEY, $defaults);
+        $options = get_option(self::OPTION_KEY, $defaults);
 
         return wp_parse_args($options, $defaults);
     }
@@ -104,7 +110,8 @@ class AdsSettingsPage
      * @param string $path
      * @return string
      */
-    public static function field_name(string $path): string {
+    public static function field_name(string $path): string
+    {
         return self::OPTION_KEY . $path;
     }
 

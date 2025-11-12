@@ -8,7 +8,7 @@
 <div class="es-ad">
     <p class="es-ad__desc">
         Mời Quý độc giả <strong>CLICK</strong> vào <strong>LIÊN KẾT HOẶC ẢNH</strong> bên dưới<br>
-        <span class="es-ad__highlight">MỞ ỨNG DỤNG SHOPEE</span> để tiếp tục đọc toàn bộ chương truyện!
+        <span class="highlight"><?php echo esc_html($ad['sub_title']); ?></span> để tiếp tục đọc toàn bộ chương truyện!
     </p>
 
     <p class="es-ad__link">

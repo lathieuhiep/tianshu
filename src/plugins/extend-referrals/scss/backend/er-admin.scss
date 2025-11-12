@@ -2,54 +2,130 @@
 $er-color-primary: #007cba;
 $er-color-primary-hover: #005a9c;
 $er-color-danger: #d63638;
+$er-color-danger-hover: #b32d2e;
+$er-color-success: #00a32a;
 $er-color-text: #555;
 $er-color-text-dark: #23282d;
 $er-color-text-muted: #777;
 $er-color-border: #dcdcdc;
-$er-color-border-focus: #8c8f94;
+$er-color-border-focus: #007cba;
+$er-color-border-hover: #b4b9be;
 $er-color-bg: #fff;
-$er-spacing-sm: 6px;
-$er-spacing-md: 12px;
+$er-color-bg-hover: #f6f7f7;
+$er-color-shadow: rgba(0, 0, 0, 0.05);
+$er-color-shadow-hover: rgba(0, 0, 0, 0.1);
+$er-spacing-xs: 4px;
+$er-spacing-sm: 8px;
+$er-spacing-md: 16px;
 $er-spacing-lg: 24px;
+$er-spacing-xl: 32px;
 $er-border-radius-sm: 4px;
 $er-border-radius-md: 6px;
-$er-transition-fast: 0.2s ease;
-$er-transition-normal: 0.25s ease;
+$er-border-radius-lg: 8px;
+$er-transition-fast: 0.15s ease;
+$er-transition-normal: 0.2s ease;
+$er-transition-slow: 0.3s ease;
 
 // --- Tổng thể trang ---
 .extend-referrals-settings {
+    h1 {
+        margin-bottom: $er-spacing-md;
+        font-size: 23px;
+        font-weight: 400;
+        line-height: 1.3;
+    }
+
     .description {
         color: $er-color-text;
-        margin-bottom: 1rem;
+        margin-bottom: $er-spacing-xl;
         max-width: 800px;
+        font-size: 14px;
+        line-height: 1.6;
     }
 
     .action-top {
-        margin-bottom: $er-spacing-md;
-        padding: $er-spacing-md;
+        margin-bottom: $er-spacing-xl;
+        padding: $er-spacing-lg;
         background: $er-color-bg;
         border: 1px solid $er-color-border;
         border-radius: $er-border-radius-md;
+        box-shadow: 0 1px 3px $er-color-shadow;
 
-        .ttl-setting .note {
-            margin: $er-spacing-md 0 0 0;
+        .ads-toolbar {
+            margin-bottom: $er-spacing-lg;
+            padding-bottom: $er-spacing-lg;
+            border-bottom: 1px solid $er-color-border;
+        }
+
+        .ttl-setting {
+            display: flex;
+            flex-direction: column;
+            gap: $er-spacing-sm;
+
+            .ttl-label {
+                font-weight: 600;
+                color: $er-color-text-dark;
+                font-size: 14px;
+                margin-bottom: $er-spacing-xs;
+            }
+
+            > div,
+            > label {
+                display: flex;
+                align-items: center;
+                gap: $er-spacing-sm;
+                flex-wrap: wrap;
+            }
+
+            input[type="number"] {
+                width: auto;
+                min-width: 80px;
+            }
+
+            .ttl-unit {
+                color: $er-color-text-muted;
+                font-size: 13px;
+            }
+
+            .note {
+                margin: $er-spacing-sm 0 0 0;
+                color: $er-color-text-muted;
+                font-size: 13px;
+                line-height: 1.5;
+                font-style: italic;
+            }
         }
     }
 
     // Thanh công cụ (toolbar)
     .ads-toolbar {
-        margin-bottom: $er-spacing-md;
+        display: flex;
+        align-items: center;
+        gap: $er-spacing-md;
+        flex-wrap: wrap;
     }
 
     .toggle-all-ads {
         background-color: $er-color-primary;
         color: $er-color-bg;
         border: 1px solid $er-color-primary;
-        transition: background-color $er-transition-fast;
+        border-radius: $er-border-radius-sm;
+        padding: 8px 16px;
+        font-weight: 500;
+        transition: all $er-transition-fast;
+        box-shadow: 0 1px 2px rgba(0, 124, 186, 0.2);
 
         &:hover {
             color: $er-color-bg;
             background-color: $er-color-primary-hover;
+            border-color: $er-color-primary-hover;
+            box-shadow: 0 2px 4px rgba(0, 124, 186, 0.3);
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 124, 186, 0.2);
         }
     }
 
@@ -57,43 +133,80 @@ $er-transition-normal: 0.25s ease;
     .affiliate-ads-list {
         display: flex;
         flex-direction: column;
-        gap: $er-spacing-lg; // spacing giữa các ad-item
+        gap: $er-spacing-lg;
+        margin-bottom: $er-spacing-xl;
     }
 
     // Mỗi quảng cáo
     .ad-item {
         display: grid;
-        grid-template-columns: 1fr auto; // trái: input, phải: hành động
+        grid-template-columns: 1fr auto;
         align-items: flex-start;
         gap: $er-spacing-lg;
         background: $er-color-bg;
         border: 1px solid $er-color-border;
         border-radius: $er-border-radius-md;
-        padding: $er-spacing-md;
-        transition: border-color $er-transition-fast, background-color $er-transition-normal, opacity $er-transition-normal;
+        padding: $er-spacing-lg;
+        transition: all $er-transition-normal;
+        box-shadow: 0 1px 3px $er-color-shadow;
+        position: relative;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: transparent;
+            border-radius: $er-border-radius-md 0 0 $er-border-radius-md;
+            transition: background $er-transition-normal;
+        }
 
         &:hover {
-            border-color: $er-color-primary;
+            border-color: $er-color-border-hover;
+            box-shadow: 0 2px 6px $er-color-shadow-hover;
+            transform: translateY(-1px);
+
+            &::before {
+                background: $er-color-primary;
+            }
         }
 
         &--inactive {
+            background: $er-color-bg-hover;
+            opacity: 0.85;
+
+            &::before {
+                background: $er-color-text-muted;
+            }
+
             .ad-fields {
-                opacity: 0.6;
+                opacity: 0.65;
+
+                input {
+                    background-color: #fafafa;
+                    color: $er-color-text-muted;
+                }
 
                 input:focus {
                     border-color: $er-color-border-focus;
                     box-shadow: none;
                     outline: none;
+                    background-color: $er-color-bg;
                 }
 
                 button {
                     pointer-events: none;
                     cursor: not-allowed;
+                    opacity: 0.6;
                 }
             }
 
-            input[disabled] {
+            input[disabled],
+            input[readonly] {
                 cursor: not-allowed;
+                background-color: #f5f5f5;
             }
         }
     }
@@ -102,28 +215,78 @@ $er-transition-normal: 0.25s ease;
     .ad-fields {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: $er-spacing-md;
 
-        input {
+        input[type="text"],
+        input[type="url"] {
             width: 100%;
+            padding: 8px 12px;
+            border: 1px solid $er-color-border;
+            border-radius: $er-border-radius-sm;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: all $er-transition-fast;
+            background-color: $er-color-bg;
+
+            &:focus {
+                border-color: $er-color-border-focus;
+                box-shadow: 0 0 0 1px $er-color-border-focus;
+                outline: none;
+            }
+
+            &::placeholder {
+                color: #a7aaad;
+            }
         }
 
         .ad-image-field {
+            margin-top: $er-spacing-xs;
+
             .group-option {
                 display: flex;
-                align-items: center;
-                gap: $er-spacing-lg;
+                align-items: flex-start;
+                gap: $er-spacing-md;
+                flex-wrap: wrap;
+
+                input[type="hidden"] {
+                    display: none;
+                }
+
+                .ad-image-url {
+                    flex: 1;
+                    min-width: 200px;
+                }
+
+                .select-ad-image {
+                    white-space: nowrap;
+                    transition: all $er-transition-fast;
+
+                    &:hover {
+                        background-color: $er-color-bg-hover;
+                    }
+                }
             }
 
             .ad-image-preview {
                 margin-top: $er-spacing-md;
+                display: inline-block;
 
                 img {
-                    padding: $er-spacing-md;
-                    max-width: 90px;
-                    width: 100%;
+                    padding: $er-spacing-sm;
+                    max-width: 120px;
+                    width: auto;
+                    height: auto;
                     border: 1px solid $er-color-border;
                     border-radius: $er-border-radius-sm;
+                    background: $er-color-bg-hover;
+                    transition: all $er-transition-normal;
+                    display: block;
+
+                    &:hover {
+                        border-color: $er-color-border-hover;
+                        box-shadow: 0 2px 8px $er-color-shadow;
+                        transform: scale(1.02);
+                    }
                 }
             }
         }
@@ -132,9 +295,11 @@ $er-transition-normal: 0.25s ease;
     // Khối hành động
     .ad-actions {
         display: flex;
-        align-items: center;
-        gap: $er-spacing-lg;
-        min-width: 140px;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: $er-spacing-md;
+        min-width: 160px;
+        padding-top: $er-spacing-xs;
     }
 
     .ad-toggle {
@@ -144,6 +309,23 @@ $er-transition-normal: 0.25s ease;
         font-size: 13px;
         color: $er-color-text-dark;
         white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+        padding: $er-spacing-xs $er-spacing-sm;
+        border-radius: $er-border-radius-sm;
+        transition: background-color $er-transition-fast;
+
+        &:hover {
+            background-color: $er-color-bg-hover;
+        }
+
+        input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: $er-color-primary;
+        }
     }
 
     .remove-ad {
@@ -151,56 +333,295 @@ $er-transition-normal: 0.25s ease;
         color: $er-color-bg;
         background-color: $er-color-danger;
         transition: all $er-transition-fast;
+        border-radius: $er-border-radius-sm;
+        font-weight: 500;
+        box-shadow: 0 1px 2px rgba(214, 54, 56, 0.2);
 
         &:hover {
-            background: $er-color-danger;
+            background: $er-color-danger-hover;
+            border-color: $er-color-danger-hover;
             color: $er-color-bg;
+            box-shadow: 0 2px 4px rgba(214, 54, 56, 0.3);
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(214, 54, 56, 0.2);
         }
     }
 
+    // Nút thêm mới
+    .add-ad-wrapper {
+        margin: $er-spacing-lg 0 $er-spacing-xl;
+        padding: $er-spacing-md 0;
+        border-top: 1px solid $er-color-border;
+
+        .add-ad {
+            background-color: $er-color-success;
+            color: $er-color-bg;
+            border-color: $er-color-success;
+            border-radius: $er-border-radius-sm;
+            font-weight: 500;
+            transition: all $er-transition-fast;
+            box-shadow: 0 1px 2px rgba(0, 163, 42, 0.2);
+
+            &:hover {
+                background-color: #008a20;
+                border-color: #008a20;
+                color: $er-color-bg;
+                box-shadow: 0 2px 4px rgba(0, 163, 42, 0.3);
+                transform: translateY(-1px);
+            }
+
+            &:active {
+                transform: translateY(0);
+                box-shadow: 0 1px 2px rgba(0, 163, 42, 0.2);
+            }
+        }
+    }
+
+    // Nút submit
     .submit {
         text-align: right;
+        margin-top: $er-spacing-xl;
+        padding-top: $er-spacing-lg;
+        border-top: 1px solid $er-color-border;
     }
 
     // Responsive
-    @media (max-width: 700px) {
+    @media (max-width: 782px) {
         .ad-item {
             grid-template-columns: 1fr;
+            gap: $er-spacing-md;
         }
 
         .ad-actions {
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
+            width: 100%;
+            min-width: auto;
+            padding-top: $er-spacing-md;
+            border-top: 1px solid $er-color-border;
+        }
+
+        .action-top {
+            .ttl-setting {
+                > div,
+                > label {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: $er-spacing-xs;
+                }
+            }
+        }
+    }
+
+    @media (max-width: 480px) {
+        .action-top {
+            padding: $er-spacing-md;
+        }
+
+        .ad-item {
+            padding: $er-spacing-md;
+        }
+
+        .ad-fields {
+            .ad-image-field {
+                .group-option {
+                    flex-direction: column;
+                    align-items: stretch;
+
+                    .ad-image-url {
+                        min-width: auto;
+                    }
+
+                    .select-ad-image {
+                        width: 100%;
+                    }
+                }
+            }
         }
     }
 }
 
 // --- Trang Quy tắc Hiển thị ---
 .extend-referrals-display-rules {
+    h1 {
+        margin-bottom: $er-spacing-md;
+        font-size: 23px;
+        font-weight: 400;
+        line-height: 1.3;
+    }
+
+    .description {
+        color: $er-color-text;
+        margin-bottom: $er-spacing-xl;
+        max-width: 800px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
     .er-actions {
-        margin: 1em 0;
+        margin: $er-spacing-lg 0;
+        padding: $er-spacing-md;
+        background: $er-color-bg;
+        border: 1px solid $er-color-border;
+        border-radius: $er-border-radius-md;
+        box-shadow: 0 1px 3px $er-color-shadow;
         display: flex;
-        gap: 0.5em;
+        gap: $er-spacing-sm;
+        flex-wrap: wrap;
+        align-items: center;
+
+        .button {
+            transition: all $er-transition-fast;
+
+            &:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px $er-color-shadow-hover;
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
     }
 
     .er-post-type-list {
         list-style: none;
         margin: 0;
         padding: 0;
+        display: grid;
+        gap: $er-spacing-md;
+        margin-top: $er-spacing-lg;
     }
 
     .er-post-type-item {
-        margin-bottom: $er-spacing-sm;
+        margin: 0;
+        padding: $er-spacing-md $er-spacing-lg;
+        background: $er-color-bg;
+        border: 1px solid $er-color-border;
+        border-radius: $er-border-radius-md;
+        box-shadow: 0 1px 3px $er-color-shadow;
+        transition: all $er-transition-normal;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: $er-spacing-md;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: transparent;
+            border-radius: $er-border-radius-md 0 0 $er-border-radius-md;
+            transition: background $er-transition-normal;
+        }
+
+        &:hover {
+            border-color: $er-color-border-hover;
+            box-shadow: 0 2px 6px $er-color-shadow-hover;
+            transform: translateY(-1px);
+
+            &::before {
+                background: $er-color-primary;
+            }
+        }
+
+        // Checkbox styling
+        input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: $er-color-primary;
+            flex-shrink: 0;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: $er-spacing-sm;
+            cursor: pointer;
+            flex: 1;
+            user-select: none;
+            padding: $er-spacing-xs 0;
+            transition: color $er-transition-fast;
+
+            &:hover {
+                color: $er-color-primary;
+            }
+        }
     }
 
     .er-label-text {
-        font-weight: 500;
-        margin-left: 4px;
+        font-weight: 600;
+        margin-left: 0;
+        color: $er-color-text-dark;
+        font-size: 14px;
+        line-height: 1.5;
     }
 
     .er-slug {
         color: $er-color-text-muted;
-        font-size: 0.9em;
+        font-size: 13px;
+        margin-left: $er-spacing-xs;
+        font-family: 'Courier New', monospace;
+        background: $er-color-bg-hover;
+        padding: 2px 6px;
+        border-radius: $er-border-radius-sm;
+        font-weight: 400;
+    }
+
+    // Form wrapper styling
+    form {
+        .submit {
+            margin-top: $er-spacing-xl;
+            padding-top: $er-spacing-lg;
+            border-top: 1px solid $er-color-border;
+            text-align: right;
+        }
+    }
+
+    // Responsive
+    @media (max-width: 782px) {
+        .er-actions {
+            flex-direction: column;
+            align-items: stretch;
+
+            .button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        .er-post-type-item {
+            padding: $er-spacing-md;
+            flex-wrap: wrap;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .er-post-type-item {
+            padding: $er-spacing-sm $er-spacing-md;
+            gap: $er-spacing-sm;
+
+            label {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: $er-spacing-xs;
+            }
+        }
+
+        .er-slug {
+            display: block;
+            margin-left: 0;
+            margin-top: $er-spacing-xs;
+        }
     }
 }
