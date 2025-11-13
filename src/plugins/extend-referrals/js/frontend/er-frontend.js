@@ -95,7 +95,7 @@
         // fallback nếu user cancel popup
         setTimeout(function () {
             if (!leftPage) {
-                showToast('Vui lòng MỞ SHOPEE để tiếp tục đọc chương ❤️');
+                showToast('Vui lòng MỞ Quảng Cáo để tiếp tục đọc chương ❤️');
             }
         }, 1500);
     });
