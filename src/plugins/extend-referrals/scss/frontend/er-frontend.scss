@@ -88,29 +88,43 @@ $er-breakpoint-mobile: 480px;
     }
 }
 
-/* === Toast Notification === */
-.er-toast {
-    position: fixed;
-    left: 50%;
-    bottom: 40px;
-    transform: translateX(-50%) translateY(20px);
-    background: rgba(0, 0, 0, 0.9);
-    color: #fff;
-    padding: 12px 18px;
-    border-radius: 8px;
-    font-size: 16px;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
-    z-index: 999999;
-    max-width: 90%;
+/* Popup Styles */
+.er-aff-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 99999;
+  display: none;
+
+  &__inner {
+    background: #fff;
+    padding: 24px 20px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 350px;
     text-align: center;
-}
+    margin: 120px auto 0;
+    position: relative;
+  }
 
-/* Khi hiện lên */
-.er-toast--show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    pointer-events: auto;
-}
+  &__close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #555;
+    padding: 0;
 
+    &:hover {
+      color: #000;
+    }
+  }
+
+  .heading {
+    font-size: 20px;
+  }
+}

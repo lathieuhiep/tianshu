@@ -354,14 +354,14 @@ const buildJPluginExtendSite = () => {
 * */
 const buildStylePluginExtendReferrals = () => {
     return buildScssPipeline({
-        input: `${paths.plugins.er.scss}**/*.scss`,
+        input: `${paths.plugins.er.scss}*/**.scss`,
         output: `${paths.output.plugins.er.css}`
     })
 }
 
 const buildJsPluginExtendReferrals = () => {
     return buildJsPipeline({
-        input: `${paths.plugins.er.js}**/*.js`,
+        input: `${paths.plugins.er.js}*/**.js`,
         output: `${paths.output.plugins.er.js}`
     })
 }
@@ -445,10 +445,10 @@ const watchTask = () => {
     ** plugin extend referrals watch
     * */
     watch([
-        `${paths.plugins.er.scss}**/*.scss`
+        `${paths.plugins.er.scss}*/**.scss`
     ], buildStylePluginExtendReferrals)
 
-    watch([`${paths.plugins.er.js}**/*.js`], buildJsPluginExtendReferrals)
+    watch([`${paths.plugins.er.js}*/**.js`], buildJsPluginExtendReferrals)
 
     // theme watch
     watch([
