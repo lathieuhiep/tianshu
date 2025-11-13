@@ -4,6 +4,9 @@
     let ttlChecked = false;
     let leftPage = false;
 
+    /**
+     * AJAX: Set TTL
+     */
     function setAffiliateTTL() {
         return $.ajax({
             url: ExtendReferrals.ajax_url,
@@ -16,6 +19,9 @@
         });
     }
 
+    /**
+     * AJAX: Check TTL
+     */
     function checkTTL() {
         if (ttlChecked) return;
         ttlChecked = true;
@@ -30,11 +36,10 @@
             }
         }).done(res => {
             if (res && res.expired === false) {
-
                 // Xóa quảng cáo
                 $('.er-partner-info').remove();
 
-                // Mở khóa nội dung
+                // Mở khóa content
                 $('#er-partner-content-wrapper').removeClass('er-locked');
 
                 // Xóa flag click
@@ -43,7 +48,9 @@
         });
     }
 
-    /** Toast Notification */
+    /**
+     * Toast notification
+     */
     function showToast(message) {
         let $toast = $('#er-toast');
 
@@ -57,11 +64,11 @@
 
         setTimeout(() => {
             $toast.removeClass('er-toast--show');
-        }, 4000);
+        }, 4000); // Hiển thị 4 giây
     }
 
     /**
-     * Click affiliate
+     * CLICK AFFILIATE
      */
     $(document).on('click', '[data-affiliate-click]', function (e) {
         e.preventDefault();
@@ -71,24 +78,38 @@
         const link = $(this).attr('href') || '';
         if (link) window.open(link, '_blank', 'noopener,noreferrer');
 
+        // --- AUTO-DELAY PRO MAX ---
+        const start = performance.now(); // bắt đầu đo thời gian AJAX
+
         setAffiliateTTL().always(() => {
             localStorage.setItem('er_aff_clicked', '1');
+
+            const elapsed = performance.now() - start; // AJAX mất bao lâu
+            const delay = Math.max(150, elapsed + 100); // buffer + minimum delay
+
+            setTimeout(() => {
+                checkTTL(); // Auto-unlock không chờ quay lại tab
+            }, delay);
         });
 
-        // Fallback: user cancel popup → nhắc nhẹ
+        // fallback nếu user cancel popup
         setTimeout(function () {
             if (!leftPage) {
-                showToast('Vui lòng MỞ Quảng Cáo để tiếp tục đọc chương ❤️');
+                showToast('Vui lòng MỞ SHOPEE để tiếp tục đọc chương ❤️');
             }
         }, 1500);
     });
 
-    /** User rời trang */
+    /**
+     * User rời tab
+     */
     window.addEventListener('blur', function () {
         leftPage = true;
     });
 
-    /** Quay lại tab (desktop) */
+    /**
+     * Desktop quay lại tab
+     */
     window.addEventListener('focus', function () {
         if (localStorage.getItem('er_aff_clicked') === '1') {
             leftPage = true;
@@ -96,7 +117,9 @@
         }
     });
 
-    /** Quay lại sau khi mở Shopee (mobile webview) */
+    /**
+     * Mobile quay lại (WebView)
+     */
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'hidden') {
             leftPage = true;
