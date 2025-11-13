@@ -135,7 +135,6 @@ class Plugin
 
         // ajax frontend
         LoadChapters::init();
-//        LoadChapterNeighbors::init();
         IncrementView::init();
         LoadRanking::init();
         LoadLatestStories::init();

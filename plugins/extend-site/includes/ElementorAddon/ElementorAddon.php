@@ -76,19 +76,5 @@ class ElementorAddon
         $widgets_manager->register(new StoryGrid());
         $widgets_manager->register(new StoryLatestGrid());
         $widgets_manager->register(new StoryTaxonomyList());
-
-        // register addon elementor here
-//        $widgets_manager->register(new CarouselImages());
-//
-//        if (function_exists('wpcf7')) {
-//            $widgets_manager->register(new ContactForm());
-//        }
-
-//        $widgets_manager->register(new HeadingEditor());
-//        $widgets_manager->register(new InfoBox());
-//        $widgets_manager->register(new IconTextGrid());
-//        $widgets_manager->register(new PostCarousel());
-//        $widgets_manager->register(new PostGrid());
-//        $widgets_manager->register(new TestimonialSlider());
     }
 }

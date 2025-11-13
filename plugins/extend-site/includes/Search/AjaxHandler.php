@@ -20,14 +20,6 @@ class AjaxHandler {
      * @return void
      */
     public static function handle(): void {
-        // Decode action trước khi làm gì thêm
-        if (isset($_POST['action'])) {
-            $decoded = base64_decode($_POST['action']);
-            if (!empty($decoded)) {
-                $_POST['action'] = $decoded;
-            }
-        }
-
         check_ajax_referer(EXTEND_SITE_NONCE_ACTION, 'security');
 
         $keyword = isset($_POST['keyword']) ? sanitize_text_field($_POST['keyword']) : '';
