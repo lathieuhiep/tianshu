@@ -123,7 +123,7 @@
                     type: 'POST',
                     dataType: 'json',
                     data: {
-                        action: 'es_search_story',
+                        action: 'es_story_search',
                         security: esWidget.nonce,
                         keyword: keyword,
                     },

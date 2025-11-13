@@ -2,6 +2,10 @@
 @import "../abstracts/abstracts";
 
 .#{$prefix-plugin-class}breadcrumb {
+  &__list {
+    flex-wrap: wrap;
+  }
+
   &__item {
     .#{$prefix-plugin-class}ic-mask {
       --#{$prefix-plugin-class}ic-width: 1.2rem;
