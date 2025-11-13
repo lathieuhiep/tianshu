@@ -111,7 +111,7 @@
 .#{$prefix-plugin-class}sticky-top {
   position: sticky;
   top: 10px;
-  z-index: 10;
+  z-index: 1;
 }
 
 // Utility to remove all margin from an element
