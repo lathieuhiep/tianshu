@@ -13,15 +13,13 @@
 
     <p class="er-partner-info__link">
         <a href="<?php echo esc_url($ad['link']); ?>"
-           data-affiliate-click="1"
-           target="_blank">
+           data-affiliate-click="1">
             <?php echo esc_html($ad['link']); ?>
         </a>
     </p>
 
     <a href="<?php echo esc_url($ad['link']); ?>"
        data-affiliate-click="1"
-       target="_blank"
        class="er-partner-info__image">
         <img src="<?php echo esc_url($ad['image']); ?>"
              alt="<?php echo esc_attr($ad['label']); ?>" />

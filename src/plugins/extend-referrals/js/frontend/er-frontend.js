@@ -1,6 +1,9 @@
 (function ($) {
     'use strict';
 
+    let ttlChecked = false;
+    let leftPage = false;
+
     function setAffiliateTTL() {
         return $.ajax({
             url: ExtendReferrals.ajax_url,
@@ -13,49 +16,97 @@
         });
     }
 
-    function getDevicePlatform() {
-        const ua = navigator.userAgent.toLowerCase();
-        if (/android/.test(ua)) return 'android';
-        if (/iphone|ipad|ipod/.test(ua)) return 'ios';
-        return 'desktop';
-    }
+    function checkTTL() {
+        if (ttlChecked) return;
+        ttlChecked = true;
 
-    function smoothReload() {
-        const scrollY = window.scrollY;
-        window.location.replace(window.location.href);
-        setTimeout(() => window.scrollTo(0, scrollY), 300);
-    }
+        $.ajax({
+            url: ExtendReferrals.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'extend_referrals_check_ttl',
+                nonce: ExtendReferrals.nonce
+            }
+        }).done(res => {
+            if (res && res.expired === false) {
 
-    function handleAffiliateClick(link) {
-        const platform = getDevicePlatform();
+                // Xóa quảng cáo
+                $('.er-partner-info').remove();
 
-        // Mở link ngay
-        if (link) {
-            window.open(link, '_blank', 'noopener,noreferrer');
-        }
+                // Mở khóa nội dung
+                $('#er-partner-content-wrapper').removeClass('er-locked');
 
-        // Gửi TTL song song + đánh dấu localStorage
-        setAffiliateTTL().always(() => {
-            localStorage.setItem('er_aff_clicked', '1');
-            if (platform === 'desktop') {
-                setTimeout(() => smoothReload(), 800);
+                // Xóa flag click
+                localStorage.removeItem('er_aff_clicked');
             }
         });
     }
 
-    // Khi người dùng quay lại tab (từ app/store)
+    /** Toast Notification */
+    function showToast(message) {
+        let $toast = $('#er-toast');
+
+        if ($toast.length === 0) {
+            $('body').append('<div id="er-toast" class="er-toast"></div>');
+            $toast = $('#er-toast');
+        }
+
+        $toast.text(message);
+        $toast.addClass('er-toast--show');
+
+        setTimeout(() => {
+            $toast.removeClass('er-toast--show');
+        }, 4000);
+    }
+
+    /**
+     * Click affiliate
+     */
+    $(document).on('click', '[data-affiliate-click]', function (e) {
+        e.preventDefault();
+
+        leftPage = false;
+
+        const link = $(this).attr('href') || '';
+        if (link) window.open(link, '_blank', 'noopener,noreferrer');
+
+        setAffiliateTTL().always(() => {
+            localStorage.setItem('er_aff_clicked', '1');
+        });
+
+        // Fallback: user cancel popup → nhắc nhẹ
+        setTimeout(function () {
+            if (!leftPage) {
+                showToast('Vui lòng MỞ Quảng Cáo để tiếp tục đọc chương ❤️');
+            }
+        }, 1500);
+    });
+
+    /** User rời trang */
+    window.addEventListener('blur', function () {
+        leftPage = true;
+    });
+
+    /** Quay lại tab (desktop) */
     window.addEventListener('focus', function () {
         if (localStorage.getItem('er_aff_clicked') === '1') {
-            localStorage.removeItem('er_aff_clicked');
-            smoothReload();
+            leftPage = true;
+            checkTTL();
         }
     });
 
-    $(document).ready(function () {
-        $(document).on('click', '[data-affiliate-click]', function () {
-            const link = $(this).attr('href') || '';
-            handleAffiliateClick(link);
-        });
+    /** Quay lại sau khi mở Shopee (mobile webview) */
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+            leftPage = true;
+        }
+
+        if (document.visibilityState === 'visible') {
+            if (localStorage.getItem('er_aff_clicked') === '1') {
+                checkTTL();
+            }
+        }
     });
 
 })(jQuery);

@@ -9,6 +9,7 @@ namespace ExtendReferrals\Core;
 
 use ExtendReferrals\Admin\AdminMenu;
 use ExtendReferrals\Admin\Pages\DisplayRulesPage;
+use ExtendReferrals\Ajax\CheckTTL;
 use ExtendReferrals\Ajax\SetTTL;
 
 defined('ABSPATH') || exit;
@@ -121,5 +122,6 @@ class Plugin {
     private static function load_ajax(): void
     {
         SetTTL::init();
+        CheckTTL::init();
     }
 }

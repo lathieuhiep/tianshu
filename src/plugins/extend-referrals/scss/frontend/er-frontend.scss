@@ -77,3 +77,40 @@ $er-breakpoint-mobile: 480px;
         }
     }
 }
+
+#er-partner-content-wrapper {
+    &.er-locked {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        pointer-events: none;
+        transition: all .3s ease;
+    }
+}
+
+/* === Toast Notification === */
+.er-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+    z-index: 999999;
+    max-width: 90%;
+    text-align: center;
+}
+
+/* Khi hiện lên */
+.er-toast--show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
