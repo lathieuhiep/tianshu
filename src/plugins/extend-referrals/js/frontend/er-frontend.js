@@ -2,118 +2,43 @@
     'use strict';
 
     /**
-     * AJAX: Set TTL (count click)
+     * Gửi TTL bằng navigator.sendBeacon
      */
-    function setAffiliateTTL() {
-        return $.ajax({
-            url: ExtendReferrals.ajax_url,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'extend_referrals_set_ttl',
-                nonce: ExtendReferrals.nonce
-            }
-        });
+    function sendAffiliateTTL() {
+
+        // Endpoint AJAX
+        const url = ExtendReferrals.ajax_url;
+
+        // FormData để gửi kèm action & nonce
+        const data = new FormData();
+        data.append('action', 'extend_referrals_set_ttl');
+        data.append('nonce', ExtendReferrals.nonce);
+
+        // Gửi ngay lập tức trước khi rời trang
+        navigator.sendBeacon(url, data);
     }
 
-    /**
-     * OPEN LINK (Android / iOS / Desktop)
-     */
-    function openAffiliateLink(link) {
-        const ua = navigator.userAgent.toLowerCase();
-
-        // ANDROID
-        if (ua.includes('android')) {
-            // Intent mở Chrome → thoát WebView Messenger, Zalo, TikTok
-            const intentLink =
-                `intent://${link.replace(/^https?:\/\//, '')}` +
-                `#Intent;scheme=https;package=com.android.chrome;end`;
-
-            window.location.href = intentLink;
-            return;
-        }
-
-        // IOS
-        if (/iphone|ipad|ipod/.test(ua)) {
-            // Mở Chrome iOS
-            const chromeURL = `googlechrome://${link.replace(/^https?:\/\//, '')}`;
-            window.location.href = chromeURL;
-
-            // Fallback Safari
-            setTimeout(() => {
-                window.location.href = link;
-            }, 300);
-
-            return;
-        }
-
-        // DESKTOP
-        window.open(link, '_blank', 'noopener,noreferrer');
-    }
 
     /**
-     * MOBILE POPUP + AUTO OPEN
+     * Xử lý khi click quảng cáo
      */
-    function showAffiliatePopup(link) {
-        const $popup = $('#er-aff-popup');
+    $(document).on('click', '[data-affiliate-click]', function () {
 
-        $popup.fadeIn(150);
-
-        // Auto-open Shopee
-        const openTimer = setTimeout(() => {
-            openAffiliateLink(link);
-        }, 200);
-
-        // Auto-close popup
-        const closeTimer = setTimeout(() => {
-            $popup.fadeOut(250);
-        }, 1000);
-
-        // Manual close
-        $popup.find('.er-aff-popup__close')
-            .off('click')
-            .on('click', function () {
-                clearTimeout(openTimer);
-                clearTimeout(closeTimer);
-                $popup.fadeOut(250);
-            });
-    }
-
-    /**
-     * CLICK AFFILIATE FINAL FLOW
-     */
-    $(document).on('click', '[data-affiliate-click]', function (e) {
-        e.preventDefault();
-
-        const link = $(this).attr('href');
-        const ua = navigator.userAgent.toLowerCase();
-        const isMobile = /android|iphone|ipad|ipod/.test(ua);
-
-        // Chống double click mở 2 lần
+        // Chống double click
         if ($(this).data('aff-opening')) return;
         $(this).data('aff-opening', true);
 
-        // 1) Gửi TTL (count click)
-        setAffiliateTTL().always(() => {
+        // Lưu trạng thái click ở client
+        localStorage.setItem('er_aff_clicked', '1');
 
-            // LocalStorage recording
-            localStorage.setItem('er_aff_clicked', '1');
+        // Gửi TTL bằng sendBeacon (an toàn khi unload trang)
+        sendAffiliateTTL();
 
-            // Remove ad/banner
-            $('.er-partner-info').remove();
+        // Xóa banner quảng cáo
+        $('.er-partner-info').remove();
 
-            // Unlock content
-            $('#er-partner-content-wrapper').removeClass('er-locked');
-
-            // 2) DESKTOP → mở thẳng tab mới (không popup)
-            if (!isMobile) {
-                window.open(link, '_blank', 'noopener,noreferrer');
-                return;
-            }
-
-            // 3) MOBILE → popup + auto-open
-            showAffiliatePopup(link);
-        });
+        // Mở khóa nội dung
+        $('#er-partner-content-wrapper').removeClass('er-locked');
     });
 
 })(jQuery);
