@@ -9,8 +9,6 @@ namespace ExtendReferrals\Core;
 
 use ExtendReferrals\Admin\AdminMenu;
 use ExtendReferrals\Admin\Pages\DisplayRulesPage;
-use ExtendReferrals\Ajax\CheckTTL;
-use ExtendReferrals\Ajax\SetTTL;
 
 defined('ABSPATH') || exit;
 
@@ -28,8 +26,6 @@ class Plugin {
             add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_frontend']);
             add_filter('the_content', [AdsManager::class, 'inject_ads_into_content']);
         }
-
-        self::load_ajax();
     }
 
     /**
@@ -114,14 +110,5 @@ class Plugin {
                 'nonce'    => wp_create_nonce('extend_referrals_nonce'),
             ]
         );
-    }
-
-    /**
-     * Load AJAX handlers.
-     */
-    private static function load_ajax(): void
-    {
-        SetTTL::init();
-        CheckTTL::init();
     }
 }
