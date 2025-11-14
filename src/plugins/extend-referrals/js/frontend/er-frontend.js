@@ -1,44 +1,73 @@
 (function ($) {
     'use strict';
 
-    /**
-     * Gửi TTL bằng navigator.sendBeacon
-     */
-    function sendAffiliateTTL() {
+    const TTL_COOKIE = "extend_referrals_ttl";
 
-        // Endpoint AJAX
-        const url = ExtendReferrals.ajax_url;
-
-        // FormData để gửi kèm action & nonce
-        const data = new FormData();
-        data.append('action', 'extend_referrals_set_ttl');
-        data.append('nonce', ExtendReferrals.nonce);
-
-        // Gửi ngay lập tức trước khi rời trang
-        navigator.sendBeacon(url, data);
+    function getTTL() {
+        const match = document.cookie.match(/extend_referrals_ttl=(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
     }
 
+    function setTTL(ttlMinutes) {
+        const ttlSeconds = ttlMinutes * 60;
+        const now = Date.now();
+
+        document.cookie =
+            TTL_COOKIE + "=" + now +
+            "; path=/; max-age=" + ttlSeconds +
+            "; samesite=Lax";
+    }
+
+    function isTTLExpired(ttlMinutes) {
+        const saved = getTTL();
+        if (!saved) return true;
+
+        const ttlMs = ttlMinutes * 60 * 1000;
+        return (Date.now() - saved) > ttlMs;
+    }
 
     /**
-     * Xử lý khi click quảng cáo
+     * CLICK: set TTL + switch UI
      */
     $(document).on('click', '[data-affiliate-click]', function () {
 
-        // Chống double click
         if ($(this).data('aff-opening')) return;
         $(this).data('aff-opening', true);
 
-        // Lưu trạng thái click ở client
-        localStorage.setItem('er_aff_clicked', '1');
+        const $box = $('.er-partner-info');
+        const $content = $('#er-partner-content-wrapper');
+        const ttl = parseInt($box.data('ttl'), 10) || 10;
 
-        // Gửi TTL bằng sendBeacon (an toàn khi unload trang)
-        sendAffiliateTTL();
+        setTTL(ttl);
 
-        // Xóa banner quảng cáo
-        $('.er-partner-info').remove();
+        // Ẩn quảng cáo bằng hidden
+        $box.prop('hidden', true);
 
-        // Mở khóa nội dung
-        $('#er-partner-content-wrapper').removeClass('er-locked');
+        // Hiện nội dung
+        $content.prop('hidden', false);
+    });
+
+    /**
+     * LOAD TRANG → kiểm tra TTL và ẩn/hiện
+     */
+    $(document).ready(function () {
+
+        const $box = $('.er-partner-info');
+        const $content = $('#er-partner-content-wrapper');
+
+        if (!$box.length || !$content.length) return;
+
+        const ttl = parseInt($box.data('ttl'), 10) || 10;
+
+        if (isTTLExpired(ttl)) {
+            // TTL hết → show quảng cáo, hide content
+            $box.prop('hidden', false);
+            $content.prop('hidden', true);
+        } else {
+            // TTL còn → ẩn quảng cáo, hiện content
+            $box.prop('hidden', true);
+            $content.prop('hidden', false);
+        }
     });
 
 })(jQuery);
