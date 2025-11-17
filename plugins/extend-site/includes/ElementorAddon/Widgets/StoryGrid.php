@@ -129,8 +129,8 @@ class StoryGrid extends Widget_Base
                 'type' => Controls_Manager::SELECT,
                 'default' => 'DESC',
                 'options' => [
-                    'DESC' => esc_html__('Tăng dần', 'extend-site'),
-                    'ASC' => esc_html__('Giảm dần', 'extend-site'),
+                    'DESC' => esc_html__('Giảm dần', 'extend-site'),
+                    'ASC' => esc_html__('Tăng dần', 'extend-site'),
                 ],
             ]
         );
