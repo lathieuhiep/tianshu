@@ -77,8 +77,8 @@ class LoadLatestStories
         ?>
 
             <div class="item">
-                <div class="thumbnail es-ratio-4-5">
-                    <a class="es-ratio-thumb" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
+                <div class="thumbnail">
+                    <a class="image-link" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
                         <?php
                         if (has_post_thumbnail()) :
                             the_post_thumbnail( $image_size );

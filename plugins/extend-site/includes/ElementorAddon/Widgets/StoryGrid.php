@@ -195,7 +195,35 @@ class StoryGrid extends Widget_Base
 
         $this->addImageSizeControl($this);
 
-        $this->addImageRatioControl($this);
+        $this->add_responsive_control(
+            'thumb_height',
+            [
+                'label' => esc_html__( 'Chiều cao khối ảnh', 'extend-site' ),
+                'type'  => Controls_Manager::SLIDER,
+                'size_units' => [ 'px', '%', 'vh', 'custom' ],
+                'range' => [
+                    'px' => [
+                        'min' => 50,
+                        'max' => 600,
+                    ],
+                    '%' => [
+                        'min' => 10,
+                        'max' => 100,
+                    ],
+                    'vh' => [
+                        'min' => 10,
+                        'max' => 100,
+                    ],
+                ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 280,
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .es-addon-story-grid .image-link' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
 
         $this->end_controls_section();
 
@@ -402,14 +430,14 @@ class StoryGrid extends Widget_Base
                     $story_views = ViewTracker::format_short( ViewTracker::get_story_views( get_the_ID() ) );
                 ?>
                     <div class="item">
-                        <div class="thumbnail es-ratio-4-5">
+                        <div class="thumbnail">
                             <?php if ( $show_status_label === 'yes' && $text_status_label ) : ?>
                                 <div class="status-label">
                                     <?php echo esc_html( $text_status_label ); ?>
                                 </div>
                             <?php endif; ?>
 
-                            <a class="es-ratio-thumb" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
+                            <a class="image-link" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
                                 <?php
                                 if (has_post_thumbnail()) :
                                     the_post_thumbnail( $image_size );

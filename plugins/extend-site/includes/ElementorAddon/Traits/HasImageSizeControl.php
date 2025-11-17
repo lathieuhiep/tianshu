@@ -44,13 +44,13 @@ trait HasImageSizeControl
      *
      * @param object $widget The Elementor widget instance (usually $this).
      * @param string $control_id The ID for the control. Default is 'image_ratio'.
-     * @param string $default The default image ratio. Default is '16-9'.
+     * @param string $default The default image ratio. Default is '4:5'.
      * @param array $args Additional arguments to merge with the base args.
      */
     protected function addImageRatioControl(
         object $widget,
         string $control_id = 'image_ratio',
-        string $default = '16-9',
+        string $default = '4:5',
         array  $args = []
     ): void
     {
@@ -61,6 +61,7 @@ trait HasImageSizeControl
                 '16-9' => '16:9',
                 '4-3' => '4:3',
                 '1-1' => '1:1',
+                '4-5' => '4:5',
                 '3-4' => '3:4',
                 '2-3' => '2:3',
                 'auto' => esc_html__('Tự động', 'extend-site'),
