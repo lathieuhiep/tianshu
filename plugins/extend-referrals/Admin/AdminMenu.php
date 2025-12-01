@@ -2,12 +2,14 @@
 namespace ExtendReferrals\Admin;
 
 use ExtendReferrals\Admin\Pages\AdsSettingsPage;
+use ExtendReferrals\Admin\Pages\AdvancedRulesPage;
 use ExtendReferrals\Admin\Pages\DisplayRulesPage;
 
 defined('ABSPATH') || exit;
 
 class AdminMenu {
 
+    public const MANAGE_OPTIONS = 'manage_options';
     public const PARENT_SLUG = 'extend-referrals';
 
     /**
@@ -21,6 +23,7 @@ class AdminMenu {
         // load Page
         AdsSettingsPage::init();
         DisplayRulesPage::init();
+        AdvancedRulesPage::init();
     }
 
     public static function register(): void {
@@ -28,7 +31,7 @@ class AdminMenu {
         add_menu_page(
             esc_html__('Extend Referrals', 'extend-referrals'),
             esc_html__('Extend Referrals', 'extend-referrals'),
-            'manage_options',
+            self::MANAGE_OPTIONS,
             self::PARENT_SLUG,
             [AdsSettingsPage::class, 'render_page'],
             'dashicons-megaphone',
@@ -40,7 +43,7 @@ class AdminMenu {
             self::PARENT_SLUG,
             esc_html__('Quảng cáo đối tác', 'extend-referrals'),
             esc_html__('Quảng cáo đối tác', 'extend-referrals'),
-            'manage_options',
+            self::MANAGE_OPTIONS,
             self::PARENT_SLUG,
             [AdsSettingsPage::class, 'render_page']
         );
@@ -49,9 +52,19 @@ class AdminMenu {
             self::PARENT_SLUG,
             esc_html__('Thiết lập hiển thị', 'extend-referrals'),
             esc_html__('Thiết lập hiển thị', 'extend-referrals'),
-            'manage_options',
+            self::MANAGE_OPTIONS,
             'extend-referrals-display-rules',
             [DisplayRulesPage::class, 'render_page']
         );
+
+        add_submenu_page(
+            self::PARENT_SLUG,
+            esc_html__('Điều kiện hiển thị nâng cao', 'extend-referrals'),
+            esc_html__('Điều kiện nâng cao', 'extend-referrals'),
+            self::MANAGE_OPTIONS,
+            'extend-referrals-advanced-rules',
+            [AdvancedRulesPage::class, 'render_page']
+        );
+
     }
 }
