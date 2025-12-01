@@ -11,8 +11,8 @@ $story_views   = ViewTracker::format_short( ViewTracker::get_story_views( get_th
          itemscope
          itemtype="https://schema.org/Book">
     <div class="item es-flex es-flex-column">
-        <div class="item__thumbnail es-ratio-16-9">
-            <a class="es-ratio-thumb" href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
+        <div class="item__thumbnail">
+            <a class="image-link" href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
                 <?php if ( has_post_thumbnail() ) : ?>
                     <?php the_post_thumbnail( 'medium', [ 'alt' => get_the_title() ] ); ?>
                 <?php else : ?>

@@ -7,6 +7,7 @@ use Elementor\Widget_Base;
 use ExtendSite\ElementorAddon\Traits\HasImageSizeControl;
 use ExtendSite\ElementorAddon\Traits\HasSliderControls;
 use ExtendSite\PostType\StoryPostType;
+use ExtendSite\Repositories\StoryRankingRepository;
 use ExtendSite\Repositories\StoryRepository;
 
 defined('ABSPATH') || exit;
@@ -71,6 +72,20 @@ class StoryFeaturedSlider extends Widget_Base
         );
 
         $this->add_control(
+            'query_source',
+            [
+                'label' => esc_html__('Nguồn dữ liệu', 'extend-site'),
+                'type'  => Controls_Manager::SELECT,
+                'default' => 'custom',
+                'label_block' => true,
+                'options' => [
+                    'custom'  => esc_html__('Truy vấn bình thường', 'extend-site'),
+                    'top_week' => esc_html__('Top truyện xem nhiều 7 ngày qua', 'extend-site'),
+                ],
+            ]
+        );
+
+        $this->add_control(
             'taxonomy',
             [
                 'label' => esc_html__('Chọn danh mục', 'extend-site'),
@@ -78,6 +93,9 @@ class StoryFeaturedSlider extends Widget_Base
                 'options' => es_get_tax_list(StoryPostType::TAX_SLUG),
                 'multiple' => true,
                 'label_block' => true,
+                'condition' => [
+                    'query_source' => 'custom',
+                ],
             ]
         );
 
@@ -89,6 +107,9 @@ class StoryFeaturedSlider extends Widget_Base
                 'options' => es_get_story_tags(),
                 'multiple' => false,
                 'label_block' => true,
+                'condition' => [
+                    'query_source' => 'custom',
+                ],
             ]
         );
 
@@ -116,6 +137,9 @@ class StoryFeaturedSlider extends Widget_Base
                     'date' => esc_html__('Ngày đăng', 'extend-site'),
                     'views' => esc_html__('Lượt xem', 'extend-site'),
                 ],
+                'condition' => [
+                    'query_source' => 'custom',
+                ],
             ]
         );
 
@@ -126,9 +150,24 @@ class StoryFeaturedSlider extends Widget_Base
                 'type' => Controls_Manager::SELECT,
                 'default' => 'DESC',
                 'options' => [
-                    'DESC' => esc_html__('Tăng dần', 'extend-site'),
-                    'ASC' => esc_html__('Giảm dần', 'extend-site'),
+                    'DESC' => esc_html__('Giảm dần', 'extend-site'),
+                    'ASC' => esc_html__('Tăng dần', 'extend-site'),
                 ],
+                'condition' => [
+                    'query_source' => 'custom',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'excerpt_words',
+            [
+                'label' => esc_html__( 'Số từ mô tả', 'extend-site' ),
+                'type' => Controls_Manager::NUMBER,
+                'default' => 25,
+                'min' => 5,
+                'max' => 100,
+                'step' => 1,
             ]
         );
 
@@ -171,67 +210,95 @@ class StoryFeaturedSlider extends Widget_Base
         ] );
 
         // get query
-        $taxonomies = $settings['taxonomy'] ?? [];
-        $tag = $settings['tag'] ?? [];
+        $query_source = $settings['query_source'] ?? 'custom';
         $limit   = absint($settings['limit'] ?? 18);
-        $order_by = $settings['order_by'] ?? 'ID';
-        $order   = $settings['order'] ?? 'DESC';
 
-        // Lọc theo danh mục truyện (story_genre)
-        $tax_query = [];
+        if ( $query_source === 'top_week' ) {
 
-        if (!empty($taxonomies)) {
-            $tax_query[] = [
-                'taxonomy' => StoryPostType::TAX_SLUG,
-                'field'    => 'term_id',
-                'terms'    => (array) $taxonomies,
-                'operator' => 'IN',
-            ];
-        }
+            // Lấy danh sách story ID theo ranking tuần
+            $ranked = StoryRankingRepository::top_7_days($limit);
 
-        // Lọc theo tag (story_tag)
-        if (!empty($tag)) {
-            $tax_query[] = [
-                'taxonomy' => StoryPostType::TAG_SLUG,
-                'field'    => 'term_id',
-                'terms'    => (array) $tag,
-                'operator' => 'IN',
-            ];
-        }
+            // Chuẩn hóa mảng ID
+            $story_ids = wp_list_pluck($ranked, 'story_id');
 
-        // Query stories
-        $args = [
-            'post_type'      => StoryPostType::SLUG,
-            'posts_per_page' => $limit,
-            'order'          => $order,
-            'no_found_rows'  => true,
-        ];
+            if (empty($story_ids)) {
+                echo '<div class="es-empty">'. esc_html__('Không có dữ liệu tuần.', 'extend-site') .'</div>';
 
-        // Nếu sắp xếp theo view
-        if ($order_by === 'views') {
-            $args['meta_key']   = StoryPostType::META_STORY_VIEWS;
-            $args['meta_type']  = 'NUMERIC';
-            $args['orderby']    = 'meta_value_num';
-        } else {
-            $args['orderby'] = $order_by;
-        }
-
-        // Chỉ thêm tax_query khi có ít nhất 1 điều kiện
-        if (!empty($tax_query)) {
-            if (count($tax_query) > 1) {
-                $tax_query = array_merge(['relation' => 'AND'], $tax_query);
+                return;
             }
 
-            $args['tax_query'] = $tax_query;
+            // Query theo danh sách ID (giữ đúng thứ tự ranking)
+            $args = [
+                'post_type'      => StoryPostType::SLUG,
+                'post__in'       => $story_ids,
+                'orderby'        => 'post__in',
+                'posts_per_page' => count($story_ids),
+                'no_found_rows'  => true,
+            ];
+
+        } else {
+            $taxonomies = $settings['taxonomy'] ?? [];
+            $tag = $settings['tag'] ?? [];
+            $order_by = $settings['order_by'] ?? 'ID';
+            $order   = $settings['order'] ?? 'DESC';
+
+            // Lọc theo danh mục truyện (story_genre)
+            $tax_query = [];
+
+            if (!empty($taxonomies)) {
+                $tax_query[] = [
+                    'taxonomy' => StoryPostType::TAX_SLUG,
+                    'field'    => 'term_id',
+                    'terms'    => (array) $taxonomies,
+                    'operator' => 'IN',
+                ];
+            }
+
+            // Lọc theo tag (story_tag)
+            if (!empty($tag)) {
+                $tax_query[] = [
+                    'taxonomy' => StoryPostType::TAG_SLUG,
+                    'field'    => 'term_id',
+                    'terms'    => (array) $tag,
+                    'operator' => 'IN',
+                ];
+            }
+
+            // Query stories
+            $args = [
+                'post_type'      => StoryPostType::SLUG,
+                'posts_per_page' => $limit,
+                'order'          => $order,
+                'no_found_rows'  => true,
+            ];
+
+            // Nếu sắp xếp theo view
+            if ($order_by === 'views') {
+                $args['meta_key']   = StoryPostType::META_STORY_VIEWS;
+                $args['meta_type']  = 'NUMERIC';
+                $args['orderby']    = 'meta_value_num';
+            } else {
+                $args['orderby'] = $order_by;
+            }
+
+            // Chỉ thêm tax_query khi có ít nhất 1 điều kiện
+            if (!empty($tax_query)) {
+                if (count($tax_query) > 1) {
+                    $tax_query = array_merge(['relation' => 'AND'], $tax_query);
+                }
+
+                $args['tax_query'] = $tax_query;
+            }
         }
 
+        // Execute query
         $query = new \WP_Query($args);
 
         if ( !$query->have_posts() ) {
             echo '<p>' . esc_html__('Không có truyện phù hợp với điều kiện.', 'extend-site') . '</p>';
             return;
         }
-    ?>
+        ?>
         <div <?php echo $this->get_render_attribute_string( 'classes' ); ?> data-settings-swiper='<?php echo esc_attr( $swiperOptions ); ?>'>
             <div class="swiper-wrapper">
                 <?php
@@ -239,6 +306,15 @@ class StoryFeaturedSlider extends Widget_Base
                 while ( $query->have_posts() ) :
                     $query->the_post();
                     $authors = StoryRepository::get_authors(get_the_ID());
+
+                    // Lấy excerpt với giới hạn từ
+                    $word_limit = (int) $settings['excerpt_words'] ?? 25;
+
+                    $excerpt_raw = get_post_field( 'post_excerpt', get_the_ID() );
+                    $excerpt     = $excerpt_raw ?: get_post_field( 'post_content', get_the_ID() );
+
+                    $excerpt     = wp_strip_all_tags( $excerpt );
+                    $excerpt     = wp_trim_words( $excerpt, $word_limit, '…' );
 
                     // Mở slide mới
                     if ( $i % 3 === 0 ) {
@@ -271,7 +347,7 @@ class StoryFeaturedSlider extends Widget_Base
                             </h4>
 
                             <div class="desc">
-                                <?php the_content(); ?>
+                                <?php echo esc_html( $excerpt ); ?>
                             </div>
 
                             <?php if ( $authors ) : ?>

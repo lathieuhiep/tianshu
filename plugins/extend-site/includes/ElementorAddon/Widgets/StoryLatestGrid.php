@@ -139,7 +139,35 @@ class StoryLatestGrid extends Widget_Base
 
         $this->addImageSizeControl($this);
 
-        $this->addImageRatioControl($this);
+        $this->add_responsive_control(
+            'thumb_height',
+            [
+                'label' => esc_html__( 'Chiều cao khối ảnh', 'extend-site' ),
+                'type'  => Controls_Manager::SLIDER,
+                'size_units' => [ 'px', '%', 'vh', 'custom' ],
+                'range' => [
+                    'px' => [
+                        'min' => 50,
+                        'max' => 600,
+                    ],
+                    '%' => [
+                        'min' => 10,
+                        'max' => 100,
+                    ],
+                    'vh' => [
+                        'min' => 10,
+                        'max' => 100,
+                    ],
+                ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 280,
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .es-addon-story-grid .image-link' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
 
         $this->end_controls_section();
 
