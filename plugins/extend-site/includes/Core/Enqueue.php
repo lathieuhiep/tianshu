@@ -1,6 +1,7 @@
 <?php
 namespace ExtendSite\Core;
 
+use ExtendReferrals\Core\TTLManager;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -195,7 +196,7 @@ class Enqueue
             wp_localize_script('es-single-' . ChapterPostType::SLUG, 'esSingleChapterAjax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce(EXTEND_SITE_NONCE_ACTION),
-                'ttl_valid' => !class_exists('\ExtendReferrals\Core\TTLManager') || !\ExtendReferrals\Core\TTLManager::is_expired(),
+                'ttl_valid' => !class_exists('\ExtendReferrals\Core\TTLManager') || !TTLManager::is_expired(),
                 'chapter_number' => ChapterRepository::get_chapter_number(get_the_ID()),
             ]);
         }
