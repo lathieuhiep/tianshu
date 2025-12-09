@@ -50,8 +50,25 @@ class MenuPage
     /** Trang dashboard */
     public static function render_dashboard(): void
     {
+        // Kiểm tra submit
+        if (isset($_POST['extend_site_last_chapter_facebook_url'])) {
+
+            check_admin_referer('extend_site_save_options', 'extend_site_nonce');
+
+            // Lấy giá trị (dù trống vẫn cho lưu)
+            $value = sanitize_text_field($_POST['extend_site_last_chapter_facebook_url']);
+
+            update_option('extend_site_last_chapter_facebook_url', $value);
+
+            echo '<div class="updated"><p>Lưu thành công.</p></div>';
+        }
+
+        // Lấy option để hiển thị trong view
+        $fb_url = get_option('extend_site_last_chapter_facebook_url', '');
+
         self::load_view('dashboard', [
-            'title' => esc_html__('Hệ thống Truyện', 'extend-site'),
+            'title'  => esc_html__('Hệ thống Truyện', 'extend-site'),
+            'fb_url' => $fb_url,
         ]);
     }
 
@@ -72,9 +89,9 @@ class MenuPage
 
             if ($tool_class && class_exists($tool_class)) {
                 $result = ToolManager::run_tool($tool_class);
-                $message = $result['message'] ?? __('Tool executed.', 'extend-site');
+                $message = $result['message'] ?? esc_html__('Tool executed.', 'extend-site');
             } else {
-                $message = __('Tool not found.', 'extend-site');
+                $message = esc_html__('Tool not found.', 'extend-site');
                 error_log("[TOOLS PAGE] Invalid tool key: $key");
             }
         }

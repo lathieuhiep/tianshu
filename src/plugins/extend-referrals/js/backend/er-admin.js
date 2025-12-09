@@ -186,4 +186,51 @@
     };
     initDisplayRulesForm();
 
+    // --- Điều kiện hiển thị nâng cao cho chapter ---
+    const AdvancedChapterRules = {
+        init() {
+            this.modeSelect = $('#ar-chapter-mode');    // select chế độ
+            this.rowFrom    = $('.ar-row-from');        // hàng input từ chương
+            this.rowList    = $('.ar-row-only-list');   // hàng input danh sách chương
+
+            if (!this.modeSelect.length) return;
+
+            this.bindEvents();
+            this.updateVisibility();
+        },
+
+        bindEvents() {
+            this.modeSelect.on('change', () => this.updateVisibility());
+        },
+
+        updateVisibility() {
+            const mode = this.modeSelect.val();
+
+            // Reset hiển thị
+            this.rowFrom.show();
+            this.rowList.show();
+
+            if (mode === 'odd' || mode === 'even') {
+                // Lẻ / chẵn -> ẩn cả 2 trường
+                this.rowFrom.hide();
+                this.rowList.hide();
+            }
+
+            if (mode === 'from_number') {
+                // Từ chương X -> chỉ hiện trường FROM
+                this.rowFrom.show();
+                this.rowList.hide();
+            }
+
+            if (mode === 'only_list') {
+                // Danh sách chương -> chỉ hiện trường list
+                this.rowFrom.hide();
+                this.rowList.show();
+            }
+        }
+    };
+
+    // chạy module
+    $(document).ready(() => AdvancedChapterRules.init());
+
 })(jQuery);

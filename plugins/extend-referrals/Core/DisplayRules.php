@@ -1,6 +1,7 @@
 <?php
 namespace ExtendReferrals\Core;
 
+use ExtendReferrals\Admin\Pages\AdvancedRulesPage;
 use WP_Post;
 use ExtendReferrals\Admin\Pages\DisplayRulesPage;
 
@@ -41,24 +42,44 @@ class DisplayRules {
 
         /**
          * Bước 2: Logic riêng cho CPT "chapter".
-         * Chỉ hiển thị nếu chương >= 2.
          */
         if ($post->post_type === 'chapter') {
+
             $chapter_number = (int) get_post_meta($post->ID, '_chapter_number', true);
 
-            // Nếu meta không tồn tại → fallback cho phép hiển thị
-            if ($chapter_number === 0) {
+            if ($chapter_number <= 0) {
                 return apply_filters('extend_referrals_should_display', true, $post);
             }
 
-            $should_display = $chapter_number >= 2;
+            // Lấy rule (an toàn khi plugin bị tắt)
+            $opts = AdvancedRulesPage::get_chapter_rules();
 
-            /**
-             * Cho phép plugin khác override.
-             * @param bool $should_display  Kết quả mặc định.
-             * @param WP_Post $post         Bài viết hiện tại.
-             */
-            return (bool) apply_filters('extend_referrals_should_display', $should_display, $post);
+            // Không có rule → fallback hiển thị
+            if (empty($opts) || empty($opts['enabled'])) {
+                return apply_filters('extend_referrals_should_display', true, $post);
+            }
+
+            $mode = $opts['mode'] ?? 'from_number';
+            $should_display = true;
+
+            switch ($mode) {
+                case 'odd':
+                    $should_display = ($chapter_number % 2 !== 0);
+                    break;
+                case 'even':
+                    $should_display = ($chapter_number % 2 === 0);
+                    break;
+                case 'from_number':
+                    $min = (int) ($opts['from'] ?? 2);
+                    $should_display = ($chapter_number >= $min);
+                    break;
+                case 'only_list':
+                    $list = array_filter(array_map('intval', explode(',', $opts['only_list'] ?? '')));
+                    $should_display = in_array($chapter_number, $list, true);
+                    break;
+            }
+
+            return apply_filters('extend_referrals_should_display', $should_display, $post);
         }
 
         /**

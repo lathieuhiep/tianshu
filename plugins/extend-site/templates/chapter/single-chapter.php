@@ -59,6 +59,7 @@ $chapter_views = ViewTracker::format_short( ViewTracker::get_chapter_views( $cur
         if ( $story_id ) :
             $story_url   = get_permalink($story_id);
             $story_title = get_the_title($story_id);
+            $fb_url = get_option('extend_site_last_chapter_facebook_url');
         ?>
             <a href="<?php echo esc_url($story_url); ?>"
                class="story-back-link es-btn es-btn-secondary es-fs-sm"
@@ -99,10 +100,21 @@ $chapter_views = ViewTracker::format_short( ViewTracker::get_chapter_views( $cur
                     <i class="es-ic-mask es-ic-mask-angle-right"></i>
                 </a>
             <?php else: ?>
-                <span class="es-btn es-btn-primary disabled next es-fs-sm">
-                    <span class="text-nav"><?php esc_html_e('Chương sau', 'extend-site'); ?></span>
-                    <i class="es-ic-mask es-ic-mask-angle-right"></i>
-                </span>
+
+                <?php if (!empty($fb_url)): ?>
+                    <a href="<?php echo esc_url($fb_url); ?>"
+                       class="es-btn es-btn-primary next es-fs-sm"
+                       target="_blank" rel="noopener">
+                        <span class="text-nav"><?php esc_html_e('Chương sau', 'extend-site'); ?></span>
+                        <i class="es-ic-mask es-ic-mask-angle-right"></i>
+                    </a>
+                <?php else: ?>
+                    <span class="es-btn es-btn-primary disabled next es-fs-sm">
+                        <span class="text-nav"><?php esc_html_e('Chương sau', 'extend-site'); ?></span>
+                        <i class="es-ic-mask es-ic-mask-angle-right"></i>
+                    </span>
+                <?php endif; ?>
+
             <?php endif; ?>
         </nav>
     </div>
