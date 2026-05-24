@@ -17,6 +17,8 @@ class ChapterPostType extends BasePostType
     public const META_CHAPTER_VIEWS = '_chapter_view_count'; // số lượt xem chương
 
     // (tuỳ chọn) tên file template nếu bạn dùng TemplateLoader
+    public const OPTION_PERMALINK_STRUCTURE = 'extend_site_chapter_permalink';
+    public const DEFAULT_PERMALINK_STRUCTURE = '/%story%/chuong/%postname%/';
     public const TEMPLATE_SINGLE = 'chapter/single-chapter.php';
 
     public function __construct(array $args = [])
@@ -61,10 +63,25 @@ class ChapterPostType extends BasePostType
     /** Đăng ký rewrite rule cho permalink chương */
     public function register_chapter_rewrite_rule(): void
     {
+        $structure = self::get_permalink_structure();
+        $tokens = self::get_permalink_tokens($structure);
+        $chapter_token = in_array('%post_id%', $tokens, true) ? '%post_id%' : '%postname%';
+        $chapter_match_index = array_search($chapter_token, $tokens, true);
+
+        if ($chapter_match_index !== false) {
+            $regex = self::permalink_structure_to_regex($structure);
+            $query = $chapter_token === '%post_id%'
+                ? 'index.php?post_type=' . self::SLUG . '&p=$matches[' . ($chapter_match_index + 1) . ']'
+                : 'index.php?' . self::SLUG . '=$matches[' . ($chapter_match_index + 1) . ']';
+
+            add_rewrite_rule('^' . $regex . '/?$', $query, 'top');
+        }
+
+        // Keep the historical URL working even if the admin switches to %post_id%.
         add_rewrite_rule(
             '^([^/]+)/chuong/([^/]+)/?$',
-            'index.php?chapter=$matches[2]',
-            'top'
+            'index.php?' . self::SLUG . '=$matches[2]',
+            'bottom'
         );
     }
 
@@ -84,7 +101,68 @@ class ChapterPostType extends BasePostType
             return $permalink;
         }
 
-        return home_url(sprintf('%s/chuong/%s', $story->post_name, $post->post_name));
+        $path = str_replace(
+            ['%story%', '%postname%', '%post_id%'],
+            [$story->post_name, $post->post_name, (string) $post->ID],
+            self::get_permalink_structure()
+        );
+
+        return home_url(user_trailingslashit(trim($path, '/')));
+    }
+
+    public static function get_permalink_structure(): string
+    {
+        $structure = (string) get_option(self::OPTION_PERMALINK_STRUCTURE, self::DEFAULT_PERMALINK_STRUCTURE);
+
+        return self::sanitize_permalink_structure($structure);
+    }
+
+    public static function sanitize_permalink_structure(string $structure): string
+    {
+        $structure = trim($structure);
+
+        if ($structure === '') {
+            return self::DEFAULT_PERMALINK_STRUCTURE;
+        }
+
+        $structure = '/' . trim($structure, '/') . '/';
+
+        if (strpos($structure, '%story%') === false) {
+            return self::DEFAULT_PERMALINK_STRUCTURE;
+        }
+
+        $has_postname = strpos($structure, '%postname%') !== false;
+        $has_post_id = strpos($structure, '%post_id%') !== false;
+
+        if ($has_postname === $has_post_id) {
+            return self::DEFAULT_PERMALINK_STRUCTURE;
+        }
+
+        foreach (self::get_permalink_tokens($structure) as $token) {
+            if (!in_array($token, ['%story%', '%postname%', '%post_id%'], true)) {
+                return self::DEFAULT_PERMALINK_STRUCTURE;
+            }
+        }
+
+        return $structure;
+    }
+
+    private static function get_permalink_tokens(string $structure): array
+    {
+        preg_match_all('/%[^%]+%/', $structure, $matches);
+
+        return $matches[0] ?? [];
+    }
+
+    private static function permalink_structure_to_regex(string $structure): string
+    {
+        $regex = preg_quote(trim($structure, '/'), '#');
+
+        return str_replace(
+            ['%story%', '%postname%', '%post_id%'],
+            ['([^/]+)', '([^/]+)', '([0-9]+)'],
+            $regex
+        );
     }
 
     /** Meta boxes */

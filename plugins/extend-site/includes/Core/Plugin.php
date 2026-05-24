@@ -3,6 +3,7 @@
 namespace ExtendSite\Core;
 
 use ExtendSite\Admin\MenuPage;
+use ExtendSite\Admin\PermalinkSettings;
 use ExtendSite\Admin\StoryChapterLink;
 use ExtendSite\Ajax\IncrementView;
 use ExtendSite\Ajax\LoadChapters;
@@ -100,6 +101,7 @@ class Plugin
     private static function active_menu_page_admin(): void
     {
         MenuPage::init();
+        PermalinkSettings::init();
     }
 
     /**
