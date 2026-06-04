@@ -1,6 +1,8 @@
 <?php
 namespace ExtendSite\Core;
 
+use ExtendSite\Crawler\CrawlerAdmin;
+use ExtendSite\Crawler\CrawlerAjax;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -39,9 +41,10 @@ class Enqueue
     public static function enqueue_scripts_backend(): void
     {
         $screen = get_current_screen();
+        $is_crawler_page = $screen && $screen->id === 'extend-site_page_' . CrawlerAdmin::PAGE_SLUG;
 
         // Kiểm tra an toàn
-        if (!$screen || !in_array($screen->post_type, ['story', 'chapter'], true)) {
+        if (!$screen || (!$is_crawler_page && !in_array($screen->post_type, ['story', 'chapter'], true))) {
             return;
         }
 
@@ -61,6 +64,42 @@ class Enqueue
             true
         );
 
+        if ($is_crawler_page) {
+            wp_enqueue_style(
+                'es-story-crawler',
+                EXTEND_SITE_URL . 'assets/css/backend/story-crawler.css',
+                [],
+                EXTEND_SITE_VERSION
+            );
+
+            wp_enqueue_script(
+                'es-story-crawler',
+                EXTEND_SITE_URL . 'assets/js/backend/story-crawler.js',
+                ['jquery', 'select2'],
+                EXTEND_SITE_VERSION,
+                true
+            );
+
+            wp_localize_script('es-story-crawler', 'esStoryCrawler', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce(CrawlerAjax::NONCE_ACTION),
+                'story_search_nonce' => wp_create_nonce('es_admin_common'),
+                'story_search_action' => 'es_search_story',
+                'process_action' => CrawlerAjax::ACTION_PROCESS,
+                'preview_action' => CrawlerAjax::ACTION_PREVIEW,
+                'start_batch_action' => CrawlerAjax::ACTION_START,
+                'heartbeat_action' => CrawlerAjax::ACTION_HEARTBEAT,
+                'stop_batch_action' => CrawlerAjax::ACTION_STOP,
+                'finalize_action' => CrawlerAjax::ACTION_FINALIZE,
+                'default_delay' => 5000,
+                'retry_delay' => 3000,
+                'max_retries' => 3,
+                'max_batch_size' => 200,
+                'heartbeat_interval' => 30000,
+            ]);
+
+            return;
+        }
         // Enqueue style backend story/chapter
         wp_enqueue_style(
             'es-admin-story-chapter',

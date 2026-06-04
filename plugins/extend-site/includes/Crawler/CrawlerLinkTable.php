@@ -77,7 +77,7 @@ class CrawlerLinkTable
 
         $clean = '';
         if (!empty($parts['scheme'])) {
-            $clean .= $parts['scheme'] . '://';
+            $clean .= strtolower($parts['scheme']) . '://';
         }
 
         if (!empty($parts['user'])) {
@@ -88,7 +88,7 @@ class CrawlerLinkTable
             $clean .= '@';
         }
 
-        $clean .= $parts['host'];
+        $clean .= strtolower($parts['host']);
 
         if (!empty($parts['port'])) {
             $clean .= ':' . $parts['port'];
@@ -97,6 +97,7 @@ class CrawlerLinkTable
         $clean .= $parts['path'] ?? '';
 
         if ($query) {
+            ksort($query);
             $clean .= '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
         }
 
@@ -137,6 +138,19 @@ class CrawlerLinkTable
 
         if ($source_url === '' || $clean_url === '' || $hash === '') {
             return false;
+        }
+
+        $existing = self::find_by_hash($hash);
+        if ($existing) {
+            $updated = self::update_pending((int) $existing['id'], [
+                'source_url' => $source_url,
+                'clean_url' => $clean_url,
+                'batch_id' => isset($data['batch_id']) ? sanitize_text_field((string) $data['batch_id']) : null,
+                'story_id' => isset($data['story_id']) ? absint($data['story_id']) : 0,
+                'chapter_number' => isset($data['chapter_number']) ? absint($data['chapter_number']) : null,
+            ]);
+
+            return $updated ? (int) $existing['id'] : false;
         }
 
         $now = current_time('mysql');
@@ -183,6 +197,34 @@ class CrawlerLinkTable
     public static function mark_duplicate(int $id, string $reason): bool
     {
         return self::update_status($id, self::STATUS_DUPLICATE, $reason);
+    }
+
+    private static function update_pending(int $id, array $data): bool
+    {
+        global $wpdb;
+
+        if ($id <= 0) {
+            return false;
+        }
+
+        $result = $wpdb->update(
+            self::get_table_name(),
+            [
+                'source_url' => $data['source_url'],
+                'clean_url' => $data['clean_url'],
+                'batch_id' => $data['batch_id'],
+                'story_id' => $data['story_id'],
+                'chapter_number' => $data['chapter_number'],
+                'status' => self::STATUS_PENDING,
+                'error_log' => null,
+                'updated_at' => current_time('mysql'),
+            ],
+            ['id' => $id],
+            ['%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s'],
+            ['%d']
+        );
+
+        return $result !== false;
     }
 
     private static function update_status(int $id, string $status, ?string $message = null, ?int $chapter_id = null): bool
