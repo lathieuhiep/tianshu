@@ -1,8 +1,8 @@
 <?php
 namespace ExtendSite\Services\Tools;
 
-use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
+use ExtendSite\Repositories\ChapterRepository;
 
 defined('ABSPATH') || exit;
 
@@ -29,19 +29,7 @@ class ChapterSyncTool implements ToolInterface {
         ]);
 
         foreach ($stories as $story_id) {
-            $chapters = get_posts([
-                'post_type'   => ChapterPostType::SLUG,
-                'meta_key'    => ChapterPostType::META_STORY_ID,
-                'meta_value'  => $story_id,
-                'fields'      => 'ids',
-                'posts_per_page' => -1,
-                'post_status' => 'publish',
-                'no_found_rows' => true,
-                'update_post_meta_cache' => false,
-                'update_post_term_cache' => false,
-            ]);
-
-            update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, count($chapters));
+            ChapterRepository::sync_count_for_story((int) $story_id);
         }
 
         return ['message' => 'Đã đồng bộ tổng chương thành công!'];

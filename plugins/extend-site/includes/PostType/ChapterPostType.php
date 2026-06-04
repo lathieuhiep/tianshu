@@ -2,6 +2,7 @@
 
 namespace ExtendSite\PostType;
 
+use ExtendSite\Repositories\ChapterRepository;
 use ExtendSite\Repositories\StoryRepository;
 use WP_Post;
 
@@ -57,7 +58,12 @@ class ChapterPostType extends BasePostType
         // Cập nhật tổng chương cho truyện khi có thay đổi
         add_action('save_post_' . self::SLUG, [$this, 'update_story_chapter_count_on_save'], 20, 2);
         add_action('transition_post_status', [$this, 'handle_chapter_status_change'], 10, 3);
-        add_action('before_delete_post', [$this, 'decrease_story_chapter_count']);
+        add_action('before_delete_post', [$this, 'capture_deleted_chapter_story']);
+        add_action('deleted_post', [$this, 'sync_deleted_chapter_story']);
+        add_filter('update_post_metadata', [$this, 'capture_story_id_before_meta_update'], 10, 5);
+        add_action('updated_post_meta', [$this, 'sync_story_count_on_meta_change'], 10, 4);
+        add_action('added_post_meta', [$this, 'sync_story_count_on_meta_change'], 10, 4);
+        add_action('deleted_post_meta', [$this, 'sync_story_count_on_meta_delete'], 10, 4);
     }
 
     /** Đăng ký rewrite rule cho permalink chương */
@@ -313,56 +319,109 @@ class ChapterPostType extends BasePostType
     }
 
     /* ==========================================================
-     * CẬP NHẬT _chapter_count CHO TRUYỆN
+     * CAP NHAT _chapter_count CHO TRUYEN
      * ========================================================== */
 
-    /** Khi lưu chương publish mới → tăng tổng chương */
+    /**
+     * @var array<int, int>
+     */
+    private array $story_ids_before_meta_update = [];
+
+    /**
+     * @var array<int, int>
+     */
+    private array $story_ids_before_delete = [];
+
+    /** Sync story chapter count from actual published chapter data after a chapter save. */
     public function update_story_chapter_count_on_save(int $chapter_id, WP_Post $post): void
     {
-        if ($post->post_status !== 'publish') {
+        if ($post->post_type !== self::SLUG || wp_is_post_autosave($chapter_id) || wp_is_post_revision($chapter_id)) {
             return;
         }
 
         $story_id = (int) get_post_meta($chapter_id, self::META_STORY_ID, true);
-        if (!$story_id) return;
-
-        $count = (int) get_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, true);
-        update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, $count + 1);
+        if ($story_id > 0) {
+            ChapterRepository::sync_count_for_story($story_id);
+        }
     }
 
-    /** Khi thay đổi trạng thái chương (ẩn / khôi phục) */
+    /** Sync when a chapter enters or leaves publish status. */
     public function handle_chapter_status_change(string $new_status, string $old_status, WP_Post $post): void
     {
-        if ($post->post_type !== self::SLUG || $new_status === $old_status) return;
-
-        $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
-        if (!$story_id) return;
-
-        $count = (int) get_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, true);
-
-        // publish → trạng thái khác => giảm
-        if ($old_status === 'publish' && $new_status !== 'publish') {
-            update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, max(0, $count - 1));
+        if ($post->post_type !== self::SLUG || $new_status === $old_status) {
+            return;
         }
 
-        // trạng thái khác → publish => tăng
-        if ($old_status !== 'publish' && $new_status === 'publish') {
-            update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, $count + 1);
+        if ($new_status !== 'publish' && $old_status !== 'publish') {
+            return;
+        }
+
+        $story_id = (int) get_post_meta($post->ID, self::META_STORY_ID, true);
+        if ($story_id > 0) {
+            ChapterRepository::sync_count_for_story($story_id);
         }
     }
 
-    /** Khi xóa vĩnh viễn chương → giảm tổng chương */
-    public function decrease_story_chapter_count(int $post_id): void
+    /** Capture the story ID before WordPress deletes chapter meta. */
+    public function capture_deleted_chapter_story(int $post_id): void
     {
-        if (get_post_type($post_id) !== self::SLUG) return;
-
-        $post = get_post($post_id);
-        if (!$post || $post->post_status !== 'publish') return;
+        if (get_post_type($post_id) !== self::SLUG) {
+            return;
+        }
 
         $story_id = (int) get_post_meta($post_id, self::META_STORY_ID, true);
-        if (!$story_id) return;
+        if ($story_id > 0) {
+            $this->story_ids_before_delete[$post_id] = $story_id;
+        }
+    }
 
-        $count = (int) get_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, true);
-        update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, max(0, $count - 1));
+    /** Sync after the chapter has been deleted so the deleted post is not counted. */
+    public function sync_deleted_chapter_story(int $post_id): void
+    {
+        $story_id = $this->story_ids_before_delete[$post_id] ?? 0;
+        unset($this->story_ids_before_delete[$post_id]);
+
+        if ($story_id > 0) {
+            ChapterRepository::sync_count_for_story($story_id);
+        }
+    }
+
+    /** Capture the previous story ID before _chapter_story_id is updated. */
+    public function capture_story_id_before_meta_update($check, int $post_id, string $meta_key, $meta_value, $prev_value)
+    {
+        if ($meta_key === self::META_STORY_ID && get_post_type($post_id) === self::SLUG) {
+            $this->story_ids_before_meta_update[$post_id] = (int) get_post_meta($post_id, self::META_STORY_ID, true);
+        }
+
+        return $check;
+    }
+
+    /** Sync old and new stories when _chapter_story_id changes. */
+    public function sync_story_count_on_meta_change(int $meta_id, int $post_id, string $meta_key, $meta_value): void
+    {
+        if ($meta_key !== self::META_STORY_ID || get_post_type($post_id) !== self::SLUG) {
+            return;
+        }
+
+        $old_story_id = $this->story_ids_before_meta_update[$post_id] ?? 0;
+        unset($this->story_ids_before_meta_update[$post_id]);
+
+        $new_story_id = (int) $meta_value;
+        foreach (array_unique(array_filter([$old_story_id, $new_story_id])) as $story_id) {
+            ChapterRepository::sync_count_for_story((int) $story_id);
+        }
+    }
+
+    /** Sync the old story when _chapter_story_id is deleted. */
+    public function sync_story_count_on_meta_delete(array $meta_ids, int $post_id, string $meta_key, $meta_value): void
+    {
+        if ($meta_key !== self::META_STORY_ID || get_post_type($post_id) !== self::SLUG) {
+            return;
+        }
+
+        $story_id = (int) $meta_value;
+        if ($story_id > 0) {
+            ChapterRepository::sync_count_for_story($story_id);
+        }
     }
 }

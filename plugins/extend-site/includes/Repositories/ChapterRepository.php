@@ -3,12 +3,44 @@
 namespace ExtendSite\Repositories;
 
 use ExtendSite\PostType\ChapterPostType;
+use ExtendSite\PostType\StoryPostType;
 use WP_Query;
 
 defined('ABSPATH') || exit;
 
 class ChapterRepository
 {
+    /**
+     * Resync the stored chapter count for one story from actual published chapters.
+     */
+    public static function sync_count_for_story(int $story_id): int
+    {
+        global $wpdb;
+
+        if ($story_id <= 0) {
+            return 0;
+        }
+
+        $count = (int) $wpdb->get_var($wpdb->prepare(
+            "
+            SELECT COUNT(DISTINCT p.ID)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+            WHERE p.post_type = %s
+              AND p.post_status = 'publish'
+              AND pm.meta_key = %s
+              AND pm.meta_value = %s
+            ",
+            ChapterPostType::SLUG,
+            ChapterPostType::META_STORY_ID,
+            (string) $story_id
+        ));
+
+        update_post_meta($story_id, StoryPostType::META_CHAPTER_COUNT, $count);
+
+        return $count;
+    }
+
     /**
      * Lấy ID chương đầu hoặc chương mới nhất của 1 truyện.
      *
