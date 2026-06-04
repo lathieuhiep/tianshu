@@ -10,6 +10,8 @@ use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\Ajax\LoadLatestStories;
 use ExtendSite\Ajax\LoadRanking;
 use ExtendSite\Ajax\SearchSelect2;
+use ExtendSite\Crawler\CrawlerAdmin;
+use ExtendSite\Crawler\CrawlerAjax;
 use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
@@ -35,6 +37,7 @@ class Plugin
         self::active_core();
         self::include_files();
         self::active_menu_page_admin();
+        self::active_crawler();
         self::active_elementor_addon();
         self::active_custom_post_types();
         self::load_ajax();
@@ -102,6 +105,15 @@ class Plugin
     {
         MenuPage::init();
         PermalinkSettings::init();
+    }
+
+    /**
+     * Bootstrap crawler module stubs.
+     */
+    private static function active_crawler(): void
+    {
+        CrawlerAdmin::init();
+        CrawlerAjax::init();
     }
 
     /**
