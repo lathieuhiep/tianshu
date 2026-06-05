@@ -128,6 +128,20 @@ class CrawlerLinkTable
         return is_array($row) ? $row : null;
     }
 
+    public static function count_by_batch(string $batch_id): int
+    {
+        global $wpdb;
+
+        if ($batch_id === '') {
+            return 0;
+        }
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            'SELECT COUNT(*) FROM ' . self::get_table_name() . ' WHERE batch_id = %s',
+            $batch_id
+        ));
+    }
+
     public static function insert_pending(array $data)
     {
         global $wpdb;

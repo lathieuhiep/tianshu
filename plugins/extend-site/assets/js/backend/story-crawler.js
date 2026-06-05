@@ -8,6 +8,8 @@
         processed: 0,
         isRunning: false,
         isPaused: false,
+        previewNumberTouched: false,
+        consecutiveFailures: 0,
         batchId: '',
         storyId: 0,
         heartbeatTimer: null,
@@ -23,6 +25,9 @@
     const $previewNumber = $('#es-crawler-preview-number');
     const $previewUrl = $('#es-crawler-preview-url');
     const $postStatus = $('#es-crawler-post-status');
+    const $titleMode = $('#es-crawler-title-mode');
+    const $titleTemplate = $('#es-crawler-title-template');
+    const $titleTemplateField = $('.es-crawler-title-template-field');
     const $delay = $('#es-crawler-delay');
     const $find = $('#es-crawler-find');
     const $replace = $('#es-crawler-replace');
@@ -38,6 +43,7 @@
     const $finalizeBtn = $('#es-crawler-finalize-btn');
     const $logBody = $('#es-crawler-log-body');
     const $logExport = $('#es-crawler-log-export');
+    const $helpModal = $('#es-crawler-help-modal');
 
     function ajax(action, data) {
         return $.ajax({
@@ -45,6 +51,15 @@
             method: 'POST',
             dataType: 'json',
             data: Object.assign({ action: action, nonce: cfg.nonce }, data || {})
+        }).then(function (response) {
+            if (response && response.success === false) {
+                return $.Deferred().reject({
+                    data: response.data || {},
+                    responseJSON: response
+                }).promise();
+            }
+
+            return response;
         });
     }
 
@@ -76,6 +91,15 @@
         return $pattern.val().trim().replace('{n}', padNumber(number, $padding.val()));
     }
 
+    function isHttpUrl(value) {
+        try {
+            const parsed = new URL(value);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch (err) {
+            return false;
+        }
+    }
+
     function validateBase() {
         const storyId = selectedStoryId();
         const pattern = $pattern.val().trim();
@@ -83,16 +107,25 @@
         const to = parseInt($to.val(), 10);
 
         if (!storyId) {
-            throw new Error('Vui lòng chọn truyện trước.');
+            throw new Error('Thiếu truyện: vui lòng chọn truyện cần thêm chương.');
         }
-        if (!pattern || pattern.indexOf('{n}') === -1) {
-            throw new Error('Mẫu URL phải có {n}.');
+        if (!pattern) {
+            throw new Error('Thiếu mẫu URL: vui lòng nhập URL chương và dùng {n} tại vị trí số chương.');
         }
-        if (!Number.isInteger(from) || from < 1 || !Number.isInteger(to) || to < 1) {
-            throw new Error('Khoảng chương phải là số nguyên dương.');
+        if (pattern.indexOf('{n}') === -1) {
+            throw new Error('Mẫu URL không hợp lệ: cần có {n}, ví dụ https://example.com/truyen/chuong-{n}/.');
+        }
+        if (!Number.isInteger(from) || from < 1) {
+            throw new Error('Ô "Từ" không hợp lệ: vui lòng nhập số chương bắt đầu lớn hơn 0.');
+        }
+        if (!Number.isInteger(to) || to < 1) {
+            throw new Error('Ô "Đến" không hợp lệ: vui lòng nhập số chương kết thúc lớn hơn 0.');
         }
         if (to < from) {
-            throw new Error('Số chương kết thúc phải lớn hơn hoặc bằng số bắt đầu.');
+            throw new Error('Khoảng chương không hợp lệ: ô "Đến" phải lớn hơn hoặc bằng ô "Từ".');
+        }
+        if (!isHttpUrl(pattern.replace('{n}', padNumber(from, $padding.val())))) {
+            throw new Error('Mẫu URL không hợp lệ: URL tạo ra phải bắt đầu bằng http:// hoặc https://.');
         }
 
         return { storyId, from, to };
@@ -134,6 +167,21 @@
         $urlList.val(summary + '\n\nTất cả URL:\n' + queue.map(item => item.url).join('\n'));
     }
 
+    function clearGeneratedQueue(reason) {
+        if (!state.queue.length || state.isRunning || state.batchId) {
+            return;
+        }
+
+        state.queue = [];
+        state.index = 0;
+        state.processed = 0;
+        updateGeneratedPanel(state.queue);
+        updateProgress();
+        if (reason) {
+            setNotice(reason, 'warning');
+        }
+    }
+
     function replacementRules() {
         const finds = $find.val().split(/\r?\n/);
         const replaces = $replace.val().split(/\r?\n/);
@@ -153,6 +201,36 @@
         return rules;
     }
 
+    function titleOptions() {
+        return {
+            title_mode: $titleMode.val() || 'auto',
+            title_template: $titleTemplate.val() || ''
+        };
+    }
+
+    function toggleTitleTemplate() {
+        $titleTemplateField.toggleClass('is-hidden', $titleMode.val() !== 'custom');
+    }
+
+    function syncPreviewNumberFromRange(force) {
+        const from = parseInt($from.val(), 10);
+        if (!Number.isInteger(from) || from < 1) {
+            return;
+        }
+
+        if (force || !state.previewNumberTouched) {
+            $previewNumber.val(from);
+        }
+    }
+
+    function openHelpModal() {
+        $helpModal.removeClass('is-hidden').attr('aria-hidden', 'false');
+    }
+
+    function closeHelpModal() {
+        $helpModal.addClass('is-hidden').attr('aria-hidden', 'true');
+    }
+
     function setButtons() {
         $('#es-crawler-start-btn').prop('disabled', state.isRunning);
         $('#es-crawler-pause-btn').prop('disabled', !state.isRunning).text(state.isPaused ? 'Tiếp tục' : 'Tạm dừng');
@@ -161,7 +239,7 @@
     }
 
     function setFormLocked(locked) {
-        $('#es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn')
+        $('#es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn')
             .prop('disabled', locked);
 
         if ($story.length && $.fn.select2) {
@@ -171,6 +249,15 @@
 
     function scrollToProgress() {
         const target = $('.es-crawler-status-card');
+        if (!target.length) {
+            return;
+        }
+
+        $('html, body').animate({ scrollTop: Math.max(target.offset().top - 40, 0) }, 300);
+    }
+
+    function scrollToPreview() {
+        const target = $('#es-crawler-preview-result').closest('.es-crawler-card');
         if (!target.length) {
             return;
         }
@@ -230,6 +317,9 @@
     }
 
     function errorMessage(response, fallback) {
+        if (response && response.message) {
+            return response.message;
+        }
         if (response && response.responseJSON && response.responseJSON.data && response.responseJSON.data.message) {
             return response.responseJSON.data.message;
         }
@@ -284,19 +374,20 @@
             $currentUrl.text('Đang xử lý chương ' + item.chapterNumber + ': ' + item.url);
 
             try {
-                const response = await ajax(cfg.process_action, {
+                const response = await ajax(cfg.process_action, Object.assign({
                     batch_id: state.batchId,
                     story_id: state.storyId,
                     source_url: item.url,
                     chapter_number: item.chapterNumber,
                     post_status: $postStatus.val(),
                     replace_rules: JSON.stringify(replacementRules())
-                });
+                }, titleOptions()));
 
                 const payload = response.data || {};
                 item.completed = true;
                 state.index += 1;
                 state.processed += 1;
+                state.consecutiveFailures = 0;
                 log(item, payload.status || 'success', payload.message || 'Đã xử lý.', item.retries, payload);
                 updateProgress();
                 await sleep(crawlDelayMs());
@@ -311,8 +402,19 @@
                 item.completed = true;
                 state.index += 1;
                 state.processed += 1;
+                state.consecutiveFailures += 1;
                 log(item, 'failed', errorMessage(xhr, 'Xử lý thất bại.'), item.retries);
                 updateProgress();
+
+                if (state.consecutiveFailures >= 3) {
+                    state.isRunning = false;
+                    state.isPaused = false;
+                    setButtons();
+                    setNotice('Batch đã tự dừng vì có 3 URL lỗi liên tiếp. Kiểm tra lại khoảng chương hoặc URL nguồn.', 'error');
+                    scrollToProgress();
+                    await finalizeBatch('Batch tự dừng sau 3 URL lỗi liên tiếp.');
+                    return;
+                }
             }
         }
 
@@ -395,6 +497,7 @@
             setNotice('', 'success');
         } catch (err) {
             setNotice(err.message, 'error');
+            scrollToProgress();
         }
     });
 
@@ -403,31 +506,47 @@
             const base = validateBase();
             const chapterNumber = parseInt($previewNumber.val(), 10) || base.from;
             const url = $previewUrl.val().trim() || buildUrl(chapterNumber);
+            if (!isHttpUrl(url)) {
+                throw new Error('URL xem thử không hợp lệ: vui lòng nhập URL bắt đầu bằng http:// hoặc https://.');
+            }
             $previewResult.html('<p>Đang tải bản xem thử...</p>');
+            scrollToPreview();
 
-            const response = await ajax(cfg.preview_action, {
+            const response = await ajax(cfg.preview_action, Object.assign({
                 story_id: base.storyId,
                 source_url: url,
                 chapter_number: chapterNumber,
                 replace_rules: JSON.stringify(replacementRules()),
                 allow_short_content: true
-            });
+            }, titleOptions()));
 
             const data = response.data || {};
             const warnings = data.warnings && data.warnings.length ? '<div class="notice notice-warning inline"><p>' + escapeHtml(data.warnings.join(' | ')) + '</p></div>' : '';
+            const sourceTitle = data.source_title || data.title || '';
+            const finalTitle = data.final_title || data.title || '';
             $previewResult.html(
                 warnings +
+                '<div class="es-crawler-preview-title-box">' +
+                '<div class="es-crawler-preview-title-row">' +
+                '<span class="es-crawler-preview-title-label">Tiêu đề nguồn</span>' +
+                '<span class="es-crawler-preview-title-value">' + escapeHtml(sourceTitle || '(trống)') + '</span>' +
+                '</div>' +
+                '<div class="es-crawler-preview-title-row es-crawler-preview-title-row--final">' +
+                '<span class="es-crawler-preview-title-label">Tiêu đề sẽ lưu</span>' +
+                '<strong class="es-crawler-preview-title-value">' + escapeHtml(finalTitle || '(trống)') + '</strong>' +
+                '</div>' +
+                '</div>' +
                 '<dl class="es-crawler-preview-meta">' +
                 '<dt>URL đã làm sạch</dt><dd><code>' + escapeHtml(data.clean_url) + '</code></dd>' +
                 '<dt>Tên miền</dt><dd>' + escapeHtml(data.domain) + '</dd>' +
                 '<dt>Luật nhận diện</dt><dd>' + escapeHtml(data.rule_label) + '</dd>' +
-                '<dt>Tiêu đề</dt><dd>' + escapeHtml(data.title) + '</dd>' +
                 '<dt>Độ dài</dt><dd>' + escapeHtml(data.content_length) + ' ký tự</dd>' +
                 '</dl>' +
                 '<div class="es-crawler-preview-html">' + (data.content_preview_html || '') + '</div>'
             );
         } catch (xhr) {
             $previewResult.html('<div class="notice notice-error inline"><p>' + escapeHtml(errorMessage(xhr, 'Xem thử thất bại.')) + '</p></div>');
+            scrollToPreview();
         }
     });
 
@@ -441,13 +560,17 @@
             state.storyId = selectedStoryId();
             state.index = 0;
             state.processed = 0;
+            state.consecutiveFailures = 0;
             state.logs = [];
             $logBody.empty();
             $logExport.val('');
             updateProgress();
             setNotice('', 'success');
 
-            const response = await ajax(cfg.start_batch_action, { story_id: state.storyId });
+            const response = await ajax(cfg.start_batch_action, {
+                story_id: state.storyId,
+                expected_total: state.queue.length
+            });
             state.batchId = response.data.batch_id;
             state.isRunning = true;
             state.isPaused = false;
@@ -458,6 +581,7 @@
             processQueue();
         } catch (xhr) {
             setNotice(errorMessage(xhr, xhr.message || 'Không thể bắt đầu crawler.'), 'error');
+            scrollToProgress();
         }
     });
 
@@ -487,6 +611,7 @@
                 await finalizeBatch('Người dùng đã dừng.');
             } catch (xhr) {
                 setNotice(errorMessage(xhr, 'Dừng thất bại.'), 'error');
+                scrollToProgress();
             }
         }
     });
@@ -502,8 +627,30 @@
         document.execCommand('copy');
     });
 
+    $('#es-crawler-help-open').on('click', openHelpModal);
+    $('[data-es-crawler-help-close]').on('click', closeHelpModal);
+    $(document).on('keydown', function (event) {
+        if (event.key === 'Escape' && !$helpModal.hasClass('is-hidden')) {
+            closeHelpModal();
+        }
+    });
+
+    $titleMode.on('change', toggleTitleTemplate);
+    $from.on('input change', function () {
+        syncPreviewNumberFromRange(false);
+        clearGeneratedQueue('Khoảng chương đã thay đổi. Vui lòng tạo lại danh sách URL trước khi bắt đầu.');
+    });
+    $to.add($padding).add($pattern).on('input change', function () {
+        clearGeneratedQueue('Mẫu URL hoặc khoảng chương đã thay đổi. Vui lòng tạo lại danh sách URL trước khi bắt đầu.');
+    });
+    $previewNumber.on('input change', function () {
+        state.previewNumberTouched = true;
+    });
+
     $(function () {
         initSelect2();
+        toggleTitleTemplate();
+        syncPreviewNumberFromRange(true);
         setButtons();
         updateProgress();
     });

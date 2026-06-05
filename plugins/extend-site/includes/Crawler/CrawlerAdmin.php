@@ -35,123 +35,167 @@ class CrawlerAdmin
         <div class="wrap es-crawler-page">
             <h1><?php esc_html_e('Crawler truyện', 'extend-site'); ?></h1>
             <p class="description">
-                <?php esc_html_e('Xem thử một URL nguồn, tạo danh sách URL theo thứ tự, sau đó xử lý mỗi chương bằng một request AJAX.', 'extend-site'); ?>
+                <?php esc_html_e('Xem thử một URL nguồn, tạo danh sách URL theo thứ tự, sau đó xử lý từng chương bằng AJAX.', 'extend-site'); ?>
+            </p>
+            <p>
+                <button type="button" class="button es-crawler-help-open" id="es-crawler-help-open">
+                    <?php esc_html_e('Hướng dẫn sử dụng', 'extend-site'); ?>
+                </button>
             </p>
 
             <div class="es-crawler-grid">
                 <section class="es-crawler-card es-crawler-form-card">
                     <h2><?php esc_html_e('Thiết lập batch', 'extend-site'); ?></h2>
 
-                    <div class="es-crawler-field">
-                        <label for="es-crawler-story"><?php esc_html_e('Truyện', 'extend-site'); ?></label>
-                        <select id="es-crawler-story" class="es-crawler-story-select" data-placeholder="<?php echo esc_attr__('Tìm truyện...', 'extend-site'); ?>"></select>
-                        <p class="description"><?php esc_html_e('Chọn truyện đã có trong website. Crawler sẽ thêm chương vào truyện này; nhập ít nhất 2 ký tự để tìm.', 'extend-site'); ?></p>
+                    <div class="es-crawler-step">
+                        <h3><span>1</span><?php esc_html_e('Truyện & URL nguồn', 'extend-site'); ?></h3>
+
+                        <div class="es-crawler-field">
+                            <label for="es-crawler-story"><?php esc_html_e('Truyện', 'extend-site'); ?></label>
+                            <select id="es-crawler-story" class="es-crawler-story-select" data-placeholder="<?php echo esc_attr__('Tìm truyện...', 'extend-site'); ?>"></select>
+                            <p class="description"><?php esc_html_e('Chọn truyện đã có trong website. Crawler sẽ thêm chương vào truyện này; nhập ít nhất 2 ký tự để tìm.', 'extend-site'); ?></p>
+                        </div>
+
+                        <div class="es-crawler-field">
+                            <label for="es-crawler-url-pattern"><?php esc_html_e('Mẫu URL', 'extend-site'); ?></label>
+                            <input type="url" id="es-crawler-url-pattern" class="regular-text" placeholder="https://example.com/story/chuong-{n}/" />
+                            <p class="description"><?php esc_html_e('Thay số chương trong URL thật bằng {n}. Crawler sẽ dùng {n} để tự tạo URL cho từng chương.', 'extend-site'); ?></p>
+                            <p class="description"><strong><?php esc_html_e('Ví dụ URL thật:', 'extend-site'); ?></strong> <code>https://truyenfull.today/toi-cuong-he-thong/chuong-1/</code></p>
+                            <p class="description"><strong><?php esc_html_e('Mẫu URL cần nhập:', 'extend-site'); ?></strong> <code>https://truyenfull.today/toi-cuong-he-thong/chuong-{n}/</code></p>
+                        </div>
+
+                        <div class="es-crawler-three-cols">
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-range-from"><?php esc_html_e('Từ', 'extend-site'); ?></label>
+                                <input type="number" id="es-crawler-range-from" min="1" step="1" value="1" />
+                                <p class="description"><?php esc_html_e('Số chương bắt đầu crawl.', 'extend-site'); ?></p>
+                            </div>
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-range-to"><?php esc_html_e('Đến', 'extend-site'); ?></label>
+                                <input type="number" id="es-crawler-range-to" min="1" step="1" value="1" />
+                                <p class="description"><?php esc_html_e('Số chương kết thúc crawl.', 'extend-site'); ?></p>
+                            </div>
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-padding"><?php esc_html_e('Đệm số', 'extend-site'); ?></label>
+                                <select id="es-crawler-padding">
+                                    <option value="0"><?php esc_html_e('Không đệm', 'extend-site'); ?></option>
+                                    <option value="2"><?php esc_html_e('2 chữ số', 'extend-site'); ?></option>
+                                    <option value="3"><?php esc_html_e('3 chữ số', 'extend-site'); ?></option>
+                                </select>
+                                <p class="description"><?php esc_html_e('Dùng khi URL có dạng 01, 002. Nếu URL là chuong-1 thì chọn Không đệm.', 'extend-site'); ?></p>
+                            </div>
+                        </div>
+                        <p class="description"><?php esc_html_e('Ví dụ: Từ 1 đến 10 sẽ tạo URL cho chương 1, 2, 3... đến chương 10.', 'extend-site'); ?></p>
                     </div>
 
-                    <div class="es-crawler-field">
-                        <label for="es-crawler-url-pattern"><?php esc_html_e('Mẫu URL', 'extend-site'); ?></label>
-                        <input type="url" id="es-crawler-url-pattern" class="regular-text" placeholder="https://example.com/story/chuong-{n}/" />
-                        <p class="description"><?php esc_html_e('Thay số chương trong URL thật bằng {n}. Crawler sẽ dùng {n} để tự tạo URL cho từng chương.', 'extend-site'); ?></p>
-                        <p class="description"><strong><?php esc_html_e('Ví dụ URL thật:', 'extend-site'); ?></strong> <code>https://truyenfull.today/toi-cuong-he-thong/chuong-1/</code></p>
-                        <p class="description"><strong><?php esc_html_e('Mẫu URL cần nhập:', 'extend-site'); ?></strong> <code>https://truyenfull.today/toi-cuong-he-thong/chuong-{n}/</code></p>
+                    <div class="es-crawler-step">
+                        <h3><span>2</span><?php esc_html_e('Cách lưu chương', 'extend-site'); ?></h3>
+
+                        <div class="es-crawler-two-cols">
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-preview-number"><?php esc_html_e('Xem thử chương', 'extend-site'); ?></label>
+                                <input type="number" id="es-crawler-preview-number" min="1" step="1" value="1" />
+                                <p class="description"><?php esc_html_e('Đây là số thứ tự chương sẽ được dùng để tạo URL xem thử. Mặc định tự lấy theo ô Từ.', 'extend-site'); ?></p>
+                            </div>
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-post-status"><?php esc_html_e('Trạng thái bài viết', 'extend-site'); ?></label>
+                                <select id="es-crawler-post-status">
+                                    <option value="draft" selected><?php esc_html_e('Bản nháp', 'extend-site'); ?></option>
+                                    <option value="publish"><?php esc_html_e('Xuất bản', 'extend-site'); ?></option>
+                                </select>
+                                <p class="description"><?php esc_html_e('Nên dùng Bản nháp khi test để kiểm tra nội dung trước khi xuất bản.', 'extend-site'); ?></p>
+                            </div>
+                        </div>
+
+                        <div class="es-crawler-two-cols">
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-title-mode"><?php esc_html_e('Kiểu tiêu đề chương', 'extend-site'); ?></label>
+                                <select id="es-crawler-title-mode">
+                                    <option value="auto" selected><?php esc_html_e('Tự động', 'extend-site'); ?></option>
+                                    <option value="number"><?php esc_html_e('Chỉ dùng Chương {n}', 'extend-site'); ?></option>
+                                    <option value="story_number"><?php esc_html_e('{story} - Chương {n}', 'extend-site'); ?></option>
+                                    <option value="source_prefixed"><?php esc_html_e('Chương {n}: {source_title}', 'extend-site'); ?></option>
+                                    <option value="custom"><?php esc_html_e('Custom template', 'extend-site'); ?></option>
+                                </select>
+                                <p class="description"><?php esc_html_e('Tự động: nếu tiêu đề nguồn trùng tên truyện thì dùng Chương {n}; nếu nguồn có tiêu đề riêng thì dùng Chương {n}: tiêu đề nguồn.', 'extend-site'); ?></p>
+                            </div>
+                            <div class="es-crawler-field es-crawler-title-template-field is-hidden">
+                                <label for="es-crawler-title-template"><?php esc_html_e('Mẫu tiêu đề custom', 'extend-site'); ?></label>
+                                <input type="text" id="es-crawler-title-template" class="regular-text" value="{story} - Chương {n}: {source_title}" />
+                                <p class="description"><?php esc_html_e('Token dùng được: {story} = tên truyện, {n} = số chương, {source_title} = tiêu đề lấy từ website nguồn.', 'extend-site'); ?></p>
+                                <p class="description"><strong><?php esc_html_e('Ví dụ:', 'extend-site'); ?></strong> <code>{story} - Chương {n}: {source_title}</code></p>
+                            </div>
+                        </div>
+
+                        <div class="es-crawler-two-cols">
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-delay"><?php esc_html_e('Thời gian nghỉ giữa mỗi URL', 'extend-site'); ?></label>
+                                <input type="number" id="es-crawler-delay" min="1" max="60" step="1" value="5" />
+                                <p class="description"><?php esc_html_e('Đơn vị giây. Có thể tăng nếu site nguồn chậm hoặc dễ chặn request.', 'extend-site'); ?></p>
+                            </div>
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-preview-url"><?php esc_html_e('URL xem thử riêng', 'extend-site'); ?></label>
+                                <input type="url" id="es-crawler-preview-url" class="regular-text" placeholder="<?php echo esc_attr__('Không bắt buộc: ghi đè URL xem thử tự động', 'extend-site'); ?>" />
+                                <p class="description"><?php esc_html_e('Nếu điền, nút Xem thử sẽ dùng URL này thay vì URL sinh từ mẫu URL và số chương xem thử.', 'extend-site'); ?></p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="es-crawler-three-cols">
-                        <div class="es-crawler-field">
-                            <label for="es-crawler-range-from"><?php esc_html_e('Từ', 'extend-site'); ?></label>
-                            <input type="number" id="es-crawler-range-from" min="1" step="1" value="1" />
-                            <p class="description"><?php esc_html_e('Số chương bắt đầu crawl.', 'extend-site'); ?></p>
-                        </div>
-                        <div class="es-crawler-field">
-                            <label for="es-crawler-range-to"><?php esc_html_e('Đến', 'extend-site'); ?></label>
-                            <input type="number" id="es-crawler-range-to" min="1" step="1" value="1" />
-                            <p class="description"><?php esc_html_e('Số chương kết thúc crawl.', 'extend-site'); ?></p>
-                        </div>
-                        <div class="es-crawler-field">
-                            <label for="es-crawler-padding"><?php esc_html_e('Đệm số', 'extend-site'); ?></label>
-                            <select id="es-crawler-padding">
-                                <option value="0"><?php esc_html_e('Không đệm', 'extend-site'); ?></option>
-                                <option value="2"><?php esc_html_e('2 chữ số', 'extend-site'); ?></option>
-                                <option value="3"><?php esc_html_e('3 chữ số', 'extend-site'); ?></option>
-                            </select>
-                            <p class="description"><?php esc_html_e('Dùng khi URL có dạng 01, 002. Nếu URL là chuong-1 thì chọn Không đệm.', 'extend-site'); ?></p>
-                        </div>
-                    </div>
-                    <p class="description"><?php esc_html_e('Ví dụ: Từ 1 đến 10 sẽ tạo URL cho chương 1, 2, 3... đến chương 10.', 'extend-site'); ?></p>
+                    <details class="es-crawler-step es-crawler-advanced">
+                        <summary>
+                            <span>3</span>
+                            <strong><?php esc_html_e('Làm sạch nội dung', 'extend-site'); ?></strong>
+                            <em><?php esc_html_e('Tuỳ chọn', 'extend-site'); ?></em>
+                        </summary>
 
-                    <div class="es-crawler-two-cols">
-                        <div class="es-crawler-field">
-                            <label for="es-crawler-preview-number"><?php esc_html_e('Số chương để xem thử', 'extend-site'); ?></label>
-                            <input type="number" id="es-crawler-preview-number" min="1" step="1" value="1" />
-                            <p class="description"><?php esc_html_e('Chỉ dùng cho nút Xem thử, không chạy toàn bộ batch.', 'extend-site'); ?></p>
+                        <div class="es-crawler-two-cols">
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-find"><?php esc_html_e('Tìm nội dung', 'extend-site'); ?></label>
+                                <textarea id="es-crawler-find" rows="5" placeholder="<?php echo esc_attr__('Mỗi dòng là một nội dung cần tìm', 'extend-site'); ?>"></textarea>
+                                <p class="description"><?php esc_html_e('Dùng để xoá hoặc thay chữ trong nội dung sau khi scrape.', 'extend-site'); ?></p>
+                            </div>
+                            <div class="es-crawler-field">
+                                <label for="es-crawler-replace"><?php esc_html_e('Thay bằng', 'extend-site'); ?></label>
+                                <textarea id="es-crawler-replace" rows="5" placeholder="<?php echo esc_attr__('Mỗi dòng tương ứng với dòng cần tìm bên trái', 'extend-site'); ?>"></textarea>
+                                <p class="description"><?php esc_html_e('Ví dụ: bên trái là "Nguồn: example.com", bên phải để trống thì crawler sẽ xoá đoạn đó.', 'extend-site'); ?></p>
+                            </div>
                         </div>
-                        <div class="es-crawler-field">
-                            <label for="es-crawler-post-status"><?php esc_html_e('Trạng thái bài viết', 'extend-site'); ?></label>
-                            <select id="es-crawler-post-status">
-                                <option value="draft" selected><?php esc_html_e('Bản nháp', 'extend-site'); ?></option>
-                                <option value="publish"><?php esc_html_e('Xuất bản', 'extend-site'); ?></option>
-                            </select>
-                            <p class="description"><?php esc_html_e('Nên dùng Bản nháp khi test để kiểm tra nội dung trước khi xuất bản.', 'extend-site'); ?></p>
-                        </div>
-                    </div>
-
-                    <div class="es-crawler-field">
-                        <label for="es-crawler-delay"><?php esc_html_e('Thời gian nghỉ giữa mỗi URL', 'extend-site'); ?></label>
-                        <input type="number" id="es-crawler-delay" min="1" max="60" step="1" value="5" />
-                        <p class="description"><?php esc_html_e('Đơn vị giây. Mặc định 5 giây để giảm tải cho website nguồn; có thể tăng nếu site nguồn chậm hoặc dễ chặn request.', 'extend-site'); ?></p>
-                    </div>
-
-                    <div class="es-crawler-field">
-                        <label for="es-crawler-preview-url"><?php esc_html_e('URL xem thử riêng', 'extend-site'); ?></label>
-                        <input type="url" id="es-crawler-preview-url" class="regular-text" placeholder="<?php echo esc_attr__('Không bắt buộc: chỉ ghi đè URL xem thử được tạo tự động', 'extend-site'); ?>" />
-                        <p class="description"><?php esc_html_e('Nếu điền, nút Xem thử sẽ dùng URL này thay vì URL sinh từ Mẫu URL và Số chương để xem thử.', 'extend-site'); ?></p>
-                    </div>
-
-                    <div class="es-crawler-two-cols">
-                        <div class="es-crawler-field">
-                            <label for="es-crawler-find"><?php esc_html_e('Tìm nội dung', 'extend-site'); ?></label>
-                            <textarea id="es-crawler-find" rows="5" placeholder="<?php echo esc_attr__('Mỗi dòng là một nội dung cần tìm', 'extend-site'); ?>"></textarea>
-                            <p class="description"><?php esc_html_e('Dùng để xóa hoặc thay chữ trong nội dung sau khi scrape.', 'extend-site'); ?></p>
-                        </div>
-                        <div class="es-crawler-field">
-                            <label for="es-crawler-replace"><?php esc_html_e('Thay bằng', 'extend-site'); ?></label>
-                            <textarea id="es-crawler-replace" rows="5" placeholder="<?php echo esc_attr__('Mỗi dòng tương ứng với dòng cần tìm bên trái', 'extend-site'); ?>"></textarea>
-                            <p class="description"><?php esc_html_e('Ví dụ: dòng bên trái là "Nguồn: example.com", dòng bên phải để trống thì crawler sẽ xóa đoạn đó.', 'extend-site'); ?></p>
-                        </div>
-                    </div>
-                    <label class="es-crawler-checkbox">
-                        <input type="checkbox" id="es-crawler-remove-container" />
-                        <?php esc_html_e('Xóa cả dòng/đoạn chứa nội dung cần tìm', 'extend-site'); ?>
-                    </label>
-                    <p class="description"><?php esc_html_e('Nên bật khi muốn xóa credit, quảng cáo, dòng nguồn hoặc ghi chú dù nội dung có thêm khoảng trắng/ký tự phụ.', 'extend-site'); ?></p>
-
-                    <div class="es-crawler-actions">
-                        <button type="button" class="button" id="es-crawler-preview-btn"><?php esc_html_e('Xem thử', 'extend-site'); ?></button>
-                        <button type="button" class="button" id="es-crawler-generate-btn"><?php esc_html_e('Tạo danh sách URL', 'extend-site'); ?></button>
-                        <button type="button" class="button button-primary" id="es-crawler-start-btn"><?php esc_html_e('Bắt đầu', 'extend-site'); ?></button>
-                        <button type="button" class="button" id="es-crawler-pause-btn" disabled><?php esc_html_e('Tạm dừng', 'extend-site'); ?></button>
-                        <button type="button" class="button" id="es-crawler-stop-btn" disabled><?php esc_html_e('Dừng', 'extend-site'); ?></button>
-                        <button type="button" class="button button-secondary is-hidden" id="es-crawler-finalize-btn"><?php esc_html_e('Hoàn tất lại', 'extend-site'); ?></button>
-                    </div>
-                    <ul class="es-crawler-action-help">
-                        <li><strong><?php esc_html_e('Xem thử:', 'extend-site'); ?></strong> <?php esc_html_e('Đọc thử 1 URL để kiểm tra crawler lấy đúng tiêu đề và nội dung, không tạo chương.', 'extend-site'); ?></li>
-                        <li><strong><?php esc_html_e('Tạo danh sách URL:', 'extend-site'); ?></strong> <?php esc_html_e('Sinh danh sách URL từ Mẫu URL, Từ, Đến và Đệm số để bạn kiểm tra trước khi crawl.', 'extend-site'); ?></li>
-                        <li><strong><?php esc_html_e('Bắt đầu:', 'extend-site'); ?></strong> <?php esc_html_e('Bắt đầu crawl từng URL trong danh sách và tạo chương theo trạng thái đã chọn.', 'extend-site'); ?></li>
-                        <li><strong><?php esc_html_e('Tạm dừng:', 'extend-site'); ?></strong> <?php esc_html_e('Dừng tạm trước URL kế tiếp; request đang chạy sẽ không bị hủy.', 'extend-site'); ?></li>
-                        <li><strong><?php esc_html_e('Dừng:', 'extend-site'); ?></strong> <?php esc_html_e('Dừng batch hiện tại, giải phóng lock và chạy bước hoàn tất.', 'extend-site'); ?></li>
-                        <li><strong><?php esc_html_e('Hoàn tất lại:', 'extend-site'); ?></strong> <?php esc_html_e('Chỉ hiện khi bước hoàn tất lỗi; dùng để đồng bộ lại số chương/cache và giải phóng lock.', 'extend-site'); ?></li>
-                    </ul>
+                        <label class="es-crawler-checkbox">
+                            <input type="checkbox" id="es-crawler-remove-container" />
+                            <?php esc_html_e('Xoá cả dòng/đoạn chứa nội dung cần tìm', 'extend-site'); ?>
+                        </label>
+                        <p class="description"><?php esc_html_e('Nên bật khi muốn xoá credit, quảng cáo, dòng nguồn hoặc nút điều hướng như Chương trước/Chương sau.', 'extend-site'); ?></p>
+                    </details>
                 </section>
 
                 <aside class="es-crawler-card es-crawler-status-card">
-                    <h2><?php esc_html_e('Tiến độ', 'extend-site'); ?></h2>
-                    <div class="es-crawler-progress" aria-label="<?php echo esc_attr__('Tiến độ crawler', 'extend-site'); ?>">
-                        <div class="es-crawler-progress-bar" style="width:0%"></div>
+                    <div class="es-crawler-sidebar-actions">
+                        <h2><?php esc_html_e('Thao tác', 'extend-site'); ?></h2>
+                        <div class="es-crawler-actions">
+                            <button type="button" class="button" id="es-crawler-preview-btn"><?php esc_html_e('Xem thử', 'extend-site'); ?></button>
+                            <button type="button" class="button" id="es-crawler-generate-btn"><?php esc_html_e('Tạo danh sách URL', 'extend-site'); ?></button>
+                            <button type="button" class="button button-primary" id="es-crawler-start-btn"><?php esc_html_e('Bắt đầu', 'extend-site'); ?></button>
+                            <button type="button" class="button" id="es-crawler-pause-btn" disabled><?php esc_html_e('Tạm dừng', 'extend-site'); ?></button>
+                            <button type="button" class="button" id="es-crawler-stop-btn" disabled><?php esc_html_e('Dừng', 'extend-site'); ?></button>
+                            <button type="button" class="button button-secondary is-hidden" id="es-crawler-finalize-btn"><?php esc_html_e('Hoàn tất lại', 'extend-site'); ?></button>
+                        </div>
+                        <ul class="es-crawler-action-help">
+                            <li><strong><?php esc_html_e('Xem thử:', 'extend-site'); ?></strong> <?php esc_html_e('Kiểm tra 1 URL, không tạo chương.', 'extend-site'); ?></li>
+                            <li><strong><?php esc_html_e('Tạo URL:', 'extend-site'); ?></strong> <?php esc_html_e('Sinh danh sách trước khi crawl.', 'extend-site'); ?></li>
+                            <li><strong><?php esc_html_e('Bắt đầu:', 'extend-site'); ?></strong> <?php esc_html_e('Chạy tuần tự từng URL.', 'extend-site'); ?></li>
+                        </ul>
                     </div>
-                    <div class="es-crawler-progress-text">0 / 0 (0%)</div>
-                    <div class="es-crawler-current-url"><?php esc_html_e('Chưa xử lý URL nào.', 'extend-site'); ?></div>
-                    <div id="es-crawler-lock-notice" class="es-crawler-lock-notice is-hidden"></div>
-                    <div id="es-crawler-finalize-status" class="es-crawler-finalize-status"></div>
+
+                    <div class="es-crawler-sidebar-progress">
+                        <h2><?php esc_html_e('Tiến độ', 'extend-site'); ?></h2>
+                        <div class="es-crawler-progress" aria-label="<?php echo esc_attr__('Tiến độ crawler', 'extend-site'); ?>">
+                            <div class="es-crawler-progress-bar" style="width:0%"></div>
+                        </div>
+                        <div class="es-crawler-progress-text">0 / 0 (0%)</div>
+                        <div class="es-crawler-current-url"><?php esc_html_e('Chưa xử lý URL nào.', 'extend-site'); ?></div>
+                        <div id="es-crawler-lock-notice" class="es-crawler-lock-notice is-hidden"></div>
+                        <div id="es-crawler-finalize-status" class="es-crawler-finalize-status"></div>
+                    </div>
                 </aside>
             </div>
 
@@ -186,6 +230,33 @@ class CrawlerAdmin
                         <tbody id="es-crawler-log-body"></tbody>
                     </table>
                 </section>
+            </div>
+
+            <div class="es-crawler-help-modal is-hidden" id="es-crawler-help-modal" aria-hidden="true">
+                <div class="es-crawler-help-backdrop" data-es-crawler-help-close></div>
+                <div class="es-crawler-help-dialog" role="dialog" aria-modal="true" aria-labelledby="es-crawler-help-title">
+                    <button type="button" class="es-crawler-help-close" data-es-crawler-help-close aria-label="<?php echo esc_attr__('Đóng hướng dẫn', 'extend-site'); ?>">×</button>
+                    <h2 id="es-crawler-help-title"><?php esc_html_e('Hướng dẫn crawler truyện', 'extend-site'); ?></h2>
+
+                    <ol class="es-crawler-help-steps">
+                        <li><strong><?php esc_html_e('Chuẩn bị truyện trước', 'extend-site'); ?></strong><p><?php esc_html_e('Crawler hiện chỉ thêm chương vào truyện đã có. Hãy tạo Story, tác giả, ảnh bìa và mô tả trước nếu cần.', 'extend-site'); ?></p></li>
+                        <li><strong><?php esc_html_e('Nhập mẫu URL có {n}', 'extend-site'); ?></strong><p><?php esc_html_e('Thay số chương thật bằng {n}. Ví dụ URL thật là /chuong-1/ thì mẫu URL là /chuong-{n}/.', 'extend-site'); ?></p></li>
+                        <li><strong><?php esc_html_e('Xem thử trước khi chạy', 'extend-site'); ?></strong><p><?php esc_html_e('Nên xem thử chương đầu, giữa và cuối. Kiểm tra kỹ Tiêu đề sẽ lưu, độ dài nội dung và phần preview.', 'extend-site'); ?></p></li>
+                        <li><strong><?php esc_html_e('Tạo danh sách URL rồi mới bắt đầu', 'extend-site'); ?></strong><p><?php esc_html_e('Nếu sửa mẫu URL, Từ, Đến hoặc Đệm số, hãy tạo lại danh sách URL trước khi bấm Bắt đầu.', 'extend-site'); ?></p></li>
+                        <li><strong><?php esc_html_e('Chạy thử bằng bản nháp', 'extend-site'); ?></strong><p><?php esc_html_e('Khi test nguồn mới, chọn Bản nháp và chạy ít chương trước. Nếu nội dung ổn mới chạy batch lớn hoặc xuất bản.', 'extend-site'); ?></p></li>
+                    </ol>
+
+                    <div class="es-crawler-help-notes">
+                        <h3><?php esc_html_e('Lưu ý nhanh', 'extend-site'); ?></h3>
+                        <ul>
+                            <li><?php esc_html_e('Xem thử chương là số thứ tự chương dùng để tạo URL preview, không phải số lượng chương.', 'extend-site'); ?></li>
+                            <li><?php esc_html_e('Nếu trùng URL hoặc trùng số chương, crawler báo duplicate và bỏ qua, không tạo chương trùng.', 'extend-site'); ?></li>
+                            <li><?php esc_html_e('Nếu gặp 404, captcha hoặc trang chặn truy cập, crawler sẽ báo lỗi và không tạo chương.', 'extend-site'); ?></li>
+                            <li><?php esc_html_e('Batch sẽ tự dừng nếu có 3 URL lỗi liên tiếp để tránh crawl quá xa số chương thật.', 'extend-site'); ?></li>
+                            <li><?php esc_html_e('Dùng Làm sạch nội dung khi cần xoá credit, quảng cáo hoặc nút Chương trước/Chương sau.', 'extend-site'); ?></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
         <?php

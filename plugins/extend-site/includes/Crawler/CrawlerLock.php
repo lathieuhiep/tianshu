@@ -16,7 +16,7 @@ class CrawlerLock
         return is_array($lock) ? $lock : null;
     }
 
-    public static function acquire(int $story_id, int $user_id, int $ttl = self::DEFAULT_TTL): array
+    public static function acquire(int $story_id, int $user_id, int $ttl = self::DEFAULT_TTL, int $expected_total = 0): array
     {
         $existing = self::get();
         if ($existing && !self::is_expired($existing)) {
@@ -35,6 +35,7 @@ class CrawlerLock
             'batch_id' => wp_generate_uuid4(),
             'user_id' => $user_id,
             'story_id' => $story_id,
+            'expected_total' => max(0, $expected_total),
             'started_at' => date('Y-m-d H:i:s', $now),
             'last_heartbeat' => date('Y-m-d H:i:s', $now),
             'expires_at' => date('Y-m-d H:i:s', $now + $ttl),

@@ -1,6 +1,7 @@
 <?php
 namespace ExtendSite\DB;
 
+use ExtendSite\PostType\ChapterPostType;
 use WP_Post;
 
 defined('ABSPATH') || exit;
@@ -211,6 +212,68 @@ class LatestChapterTable {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('[LatestChapter] Resynced all latest chapters');
         }
+    }
+
+    /**
+     * Rebuild latest chapter data for one story after imports or crawler batches.
+     *
+     * The frontend displays the highest published chapter number for each story,
+     * so this keeps the table aligned with the chapter relationship meta model.
+     */
+    public static function resync_story(int $story_id): ?array {
+        global $wpdb;
+
+        if ($story_id <= 0) {
+            return null;
+        }
+
+        $table = self::get_table_name();
+        $row = $wpdb->get_row($wpdb->prepare(
+            "
+            SELECT p.ID AS chapter_id, p.post_date AS updated_at
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} story_meta
+                ON story_meta.post_id = p.ID
+               AND story_meta.meta_key = %s
+               AND story_meta.meta_value = %s
+            INNER JOIN {$wpdb->postmeta} number_meta
+                ON number_meta.post_id = p.ID
+               AND number_meta.meta_key = %s
+            WHERE p.post_type = %s
+              AND p.post_status = 'publish'
+            ORDER BY CAST(number_meta.meta_value AS UNSIGNED) DESC, p.ID DESC
+            LIMIT 1
+            ",
+            ChapterPostType::META_STORY_ID,
+            (string) $story_id,
+            ChapterPostType::META_NUMBER,
+            ChapterPostType::SLUG
+        ), ARRAY_A);
+
+        if (!$row) {
+            $wpdb->delete($table, ['story_id' => $story_id], ['%d']);
+
+            return null;
+        }
+
+        $chapter_id = (int) $row['chapter_id'];
+        $updated_at = (string) ($row['updated_at'] ?: current_time('mysql'));
+
+        $wpdb->replace(
+            $table,
+            [
+                'story_id' => $story_id,
+                'chapter_id' => $chapter_id,
+                'updated_at' => $updated_at,
+            ],
+            ['%d', '%d', '%s']
+        );
+
+        return [
+            'story_id' => $story_id,
+            'chapter_id' => $chapter_id,
+            'updated_at' => $updated_at,
+        ];
     }
 
     /**

@@ -31,11 +31,11 @@ class Scraper
         }
 
         $domain = self::normalize_domain((string) wp_parse_url($clean_url, PHP_URL_HOST));
-        $rule = self::get_rule_for_domain($domain);
+        $use_domain_rules = (bool) apply_filters('es_crawler_use_domain_rules', false, $domain, $clean_url);
+        $rule = $use_domain_rules ? self::get_rule_for_domain($domain) : null;
         $rule_warnings = [];
         if (!$rule) {
             $rule = self::get_generic_rule($domain);
-            $rule_warnings[] = __('Chưa có luật riêng cho tên miền này, crawler đang thử luật tự động.', 'extend-site');
         }
 
         $body = self::fetch($clean_url);
@@ -77,30 +77,7 @@ class Scraper
 
     public static function get_rules(): array
     {
-        $rules = [
-            'tinhvan.site' => [
-                'label' => 'Tinh Van',
-                'title_xpath' => "//h1[contains(@class,'entry-title') or contains(@class,'chapter-title') or contains(@class,'title')]",
-                'content_xpath' => "//*[contains(@class,'entry-content') or contains(@class,'chapter-content') or contains(@class,'reading-content') or contains(@class,'content')]",
-                'cleanup_xpath' => [
-                    ".//script",
-                    ".//style",
-                    ".//*[contains(@class,'ads') or contains(@class,'advert') or contains(@class,'sharedaddy')]",
-                ],
-            ],
-            'doctruyenchill.net' => [
-                'label' => 'Doc Truyen Chill',
-                'title_xpath' => "//h1[contains(@class,'chapter-title') or contains(@class,'entry-title') or contains(@class,'title')]",
-                'content_xpath' => "//*[contains(@class,'chapter-content') or contains(@class,'entry-content') or contains(@class,'reading-content') or @id='chapter-c']",
-                'cleanup_xpath' => [
-                    ".//script",
-                    ".//style",
-                    ".//*[contains(@class,'ads') or contains(@class,'advert') or contains(@class,'chapter-nav')]",
-                ],
-            ],
-        ];
-
-        return apply_filters('es_crawler_domain_rules', $rules);
+        return apply_filters('es_crawler_domain_rules', []);
     }
 
     private static function fetch(string $url)
@@ -132,6 +109,10 @@ class Scraper
             return new WP_Error('non_html_body', __('Phản hồi nguồn không giống HTML.', 'extend-site'));
         }
 
+        if (self::looks_like_error_page($body)) {
+            return new WP_Error('blocked_or_error_page', __('Nguồn trả về trang lỗi, captcha hoặc trang chặn truy cập.', 'extend-site'));
+        }
+
         return $body;
     }
 
@@ -159,7 +140,7 @@ class Scraper
             $title = __('Chương chưa có tiêu đề', 'extend-site');
         }
 
-        $content_node = self::first_node($xpath, (string) ($rule['content_xpath'] ?? ''));
+        $content_node = self::best_content_node($xpath, (string) ($rule['content_xpath'] ?? ''));
         if (!$content_node) {
             return new WP_Error('content_xpath_missing', __('XPath nội dung không khớp.', 'extend-site'), [
                 'warnings' => $warnings,
@@ -174,6 +155,12 @@ class Scraper
 
         if (trim(wp_strip_all_tags($content_html)) === '') {
             return new WP_Error('empty_content', __('Nội dung phân tích được đang rỗng.', 'extend-site'), [
+                'warnings' => $warnings,
+            ]);
+        }
+
+        if (self::looks_like_error_page($title . "\n" . wp_strip_all_tags($content_html))) {
+            return new WP_Error('blocked_or_error_page', __('Nội dung lấy được giống trang lỗi, captcha hoặc trang chặn truy cập.', 'extend-site'), [
                 'warnings' => $warnings,
             ]);
         }
@@ -202,13 +189,16 @@ class Scraper
         return [
             'label' => sprintf(__('Luật tự động (%s)', 'extend-site'), $domain),
             'title_xpath' => "//h1 | //h2[contains(@class,'chapter-title') or contains(@class,'entry-title') or contains(@class,'title')] | //*[@class='chapter-title']",
-            'content_xpath' => "//*[@id='chapter-c'] | //*[@id='chapter-content'] | //article | //div[contains(@class,'chapter-c') or contains(@class,'chapter-content') or contains(@class,'entry-content') or contains(@class,'reading-content') or contains(@class,'content')]",
+            'content_xpath' => "//*[@id='chapter-c'] | //*[@id='chapter-content'] | //div[contains(@class,'chapter-c') or contains(@class,'chapter-content') or contains(@class,'entry-content') or contains(@class,'reading-content')] | //article | //div[contains(@class,'content')]",
             'cleanup_xpath' => [
                 ".//script",
                 ".//style",
                 ".//noscript",
                 ".//iframe",
-                ".//*[contains(@class,'ads') or contains(@class,'advert') or contains(@class,'chapter-nav') or contains(@class,'breadcrumb') or contains(@class,'social')]",
+                ".//header",
+                ".//nav",
+                ".//footer",
+                ".//*[contains(@class,'ads') or contains(@class,'advert') or contains(@class,'chapter-nav') or contains(@class,'breadcrumb') or contains(@class,'social') or contains(@class,'popup') or contains(@class,'modal') or contains(@class,'overlay') or contains(@class,'menu') or contains(@class,'navbar') or contains(@class,'sidebar') or contains(@class,'widget')]",
             ],
         ];
     }
@@ -220,6 +210,37 @@ class Scraper
         return preg_replace('/^www\./', '', $domain) ?: $domain;
     }
 
+    private static function looks_like_error_page(string $content): bool
+    {
+        $text = strtolower(remove_accents(wp_strip_all_tags(html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
+        $text = preg_replace('/\s+/', ' ', $text) ?: $text;
+
+        $patterns = [
+            '404 not found',
+            '404 page',
+            'error 404',
+            'not found',
+            'page not found',
+            'khong tim thay',
+            'trang khong ton tai',
+            'captcha',
+            'cloudflare',
+            'access denied',
+            'forbidden',
+            'just a moment',
+            'checking your browser',
+            'verify you are human',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (strpos($text, $pattern) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static function remove_unwanted_nodes(DOMXPath $xpath, array $expressions): void
     {
         $defaults = [
@@ -227,7 +248,10 @@ class Scraper
             './/style',
             './/noscript',
             './/iframe',
-            ".//*[contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ads') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'advert') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ads') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'advert')]",
+            './/header',
+            './/nav',
+            './/footer',
+            ".//*[contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ads') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'advert') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'popup') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'modal') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'overlay') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'menu') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'navbar') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sidebar') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'widget') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ads') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'advert') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'popup') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'modal') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'overlay') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'mask') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'menu') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'navbar') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sidebar') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'widget')]",
         ];
         foreach (array_merge($defaults, $expressions) as $expression) {
             foreach ($xpath->query($expression) ?: [] as $node) {
@@ -257,6 +281,40 @@ class Scraper
         }
 
         return $nodes->item(0);
+    }
+
+    private static function best_content_node(DOMXPath $xpath, string $expression): ?DOMNode
+    {
+        if ($expression === '') {
+            return null;
+        }
+
+        $nodes = $xpath->query($expression);
+        if (!$nodes || $nodes->length < 1) {
+            return null;
+        }
+
+        $best = null;
+        $best_score = 0;
+        foreach ($nodes as $node) {
+            $text = trim(preg_replace('/\s+/', ' ', $node->textContent) ?: '');
+            $length = mb_strlen($text);
+            if ($length < 80) {
+                continue;
+            }
+
+            $link_count = $xpath->query('.//a', $node);
+            $list_count = $xpath->query('.//li', $node);
+            $penalty = (($link_count ? $link_count->length : 0) * 80) + (($list_count ? $list_count->length : 0) * 40);
+            $score = max(0, $length - $penalty);
+
+            if ($score > $best_score) {
+                $best = $node;
+                $best_score = $score;
+            }
+        }
+
+        return $best ?: $nodes->item(0);
     }
 
     private static function inner_html(DOMNode $node): string
@@ -426,7 +484,7 @@ class Scraper
 
     private static function find_removable_container(DOMNode $node): ?DOMNode
     {
-        $block_tags = ['p', 'div', 'section', 'article', 'blockquote', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+        $block_tags = ['a', 'button', 'p', 'div', 'section', 'article', 'blockquote', 'li', 'nav', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
         $current = $node->parentNode;
         $fallback = $current instanceof DOMElement ? $current : $node;
 
@@ -459,6 +517,8 @@ class Scraper
         $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $value = str_replace("\xc2\xa0", ' ', $value);
         $value = preg_replace('/\s+/u', ' ', $value) ?: $value;
+        $value = function_exists('remove_accents') ? remove_accents($value) : $value;
+        $value = mb_strtolower($value, 'UTF-8');
 
         return trim($value);
     }
@@ -476,6 +536,8 @@ class Scraper
             $content = str_replace($variant, $replace, $content);
         }
 
+        $content = self::replace_plain_text_case_insensitive($content, $find, $replace);
+
         $normalized_find = trim(str_replace("\xc2\xa0", ' ', html_entity_decode($find, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
         if ($normalized_find === '') {
             return $content;
@@ -488,6 +550,19 @@ class Scraper
 
         $pattern = '/' . implode('\s+', array_map(static fn($part) => preg_quote($part, '/'), $parts)) . '/u';
         $result = preg_replace($pattern, $replace, str_replace("\xc2\xa0", ' ', $content));
+
+        return is_string($result) ? $result : $content;
+    }
+
+    private static function replace_plain_text_case_insensitive(string $content, string $find, string $replace): string
+    {
+        $find = trim(html_entity_decode($find, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($find === '') {
+            return $content;
+        }
+
+        $pattern = '/' . preg_quote($find, '/') . '/iu';
+        $result = preg_replace($pattern, $replace, $content);
 
         return is_string($result) ? $result : $content;
     }
