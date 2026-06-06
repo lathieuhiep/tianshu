@@ -43,7 +43,7 @@ class Scraper
             return $body;
         }
 
-        $parsed = self::parse_html($body, $rule, $replace_rules);
+        $parsed = self::parse_html($body, $rule, $replace_rules, $clean_url);
         if (is_wp_error($parsed)) {
             return $parsed;
         }
@@ -71,6 +71,8 @@ class Scraper
             'title' => $parsed['title'],
             'content_html' => $parsed['content_html'],
             'content_length' => $content_length,
+            'source_chapter_number' => $parsed['source_chapter_number'],
+            'source_max_chapter_number' => $parsed['source_max_chapter_number'],
             'warnings' => $warnings,
         ];
     }
@@ -116,7 +118,7 @@ class Scraper
         return $body;
     }
 
-    private static function parse_html(string $html, array $rule, array $replace_rules)
+    private static function parse_html(string $html, array $rule, array $replace_rules, string $source_url = '')
     {
         $previous = libxml_use_internal_errors(true);
         libxml_clear_errors();
@@ -136,8 +138,7 @@ class Scraper
         $warnings = [];
         $title = self::first_text($xpath, (string) ($rule['title_xpath'] ?? ''));
         if ($title === '') {
-            $warnings[] = __('XPath tiêu đề không khớp.', 'extend-site');
-            $title = __('Chương chưa có tiêu đề', 'extend-site');
+            $title = '';
         }
 
         $content_node = self::best_content_node($xpath, (string) ($rule['content_xpath'] ?? ''));
@@ -168,6 +169,8 @@ class Scraper
         return [
             'title' => sanitize_text_field($title),
             'content_html' => $content_html,
+            'source_chapter_number' => self::detect_source_chapter_number($xpath),
+            'source_max_chapter_number' => self::detect_source_max_chapter_number($xpath, $source_url),
             'warnings' => $warnings,
         ];
     }
@@ -188,8 +191,8 @@ class Scraper
     {
         return [
             'label' => sprintf(__('Luật tự động (%s)', 'extend-site'), $domain),
-            'title_xpath' => "//h1 | //h2[contains(@class,'chapter-title') or contains(@class,'entry-title') or contains(@class,'title')] | //*[@class='chapter-title']",
-            'content_xpath' => "//*[@id='chapter-c'] | //*[@id='chapter-content'] | //div[contains(@class,'chapter-c') or contains(@class,'chapter-content') or contains(@class,'entry-content') or contains(@class,'reading-content')] | //article | //div[contains(@class,'content')]",
+            'title_xpath' => "//h1[string-length(normalize-space(.)) > 0] | //h2[string-length(normalize-space(.)) > 0] | //h3[string-length(normalize-space(.)) > 0]",
+            'content_xpath' => "//*[@id='chapter-c'] | //*[@id='chapter-content'] | //div[contains(@class,'chapter-c') or contains(@class,'chapter-content') or contains(@class,'entry-content') or contains(@class,'reading-content')] | //article[string-length(normalize-space(.)) > 120] | //main[string-length(normalize-space(.)) > 120] | //section[string-length(normalize-space(.)) > 200] | //div[string-length(normalize-space(.)) > 200 and (count(.//p) >= 2 or count(.//br) >= 4 or string-length(normalize-space(.)) > 800)]",
             'cleanup_xpath' => [
                 ".//script",
                 ".//style",
@@ -295,18 +298,18 @@ class Scraper
         }
 
         $best = null;
-        $best_score = 0;
+        $best_score = PHP_INT_MIN;
+        $body_text = self::normalized_node_text(self::first_node($xpath, '//body') ?: $nodes->item(0));
+        $body_length = max(1, mb_strlen($body_text));
+
         foreach ($nodes as $node) {
-            $text = trim(preg_replace('/\s+/', ' ', $node->textContent) ?: '');
+            $text = self::normalized_node_text($node);
             $length = mb_strlen($text);
             if ($length < 80) {
                 continue;
             }
 
-            $link_count = $xpath->query('.//a', $node);
-            $list_count = $xpath->query('.//li', $node);
-            $penalty = (($link_count ? $link_count->length : 0) * 80) + (($list_count ? $list_count->length : 0) * 40);
-            $score = max(0, $length - $penalty);
+            $score = self::score_content_candidate($xpath, $node, $text, $length, $body_length);
 
             if ($score > $best_score) {
                 $best = $node;
@@ -315,6 +318,288 @@ class Scraper
         }
 
         return $best ?: $nodes->item(0);
+    }
+
+    private static function detect_source_chapter_number(DOMXPath $xpath): ?int
+    {
+        $number = self::detect_chapter_number_from_inputs($xpath);
+        if ($number !== null) {
+            return $number;
+        }
+
+        return self::detect_chapter_number_from_current_label($xpath);
+    }
+
+    private static function detect_chapter_number_from_inputs(DOMXPath $xpath): ?int
+    {
+        foreach ($xpath->query('//input[@value]') ?: [] as $node) {
+            if (!$node instanceof DOMElement) {
+                continue;
+            }
+
+            $field = strtolower(trim($node->getAttribute('id') . ' ' . $node->getAttribute('name')));
+            if ($field === '' || !preg_match('/chapter|chuong|chương|tap|tập/u', $field)) {
+                continue;
+            }
+
+            $value = trim($node->getAttribute('value'));
+            if (preg_match('/^\d+$/', $value) && (int) $value > 0) {
+                return (int) $value;
+            }
+        }
+
+        return null;
+    }
+
+    private static function detect_chapter_number_from_current_label(DOMXPath $xpath): ?int
+    {
+        $expressions = [
+            "//*[contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'active') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'current') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'current')]",
+            "//*[@aria-current='page']",
+        ];
+
+        foreach ($expressions as $expression) {
+            foreach ($xpath->query($expression) ?: [] as $node) {
+                $text = self::normalized_node_text($node);
+                if (preg_match('/(?:chương|chuong|chapter|chap|tập|tap)\s*([0-9]+)/iu', $text, $matches)) {
+                    $number = (int) $matches[1];
+                    if ($number > 0) {
+                        return $number;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static function detect_source_max_chapter_number(DOMXPath $xpath, string $source_url): ?int
+    {
+        $max = null;
+        foreach ($xpath->query('//a[@href]') ?: [] as $node) {
+            if (!$node instanceof DOMElement) {
+                continue;
+            }
+
+            $number = self::extract_chapter_number_from_href($node->getAttribute('href'), $source_url);
+            if ($number === null) {
+                continue;
+            }
+
+            $max = $max === null ? $number : max($max, $number);
+        }
+
+        return $max;
+    }
+
+    private static function extract_chapter_number_from_href(string $href, string $source_url): ?int
+    {
+        $href = trim(html_entity_decode($href, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($href === '' || strpos($href, '#') === 0 || preg_match('/^(javascript|mailto|tel):/i', $href)) {
+            return null;
+        }
+
+        $source_parts = parse_url($source_url) ?: [];
+        $href_parts = parse_url($href) ?: [];
+        if (!empty($href_parts['host']) && !empty($source_parts['host']) && strtolower($href_parts['host']) !== strtolower($source_parts['host'])) {
+            return null;
+        }
+
+        $source_path = self::normalize_url_path((string) ($source_parts['path'] ?? ''));
+        $href_path = self::normalize_url_path((string) ($href_parts['path'] ?? ''));
+        if ($href_path !== '' && $source_path !== '' && rtrim($href_path, '/') !== rtrim($source_path, '/')) {
+            return null;
+        }
+
+        $query = (string) ($href_parts['query'] ?? '');
+        if ($query !== '') {
+            parse_str($query, $params);
+            foreach (['chuong', 'chapter', 'chap', 'tap'] as $key) {
+                if (isset($params[$key]) && preg_match('/^\d+$/', (string) $params[$key])) {
+                    $number = (int) $params[$key];
+                    return $number > 0 ? $number : null;
+                }
+            }
+        }
+
+        $path = $href_path !== '' ? $href_path : $href;
+        if (preg_match('/(?:chuong|chapter|chap|tap)[\-_\/=]?([0-9]+)/i', $path, $matches)) {
+            $number = (int) $matches[1];
+            return $number > 0 ? $number : null;
+        }
+
+        return null;
+    }
+
+    private static function normalize_url_path(string $path): string
+    {
+        if ($path === '') {
+            return '';
+        }
+
+        $path = preg_replace('#/+#', '/', $path) ?: $path;
+
+        return '/' . ltrim($path, '/');
+    }
+
+    private static function score_content_candidate(DOMXPath $xpath, DOMNode $node, string $text, int $length, int $body_length): int
+    {
+        $paragraph_count = self::query_count($xpath, './/p', $node);
+        $long_paragraph_count = self::long_paragraph_count($xpath, $node);
+        $br_count = self::query_count($xpath, './/br', $node);
+        $link_count = self::query_count($xpath, './/a', $node);
+        $list_count = self::query_count($xpath, './/li', $node);
+        $button_count = self::query_count($xpath, './/button', $node);
+        $form_count = self::query_count($xpath, './/form | .//input | .//select | .//textarea', $node);
+        $media_count = self::query_count($xpath, './/img | .//video | .//iframe', $node);
+        $heading_count = self::query_count($xpath, './/h1 | .//h2 | .//h3 | .//h4', $node);
+        $sentence_count = self::sentence_count($text);
+        $bad_keyword_count = self::bad_content_keyword_count($text);
+        $bad_attr_count = self::bad_content_attribute_count($node);
+        $link_density = $length > 0 ? $link_count / max(1, $length / 250) : 0;
+        $body_ratio = $length / $body_length;
+
+        $score = $length;
+        $score += $paragraph_count * 140;
+        $score += $long_paragraph_count * 220;
+        $score += min($br_count, 20) * 35;
+        $score += min($sentence_count, 80) * 20;
+        $score += $heading_count * 20;
+
+        $score -= $link_count * 120;
+        $score -= $list_count * 70;
+        $score -= $button_count * 160;
+        $score -= $form_count * 220;
+        $score -= $media_count * 25;
+        $score -= $bad_keyword_count * 260;
+        $score -= $bad_attr_count * 420;
+        $score -= (int) round($link_density * 180);
+
+        if ($paragraph_count === 0 && $br_count < 2 && $sentence_count < 4) {
+            $score -= 700;
+        }
+
+        if ($body_ratio > 0.85 && ($link_count > 10 || $list_count > 10 || $bad_attr_count > 0)) {
+            $score -= 1200;
+        }
+
+        return (int) $score;
+    }
+
+    private static function normalized_node_text(?DOMNode $node): string
+    {
+        if (!$node) {
+            return '';
+        }
+
+        return trim(preg_replace('/\s+/u', ' ', html_entity_decode($node->textContent, ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?: '');
+    }
+
+    private static function query_count(DOMXPath $xpath, string $expression, DOMNode $context): int
+    {
+        $nodes = $xpath->query($expression, $context);
+
+        return $nodes ? $nodes->length : 0;
+    }
+
+    private static function long_paragraph_count(DOMXPath $xpath, DOMNode $context): int
+    {
+        $count = 0;
+        foreach ($xpath->query('.//p', $context) ?: [] as $paragraph) {
+            if (mb_strlen(self::normalized_node_text($paragraph)) >= 80) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    private static function sentence_count(string $text): int
+    {
+        $matches = [];
+
+        return preg_match_all('/[.!?;:。！？…]+/u', $text, $matches) ?: 0;
+    }
+
+    private static function bad_content_keyword_count(string $text): int
+    {
+        $text = mb_strtolower($text);
+        $keywords = [
+            'dang luc',
+            'dang lúc',
+            'đăng lúc',
+            'luot xem',
+            'lượt xem',
+            'binh luan',
+            'bình luận',
+            'chuong truoc',
+            'chương trước',
+            'chuong sau',
+            'chương sau',
+            'danh sach chuong',
+            'danh sách chương',
+            'chia se',
+            'chia sẻ',
+            'theo doi',
+            'theo dõi',
+            'dang nhap',
+            'đăng nhập',
+            'dang ky',
+            'đăng ký',
+        ];
+
+        $count = 0;
+        foreach ($keywords as $keyword) {
+            if ($keyword !== '' && mb_strpos($text, $keyword) !== false) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    private static function bad_content_attribute_count(DOMNode $node): int
+    {
+        if (!$node instanceof DOMElement) {
+            return 0;
+        }
+
+        $value = mb_strtolower(trim($node->getAttribute('id') . ' ' . $node->getAttribute('class')));
+        if ($value === '') {
+            return 0;
+        }
+
+        $patterns = [
+            'breadcrumb',
+            'comment',
+            'binh-luan',
+            'binh_luan',
+            'nav',
+            'menu',
+            'sidebar',
+            'widget',
+            'footer',
+            'header',
+            'modal',
+            'popup',
+            'overlay',
+            'social',
+            'share',
+            'related',
+            'recommend',
+            'pagination',
+            'chapter-list',
+            'ds-chuong',
+        ];
+
+        $count = 0;
+        foreach ($patterns as $pattern) {
+            if (strpos($value, $pattern) !== false) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     private static function inner_html(DOMNode $node): string
@@ -341,6 +626,9 @@ class Scraper
 
             $replace = isset($rule['replace']) ? (string) $rule['replace'] : '';
             $is_regex = !empty($rule['regex']);
+            if (!empty($rule['remove_container']) && !$is_regex) {
+                continue;
+            }
 
             if ($is_regex) {
                 $result = @preg_replace($find, $replace, $content);
@@ -377,8 +665,9 @@ class Scraper
         self::remove_matching_containers($xpath, $replace_rules);
         foreach ($xpath->query('//text()') ?: [] as $text_node) {
             $value = $text_node->nodeValue;
+            $removed_text = false;
             foreach ($replace_rules as $rule) {
-                if (!is_array($rule) || !empty($rule['regex'])) {
+                if (!is_array($rule) || !empty($rule['regex']) || !empty($rule['remove_container'])) {
                     continue;
                 }
 
@@ -387,7 +676,14 @@ class Scraper
                     continue;
                 }
 
-                $value = self::replace_plain_text($value, $find, isset($rule['replace']) ? (string) $rule['replace'] : '');
+                $replace = isset($rule['replace']) ? (string) $rule['replace'] : '';
+                $value = self::replace_plain_text($value, $find, $replace);
+                if ($replace === '') {
+                    $removed_text = true;
+                }
+            }
+            if ($removed_text) {
+                $value = self::cleanup_text_after_empty_replacement($value);
             }
             $text_node->nodeValue = $value;
         }
@@ -432,23 +728,79 @@ class Scraper
 
     private static function remove_empty_nodes(DOMXPath $xpath): void
     {
-        $expressions = [
-            "//div[not(@id='es-crawler-fragment') and not(normalize-space()) and not(*)]",
-            "//p[not(normalize-space()) and not(*)]",
-            "//span[not(normalize-space()) and not(*)]",
-            "//i[not(normalize-space()) and not(*)]",
-            "//b[not(normalize-space()) and not(*)]",
-            "//strong[not(normalize-space()) and not(*)]",
-            "//em[not(normalize-space()) and not(*)]",
+        $tags = [
+            'span',
+            'i',
+            'b',
+            'strong',
+            'em',
+            'p',
+            'div',
         ];
 
-        foreach ($expressions as $expression) {
-            foreach ($xpath->query($expression) ?: [] as $node) {
-                if ($node->parentNode) {
-                    $node->parentNode->removeChild($node);
+        do {
+            $removed = false;
+            foreach ($tags as $tag) {
+                foreach ($xpath->query('//' . $tag) ?: [] as $node) {
+                    if ($node instanceof DOMElement && self::is_removable_empty_element($node) && $node->parentNode) {
+                        $node->parentNode->removeChild($node);
+                        $removed = true;
+                    }
                 }
             }
+        } while ($removed);
+    }
+
+    private static function is_removable_empty_element(DOMElement $node): bool
+    {
+        if ($node->getAttribute('id') === 'es-crawler-fragment') {
+            return false;
         }
+
+        if (self::normalize_empty_check_text($node->textContent) !== '') {
+            return false;
+        }
+
+        foreach ($node->childNodes as $child) {
+            if (!$child instanceof DOMElement) {
+                continue;
+            }
+
+            $tag = strtolower($child->tagName);
+            if ($tag === 'br') {
+                continue;
+            }
+
+            if (!in_array($tag, ['span', 'i', 'b', 'strong', 'em'], true)) {
+                return false;
+            }
+
+            if (!self::is_removable_empty_element($child)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function normalize_empty_check_text(string $text): string
+    {
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = str_replace(["\xc2\xa0", '&nbsp;'], ' ', $text);
+        $text = preg_replace('/\s+/u', ' ', $text) ?: $text;
+
+        return trim($text);
+    }
+
+    private static function cleanup_text_after_empty_replacement(string $text): string
+    {
+        $text = str_replace("\xc2\xa0", ' ', $text);
+        $text = preg_replace('/[ \t]{2,}/u', ' ', $text) ?: $text;
+        if (trim($text) === '') {
+            return '';
+        }
+
+        return $text;
     }
 
     private static function remove_matching_containers(DOMXPath $xpath, array $replace_rules): void

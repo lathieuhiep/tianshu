@@ -104,17 +104,30 @@ class CrawlerAjax
         $allow_short = self::get_bool('allow_short_content');
         $title_mode = self::get_title_mode();
         $title_template = self::get_title_template();
+        $expected_chapter_number = self::resolve_expected_chapter_number($source_url, $chapter_number);
 
         $result = Scraper::scrape($source_url, $replace_rules, $allow_short);
         if (is_wp_error($result)) {
             wp_send_json_error(self::error_payload($result, [
                 'source_url' => $source_url,
                 'story_id' => $story_id,
-                'chapter_number' => $chapter_number,
+                'chapter_number' => $expected_chapter_number,
             ]));
         }
 
-        $final_title = self::build_chapter_title($story_id, $chapter_number, (string) $result['title'], $title_mode, $title_template);
+        $chapter_mismatch = self::validate_scraped_chapter_number($result, $expected_chapter_number);
+        if (is_wp_error($chapter_mismatch)) {
+            wp_send_json_error(self::error_payload($chapter_mismatch, [
+                'source_url' => $source_url,
+                'clean_url' => $result['clean_url'],
+                'story_id' => $story_id,
+                'chapter_number' => $expected_chapter_number,
+                'content_length' => $result['content_length'],
+                'warnings' => $result['warnings'],
+            ]));
+        }
+
+        $final_title = self::build_chapter_title($story_id, $expected_chapter_number, (string) $result['title'], $title_mode, $title_template);
 
         wp_send_json_success([
             'status' => 'success',
@@ -128,8 +141,10 @@ class CrawlerAjax
             'final_title' => $final_title,
             'content_preview_html' => $result['content_html'],
             'content_length' => $result['content_length'],
+            'source_chapter_number' => $result['source_chapter_number'] ?? 0,
+            'source_max_chapter_number' => $result['source_max_chapter_number'] ?? 0,
             'story_id' => $story_id,
-            'chapter_number' => $chapter_number,
+            'chapter_number' => $expected_chapter_number,
             'warnings' => $result['warnings'],
         ]);
     }
@@ -148,6 +163,7 @@ class CrawlerAjax
         $allow_short = self::get_bool('allow_short_content');
         $title_mode = self::get_title_mode();
         $title_template = self::get_title_template();
+        $expected_chapter_number = self::resolve_expected_chapter_number($source_url, $chapter_number);
 
         $clean_url = CrawlerLinkTable::clean_url_for_hash($source_url);
         $hash = CrawlerLinkTable::hash_url($clean_url);
@@ -224,6 +240,21 @@ class CrawlerAjax
             ]));
         }
 
+        $chapter_mismatch = self::validate_scraped_chapter_number($scrape, $expected_chapter_number);
+        if (is_wp_error($chapter_mismatch)) {
+            $message = $chapter_mismatch->get_error_message();
+            CrawlerLinkTable::mark_failed((int) $tracking_id, $message);
+            wp_send_json_error(self::error_payload($chapter_mismatch, [
+                'status' => CrawlerLinkTable::STATUS_FAILED,
+                'source_url' => $source_url,
+                'clean_url' => $scrape['clean_url'],
+                'story_id' => $story_id,
+                'chapter_number' => $expected_chapter_number,
+                'content_length' => $scrape['content_length'],
+                'warnings' => $scrape['warnings'],
+            ]));
+        }
+
         // Build the final title server-side so preview and inserted chapters use the same strategy.
         $final_title = self::build_chapter_title($story_id, $chapter_number, (string) $scrape['title'], $title_mode, $title_template);
 
@@ -278,6 +309,8 @@ class CrawlerAjax
             'source_title' => $scrape['title'],
             'final_title' => $final_title,
             'content_length' => $scrape['content_length'],
+            'source_chapter_number' => $scrape['source_chapter_number'] ?? 0,
+            'source_max_chapter_number' => $scrape['source_max_chapter_number'] ?? 0,
             'warnings' => $scrape['warnings'],
         ]));
     }
@@ -461,6 +494,78 @@ class CrawlerAjax
     private static function get_bool(string $key): bool
     {
         return filter_var($_POST[$key] ?? false, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private static function resolve_expected_chapter_number(string $source_url, int $fallback_chapter_number): int
+    {
+        $url_chapter_number = self::extract_chapter_number_from_url($source_url);
+
+        return $url_chapter_number ?: $fallback_chapter_number;
+    }
+
+    private static function extract_chapter_number_from_url(string $source_url): ?int
+    {
+        $parts = wp_parse_url($source_url);
+        if (!is_array($parts)) {
+            return null;
+        }
+
+        $query = (string) ($parts['query'] ?? '');
+        if ($query !== '') {
+            parse_str($query, $params);
+            foreach (['chuong', 'chapter', 'chap', 'tap'] as $key) {
+                if (isset($params[$key]) && preg_match('/^\d+$/', (string) $params[$key])) {
+                    $number = (int) $params[$key];
+                    return $number > 0 ? $number : null;
+                }
+            }
+        }
+
+        $path = (string) ($parts['path'] ?? '');
+        if ($path !== '' && preg_match('/(?:chuong|chapter|chap|tap)[\-_\/=]?([0-9]+)/i', $path, $matches)) {
+            $number = (int) $matches[1];
+            return $number > 0 ? $number : null;
+        }
+
+        return null;
+    }
+
+    private static function validate_scraped_chapter_number(array $scrape, int $expected_chapter_number)
+    {
+        $source_chapter_number = isset($scrape['source_chapter_number']) ? (int) $scrape['source_chapter_number'] : 0;
+        $source_max_chapter_number = isset($scrape['source_max_chapter_number']) ? (int) $scrape['source_max_chapter_number'] : 0;
+
+        if ($source_max_chapter_number > 0 && $expected_chapter_number > $source_max_chapter_number) {
+            return new WP_Error(
+                'source_chapter_out_of_range',
+                sprintf(
+                    __('Nguon chi thay link chuong toi da %1$d, khong co chuong dang crawl %2$d. Co the URL khong ton tai va site dang fallback ve trang khac.', 'extend-site'),
+                    $source_max_chapter_number,
+                    $expected_chapter_number
+                ),
+                [
+                    'source_max_chapter_number' => $source_max_chapter_number,
+                    'expected_chapter_number' => $expected_chapter_number,
+                ]
+            );
+        }
+
+        if ($source_chapter_number <= 0 || $source_chapter_number === $expected_chapter_number) {
+            return true;
+        }
+
+        return new WP_Error(
+            'source_chapter_mismatch',
+            sprintf(
+                __('Nguon tra ve chuong %1$d, khong khop chuong dang crawl %2$d. Co the URL khong ton tai va site dang fallback ve chuong khac.', 'extend-site'),
+                $source_chapter_number,
+                $expected_chapter_number
+            ),
+            [
+                'source_chapter_number' => $source_chapter_number,
+                'expected_chapter_number' => $expected_chapter_number,
+            ]
+        );
     }
 
     private static function build_chapter_title(int $story_id, int $chapter_number, string $source_title, string $mode, string $template = ''): string
@@ -663,6 +768,8 @@ class CrawlerAjax
             'chapter_id' => 0,
             'chapter_number' => 0,
             'content_length' => 0,
+            'source_chapter_number' => 0,
+            'source_max_chapter_number' => 0,
             'warnings' => [],
         ], $data);
     }

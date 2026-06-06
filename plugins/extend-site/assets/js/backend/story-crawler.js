@@ -439,12 +439,16 @@
             const data = response.data || {};
             stopHeartbeat();
             state.batchId = '';
+            state.isRunning = false;
+            state.isPaused = false;
             $finalizeBtn.addClass('is-hidden');
             $finalizeStatus.text(formatStatusCounts(data.chapter_status_counts, data.chapter_count));
             setNotice('', 'success');
+            setButtons();
         } catch (xhr) {
             $finalizeBtn.removeClass('is-hidden');
             $finalizeStatus.text('Hoàn tất thất bại: ' + errorMessage(xhr, 'Hoàn tất thất bại.'));
+            setButtons();
         }
     }
 

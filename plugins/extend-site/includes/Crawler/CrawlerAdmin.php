@@ -34,9 +34,7 @@ class CrawlerAdmin
         ?>
         <div class="wrap es-crawler-page">
             <h1><?php esc_html_e('Crawler truyện', 'extend-site'); ?></h1>
-            <p class="description">
-                <?php esc_html_e('Xem thử một URL nguồn, tạo danh sách URL theo thứ tự, sau đó xử lý từng chương bằng AJAX.', 'extend-site'); ?>
-            </p>
+
             <p>
                 <button type="button" class="button es-crawler-help-open" id="es-crawler-help-open">
                     <?php esc_html_e('Hướng dẫn sử dụng', 'extend-site'); ?>
@@ -252,6 +250,7 @@ class CrawlerAdmin
                             <li><?php esc_html_e('Xem thử chương là số thứ tự chương dùng để tạo URL preview, không phải số lượng chương.', 'extend-site'); ?></li>
                             <li><?php esc_html_e('Nếu trùng URL hoặc trùng số chương, crawler báo duplicate và bỏ qua, không tạo chương trùng.', 'extend-site'); ?></li>
                             <li><?php esc_html_e('Nếu gặp 404, captcha hoặc trang chặn truy cập, crawler sẽ báo lỗi và không tạo chương.', 'extend-site'); ?></li>
+                            <li><?php esc_html_e('Crawler chỉ cho chạy một batch tại một thời điểm. Khi đang chạy, hệ thống gửi heartbeat mỗi 30 giây, nếu tab bị đóng hoặc request chết, lock sẽ tự hết hiệu lực sau khoảng 5 phút.', 'extend-site'); ?></li>
                             <li><?php esc_html_e('Batch sẽ tự dừng nếu có 3 URL lỗi liên tiếp để tránh crawl quá xa số chương thật.', 'extend-site'); ?></li>
                             <li><?php esc_html_e('Dùng Làm sạch nội dung khi cần xoá credit, quảng cáo hoặc nút Chương trước/Chương sau.', 'extend-site'); ?></li>
                         </ul>
