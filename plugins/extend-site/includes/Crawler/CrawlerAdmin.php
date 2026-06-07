@@ -98,8 +98,8 @@ class CrawlerAdmin
                             <div class="es-crawler-field">
                                 <label for="es-crawler-post-status"><?php esc_html_e('Trạng thái bài viết', 'extend-site'); ?></label>
                                 <select id="es-crawler-post-status">
-                                    <option value="draft" selected><?php esc_html_e('Bản nháp', 'extend-site'); ?></option>
-                                    <option value="publish"><?php esc_html_e('Xuất bản', 'extend-site'); ?></option>
+                                    <option value="publish" selected><?php esc_html_e('Xuất bản', 'extend-site'); ?></option>
+                                    <option value="draft"><?php esc_html_e('Bản nháp', 'extend-site'); ?></option>
                                 </select>
                                 <p class="description"><?php esc_html_e('Nên dùng Bản nháp khi test để kiểm tra nội dung trước khi xuất bản.', 'extend-site'); ?></p>
                             </div>
@@ -109,13 +109,11 @@ class CrawlerAdmin
                             <div class="es-crawler-field">
                                 <label for="es-crawler-title-mode"><?php esc_html_e('Kiểu tiêu đề chương', 'extend-site'); ?></label>
                                 <select id="es-crawler-title-mode">
-                                    <option value="auto" selected><?php esc_html_e('Tự động', 'extend-site'); ?></option>
-                                    <option value="number"><?php esc_html_e('Chỉ dùng Chương {n}', 'extend-site'); ?></option>
+                                    <option value="number" selected><?php esc_html_e('Chỉ dùng Chương {n}', 'extend-site'); ?></option>
                                     <option value="story_number"><?php esc_html_e('{story} - Chương {n}', 'extend-site'); ?></option>
                                     <option value="source_prefixed"><?php esc_html_e('Chương {n}: {source_title}', 'extend-site'); ?></option>
                                     <option value="custom"><?php esc_html_e('Custom template', 'extend-site'); ?></option>
                                 </select>
-                                <p class="description"><?php esc_html_e('Tự động: nếu tiêu đề nguồn trùng tên truyện thì dùng Chương {n}; nếu nguồn có tiêu đề riêng thì dùng Chương {n}: tiêu đề nguồn.', 'extend-site'); ?></p>
                             </div>
                             <div class="es-crawler-field es-crawler-title-template-field is-hidden">
                                 <label for="es-crawler-title-template"><?php esc_html_e('Mẫu tiêu đề custom', 'extend-site'); ?></label>
