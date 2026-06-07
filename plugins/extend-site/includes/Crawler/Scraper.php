@@ -12,7 +12,8 @@ defined('ABSPATH') || exit;
 
 class Scraper
 {
-    public const DEFAULT_TIMEOUT = 20;
+    public const DEFAULT_TIMEOUT = 30;
+    public const DEFAULT_CONNECT_TIMEOUT = 10;
     public const DEFAULT_MIN_CONTENT_LENGTH = 300;
 
     public static function get_user_agent(): string
@@ -86,6 +87,7 @@ class Scraper
     {
         $response = wp_remote_get($url, [
             'timeout' => (int) apply_filters('es_crawler_http_timeout', self::DEFAULT_TIMEOUT, $url),
+            'connecttimeout' => (int) apply_filters('es_crawler_http_connect_timeout', self::DEFAULT_CONNECT_TIMEOUT, $url),
             'redirection' => 5,
             'headers' => [
                 'User-Agent' => self::get_user_agent(),
@@ -111,9 +113,6 @@ class Scraper
             return new WP_Error('non_html_body', __('Phản hồi nguồn không giống HTML.', 'extend-site'));
         }
 
-        if (self::looks_like_error_page($body)) {
-            return new WP_Error('blocked_or_error_page', __('Nguồn trả về trang lỗi, captcha hoặc trang chặn truy cập.', 'extend-site'));
-        }
 
         return $body;
     }
@@ -160,7 +159,7 @@ class Scraper
             ]);
         }
 
-        if (self::looks_like_error_page($title . "\n" . wp_strip_all_tags($content_html))) {
+        if (self::looks_like_error_page($title . "\n" . wp_strip_all_tags($content_html), self::content_length($content_html))) {
             return new WP_Error('blocked_or_error_page', __('Nội dung lấy được giống trang lỗi, captcha hoặc trang chặn truy cập.', 'extend-site'), [
                 'warnings' => $warnings,
             ]);
@@ -213,21 +212,23 @@ class Scraper
         return preg_replace('/^www\./', '', $domain) ?: $domain;
     }
 
-    private static function looks_like_error_page(string $content): bool
+    private static function looks_like_error_page(string $content, int $content_length = 0): bool
     {
+        $content = preg_replace('#<(script|style|noscript)\b[^>]*>.*?</\1>#is', ' ', $content) ?: $content;
         $text = strtolower(remove_accents(wp_strip_all_tags(html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
         $text = preg_replace('/\s+/', ' ', $text) ?: $text;
 
-        $patterns = [
+        if ($content_length > 2000) {
+            return false;
+        }
+
+        $strong_patterns = [
             '404 not found',
             '404 page',
             'error 404',
-            'not found',
             'page not found',
-            'khong tim thay',
             'trang khong ton tai',
             'captcha',
-            'cloudflare',
             'access denied',
             'forbidden',
             'just a moment',
@@ -235,8 +236,18 @@ class Scraper
             'verify you are human',
         ];
 
-        foreach ($patterns as $pattern) {
+        foreach ($strong_patterns as $pattern) {
             if (strpos($text, $pattern) !== false) {
+                return true;
+            }
+        }
+
+        $weak_patterns = [
+            'not found',
+            'khong tim thay',
+        ];
+        foreach ($weak_patterns as $pattern) {
+            if (strpos($text, $pattern) !== false && mb_strlen($text) < 2000) {
                 return true;
             }
         }

@@ -40,7 +40,7 @@ class CrawlerLinkTable
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            UNIQUE KEY source_url_hash (source_url_hash),
+            UNIQUE KEY story_source_url_hash (story_id, source_url_hash),
             KEY batch_id (batch_id),
             KEY story_id (story_id),
             KEY chapter_id (chapter_id),
@@ -50,6 +50,33 @@ class CrawlerLinkTable
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+
+        self::migrate_indexes();
+    }
+
+    private static function migrate_indexes(): void
+    {
+        global $wpdb;
+
+        $table = self::get_table_name();
+        $old_index = $wpdb->get_var("SHOW INDEX FROM {$table} WHERE Key_name = 'source_url_hash'");
+        if ($old_index !== null) {
+            $wpdb->query("ALTER TABLE {$table} DROP INDEX source_url_hash");
+        }
+
+        if (!self::has_story_hash_index()) {
+            $wpdb->query("ALTER TABLE {$table} ADD UNIQUE KEY story_source_url_hash (story_id, source_url_hash)");
+        }
+    }
+
+    public static function has_story_hash_index(): bool
+    {
+        global $wpdb;
+
+        $table = self::get_table_name();
+        $index = $wpdb->get_var("SHOW INDEX FROM {$table} WHERE Key_name = 'story_source_url_hash'");
+
+        return $index !== null;
     }
 
     public static function clean_url_for_hash(string $url): string
@@ -128,6 +155,26 @@ class CrawlerLinkTable
         return is_array($row) ? $row : null;
     }
 
+    public static function find_by_story_and_hash(int $story_id, string $hash): ?array
+    {
+        global $wpdb;
+
+        if ($story_id <= 0 || $hash === '') {
+            return null;
+        }
+
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                'SELECT * FROM ' . self::get_table_name() . ' WHERE story_id = %d AND source_url_hash = %s LIMIT 1',
+                $story_id,
+                $hash
+            ),
+            ARRAY_A
+        );
+
+        return is_array($row) ? $row : null;
+    }
+
     public static function count_by_batch(string $batch_id): int
     {
         global $wpdb;
@@ -149,18 +196,19 @@ class CrawlerLinkTable
         $source_url = isset($data['source_url']) ? trim((string) $data['source_url']) : '';
         $clean_url = isset($data['clean_url']) ? trim((string) $data['clean_url']) : self::clean_url_for_hash($source_url);
         $hash = isset($data['source_url_hash']) ? trim((string) $data['source_url_hash']) : self::hash_url($clean_url);
+        $story_id = isset($data['story_id']) ? absint($data['story_id']) : 0;
 
-        if ($source_url === '' || $clean_url === '' || $hash === '') {
+        if ($source_url === '' || $clean_url === '' || $hash === '' || $story_id <= 0) {
             return false;
         }
 
-        $existing = self::find_by_hash($hash);
+        $existing = self::find_by_story_and_hash($story_id, $hash);
         if ($existing) {
             $updated = self::update_pending((int) $existing['id'], [
                 'source_url' => $source_url,
                 'clean_url' => $clean_url,
                 'batch_id' => isset($data['batch_id']) ? sanitize_text_field((string) $data['batch_id']) : null,
-                'story_id' => isset($data['story_id']) ? absint($data['story_id']) : 0,
+                'story_id' => $story_id,
                 'chapter_number' => isset($data['chapter_number']) ? absint($data['chapter_number']) : null,
             ]);
 
@@ -175,7 +223,7 @@ class CrawlerLinkTable
                 'source_url' => $source_url,
                 'clean_url' => $clean_url,
                 'batch_id' => isset($data['batch_id']) ? sanitize_text_field((string) $data['batch_id']) : null,
-                'story_id' => isset($data['story_id']) ? absint($data['story_id']) : 0,
+                'story_id' => $story_id,
                 'chapter_id' => isset($data['chapter_id']) ? absint($data['chapter_id']) : null,
                 'chapter_number' => isset($data['chapter_number']) ? absint($data['chapter_number']) : null,
                 'status' => self::STATUS_PENDING,

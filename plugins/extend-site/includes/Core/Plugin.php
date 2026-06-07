@@ -12,6 +12,7 @@ use ExtendSite\Ajax\LoadRanking;
 use ExtendSite\Ajax\SearchSelect2;
 use ExtendSite\Crawler\CrawlerAdmin;
 use ExtendSite\Crawler\CrawlerAjax;
+use ExtendSite\Crawler\CrawlerLinkTable;
 use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
@@ -27,6 +28,8 @@ defined('ABSPATH') || exit;
 
 class Plugin
 {
+    private const DB_VERSION = '20260608_crawler_link_story_hash';
+
     /**
      * Boot the plugin by initializing all components.
      * @return void
@@ -34,6 +37,7 @@ class Plugin
     public function boot(): void
     {
         self::load_text_domain();
+        self::maybe_run_db_updates();
         self::active_core();
         self::include_files();
         self::active_menu_page_admin();
@@ -70,6 +74,18 @@ class Plugin
             false,
             dirname( EXTEND_SITE_BASENAME ) . '/languages'
         );
+    }
+
+    private static function maybe_run_db_updates(): void
+    {
+        if (get_option('extend_site_db_version') === self::DB_VERSION) {
+            return;
+        }
+
+        CrawlerLinkTable::create();
+        if (CrawlerLinkTable::has_story_hash_index()) {
+            update_option('extend_site_db_version', self::DB_VERSION, false);
+        }
     }
 
     /**

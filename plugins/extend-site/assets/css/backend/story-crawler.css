@@ -291,6 +291,10 @@
 .es-crawler-lock-notice,
 .es-crawler-finalize-status {
     border-left: 4px solid var(--es-crawler-warning);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
     margin-top: 12px;
     padding: 10px 12px;
 }
@@ -303,6 +307,10 @@
 .es-crawler-lock-notice.notice-success {
     border-left-color: var(--es-crawler-success);
     color: var(--es-crawler-success);
+}
+
+.es-crawler-view-log-btn {
+    margin: 0 !important;
 }
 
 .es-crawler-url-summary {

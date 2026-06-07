@@ -43,6 +43,7 @@
     const $finalizeBtn = $('#es-crawler-finalize-btn');
     const $logBody = $('#es-crawler-log-body');
     const $logExport = $('#es-crawler-log-export');
+    const $logCard = $('.es-crawler-log-card');
     const $helpModal = $('#es-crawler-help-modal');
 
     function ajax(action, data) {
@@ -265,6 +266,14 @@
         $('html, body').animate({ scrollTop: Math.max(target.offset().top - 40, 0) }, 300);
     }
 
+    function scrollToLog() {
+        if (!$logCard.length) {
+            return;
+        }
+
+        $('html, body').animate({ scrollTop: Math.max($logCard.offset().top - 40, 0) }, 300);
+    }
+
     function updateProgress() {
         const total = state.queue.length;
         const percent = total ? Math.round((state.processed / total) * 100) : 0;
@@ -329,15 +338,62 @@
         return fallback || 'Request thất bại.';
     }
 
-    function formatStatusCounts(counts, publishedCount) {
-        counts = counts || {};
-        const publish = counts.publish != null ? counts.publish : (publishedCount || 0);
-        const draft = counts.draft || 0;
-        const total = Object.keys(counts).reduce(function (sum, key) {
-            return sum + (parseInt(counts[key], 10) || 0);
-        }, 0);
+    function batchSummary() {
+        const counts = state.logs.reduce(function (summary, entry) {
+            const status = entry.status || 'unknown';
+            summary[status] = (summary[status] || 0) + 1;
+            return summary;
+        }, {});
 
-        return 'Đã hoàn tất. Đã xuất bản: ' + publish + ' | Bản nháp: ' + draft + ' | Tổng chương: ' + total;
+        const total = state.queue.length;
+        const success = counts.success || 0;
+        const duplicate = counts.duplicate || 0;
+        const failed = counts.failed || 0;
+        const skipped = counts.skipped || 0;
+        const retry = counts.retry || 0;
+
+        if (failed || duplicate || skipped) {
+            const parts = [];
+            if (success) {
+                parts.push('thành công: ' + success);
+            }
+            if (duplicate) {
+                parts.push('trùng/bỏ qua: ' + duplicate);
+            }
+            if (skipped) {
+                parts.push('bỏ qua: ' + skipped);
+            }
+            if (failed) {
+                parts.push('lỗi: ' + failed);
+            }
+            if (retry) {
+                parts.push('thử lại: ' + retry);
+            }
+
+            return {
+                hasIssue: true,
+                message: 'Đã hoàn tất batch nhưng có mục không thành công. ' + parts.join(' | ') + '.'
+            };
+        }
+
+        return {
+            hasIssue: false,
+            message: 'Đã hoàn tất batch thành công' + (total ? ' (' + success + '/' + total + ' URL).' : '.')
+        };
+    }
+
+    function renderFinalizeSummary() {
+        const summary = batchSummary();
+        $finalizeStatus.empty().append($('<span/>').text(summary.message));
+
+        if (summary.hasIssue) {
+            $('<button/>', {
+                type: 'button',
+                class: 'button button-small es-crawler-view-log-btn',
+                text: 'Xem log',
+                click: scrollToLog
+            }).appendTo($finalizeStatus);
+        }
     }
 
     function startHeartbeat() {
@@ -442,7 +498,7 @@
             state.isRunning = false;
             state.isPaused = false;
             $finalizeBtn.addClass('is-hidden');
-            $finalizeStatus.text(formatStatusCounts(data.chapter_status_counts, data.chapter_count));
+            renderFinalizeSummary();
             setNotice('', 'success');
             setButtons();
         } catch (xhr) {
