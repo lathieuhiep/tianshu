@@ -40,7 +40,7 @@ abstract class BasePostType
     public function __construct(array $args = [])
     {
         $this->args = $args;
-        add_action('init', [$this, 'register_ctp']);
+        add_action('init', [$this, 'register_ctp'], 0);
 
         // Tự động đăng ký thông tin post type và template
         self::$registry[static::SLUG] = [

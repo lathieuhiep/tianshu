@@ -36,14 +36,15 @@ class Plugin
      */
     public function boot(): void
     {
-        self::load_text_domain();
+        add_action('init', [__CLASS__, 'load_text_domain'], 0);
+
         self::maybe_run_db_updates();
         self::active_core();
         self::include_files();
+        self::active_custom_post_types();
         self::active_menu_page_admin();
         self::active_crawler();
         self::active_elementor_addon();
-        self::active_custom_post_types();
         self::load_ajax();
         self::register_widget();
 
@@ -67,7 +68,7 @@ class Plugin
      * Load the plugin text domain for translations.
      * @return void
      */
-    private static function load_text_domain(): void
+    public static function load_text_domain(): void
     {
         load_plugin_textdomain(
             'extend-site',

@@ -25,7 +25,7 @@ class ChapterPostType extends BasePostType
     public function __construct(array $args = [])
     {
         $args = array_replace_recursive([
-            'label' => esc_html__('Chương', 'extend-site'),
+            'label' => self::PLURAL,
             'has_archive' => false,
             'hierarchical' => false, // KHÔNG dùng post_parent
             'show_in_menu' => 'edit.php?post_type=story',
