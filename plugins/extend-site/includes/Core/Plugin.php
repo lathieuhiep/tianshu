@@ -13,6 +13,8 @@ use ExtendSite\Ajax\SearchSelect2;
 use ExtendSite\Crawler\CrawlerAdmin;
 use ExtendSite\Crawler\CrawlerAjax;
 use ExtendSite\Crawler\CrawlerLinkTable;
+use ExtendSite\Crawler\CrawlerTemplateAdmin;
+use ExtendSite\Crawler\CrawlerTemplateTable;
 use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
@@ -28,7 +30,7 @@ defined('ABSPATH') || exit;
 
 class Plugin
 {
-    private const DB_VERSION = '20260608_crawler_link_story_hash';
+    private const DB_VERSION = '20260618_crawler_templates';
 
     /**
      * Boot the plugin by initializing all components.
@@ -84,6 +86,7 @@ class Plugin
         }
 
         CrawlerLinkTable::create();
+        CrawlerTemplateTable::create();
         if (CrawlerLinkTable::has_story_hash_index()) {
             update_option('extend_site_db_version', self::DB_VERSION, false);
         }
@@ -130,6 +133,7 @@ class Plugin
     private static function active_crawler(): void
     {
         CrawlerAdmin::init();
+        CrawlerTemplateAdmin::init();
         CrawlerAjax::init();
     }
 

@@ -2,6 +2,10 @@
 
 namespace ExtendSite\Crawler;
 
+use DOMDocument;
+use DOMElement;
+use DOMNode;
+use DOMXPath;
 use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -18,6 +22,8 @@ class CrawlerAjax
     public const ACTION_HEARTBEAT = 'es_crawler_heartbeat';
     public const ACTION_STOP = 'es_crawler_stop_batch';
     public const ACTION_PREVIEW = 'es_crawler_preview_url';
+    public const ACTION_TEMPLATE_PREVIEW_PROXY = 'es_crawler_preview_proxy';
+    public const ACTION_TEMPLATE_TEST_PARSE = 'es_crawler_test_parse';
     public const ACTION_PROCESS = 'es_crawler_process_url';
     public const ACTION_FINALIZE = 'es_crawler_finalize_story';
     public const MAX_BATCH_SIZE = 200;
@@ -33,6 +39,8 @@ class CrawlerAjax
         add_action('wp_ajax_' . self::ACTION_HEARTBEAT, [self::class, 'heartbeat']);
         add_action('wp_ajax_' . self::ACTION_STOP, [self::class, 'stop_batch']);
         add_action('wp_ajax_' . self::ACTION_PREVIEW, [self::class, 'preview_url']);
+        add_action('wp_ajax_' . self::ACTION_TEMPLATE_PREVIEW_PROXY, [self::class, 'preview_proxy']);
+        add_action('wp_ajax_' . self::ACTION_TEMPLATE_TEST_PARSE, [self::class, 'test_parse']);
         add_action('wp_ajax_' . self::ACTION_PROCESS, [self::class, 'process_url']);
         add_action('wp_ajax_' . self::ACTION_FINALIZE, [self::class, 'finalize_story']);
     }
@@ -146,6 +154,92 @@ class CrawlerAjax
             'story_id' => $story_id,
             'chapter_number' => $expected_chapter_number,
             'warnings' => $result['warnings'],
+        ]);
+    }
+
+    public static function preview_proxy(): void
+    {
+        self::verify_request();
+
+        $target_url = self::get_target_url('target_url');
+        $body = self::fetch_html($target_url, 20);
+        if (is_wp_error($body)) {
+            wp_send_json_error([
+                'message' => $body->get_error_message(),
+            ], 400);
+        }
+
+        $base_url = self::get_base_url($target_url);
+        $html = self::sanitize_preview_html($body, $base_url);
+
+        wp_send_json_success([
+            'html' => $html,
+            'base_url' => $base_url,
+        ]);
+    }
+
+    public static function test_parse(): void
+    {
+        self::verify_request();
+
+        $target_url = self::get_target_url('target_url');
+        $selectors = self::get_template_selectors();
+        $warnings = [];
+
+        $body = self::fetch_html($target_url, 20);
+        if (is_wp_error($body)) {
+            wp_send_json_error([
+                'message' => $body->get_error_message(),
+            ], 400);
+        }
+
+        $dom = self::load_dom($body);
+        if (is_wp_error($dom)) {
+            wp_send_json_error([
+                'message' => $dom->get_error_message(),
+            ], 400);
+        }
+
+        $xpath = new DOMXPath($dom);
+        $matched = [];
+        foreach ($selectors as $key => $selector) {
+            $matched[$key] = $selector !== '' ? self::query_selector_count($xpath, $selector) : 0;
+            if ($selector !== '' && $matched[$key] === 0) {
+                $warnings[] = sprintf(__('Selector khong co ket qua: %s.', 'extend-site'), $key);
+            }
+        }
+
+        $extractors = self::get_template_extractors();
+        $story_title = self::extract_template_value($xpath, 'story_title', $selectors['story_title_selector'], $extractors, $target_url);
+        $story_author = self::extract_template_value($xpath, 'story_author', $selectors['story_author_selector'], $extractors, $target_url);
+        $story_desc = self::limit_text(self::extract_template_value($xpath, 'story_desc', $selectors['story_desc_selector'], $extractors, $target_url), 500);
+        $story_thumb = self::extract_template_value($xpath, 'story_thumb', $selectors['story_thumb_selector'], $extractors, $target_url, 'first_image_src');
+        $story_cats_value = self::extract_template_value($xpath, 'story_cats', $selectors['story_cats_selector'], $extractors, $target_url, 'all_link_texts');
+        $story_cats = is_array($story_cats_value) ? $story_cats_value : array_filter(array_map('trim', explode(',', (string) $story_cats_value)));
+        $chapter_title = self::first_selector_text($xpath, $selectors['chapter_title_selector']);
+        $chapter_content = self::first_selector_text($xpath, $selectors['chapter_content_selector']);
+        $chapter_links = self::chapter_link_samples($xpath, $selectors['chapter_link_selector'], $target_url);
+
+        if ($story_title === '') {
+            $warnings[] = __('Khong boc duoc tieu de truyen.', 'extend-site');
+        }
+
+        if ($selectors['chapter_link_selector'] !== '' && $chapter_links['count'] === 0) {
+            $warnings[] = __('Khong tim thay link chuong tu selector muc luc.', 'extend-site');
+        }
+
+        wp_send_json_success([
+            'story_title' => $story_title,
+            'story_author' => $story_author,
+            'story_desc' => $story_desc,
+            'story_thumb' => $story_thumb,
+            'story_cats' => $story_cats,
+            'chapter_title' => $chapter_title,
+            'chapter_content_length' => mb_strlen($chapter_content),
+            'chapter_link_count' => $chapter_links['count'],
+            'chapter_link_samples' => $chapter_links['samples'],
+            'matched' => $matched,
+            'warnings' => array_values(array_unique($warnings)),
         ]);
     }
 
@@ -359,6 +453,594 @@ class CrawlerAjax
             'latest_chapter' => $latest,
             'lock_released' => $released,
         ]);
+    }
+
+    private static function get_target_url(string $key): string
+    {
+        $url = esc_url_raw(trim((string) wp_unslash($_POST[$key] ?? '')));
+        $scheme = strtolower((string) wp_parse_url($url, PHP_URL_SCHEME));
+
+        if ($url === '' || !in_array($scheme, ['http', 'https'], true) || !wp_http_validate_url($url)) {
+            wp_send_json_error([
+                'message' => __('URL khong hop le.', 'extend-site'),
+            ], 400);
+        }
+
+        return $url;
+    }
+
+    private static function fetch_html(string $url, int $timeout = 20)
+    {
+        $response = wp_remote_get($url, [
+            'timeout' => $timeout,
+            'connecttimeout' => 10,
+            'redirection' => 5,
+            'headers' => [
+                'User-Agent' => Scraper::get_user_agent(),
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $code = (int) wp_remote_retrieve_response_code($response);
+        if ($code < 200 || $code >= 300) {
+            return new WP_Error('http_error', sprintf(__('Nguon tra ve HTTP %d.', 'extend-site'), $code));
+        }
+
+        $body = (string) wp_remote_retrieve_body($response);
+        if (trim($body) === '') {
+            return new WP_Error('empty_body', __('Nguon tra ve noi dung rong.', 'extend-site'));
+        }
+
+        return $body;
+    }
+
+    private static function get_base_url(string $url): string
+    {
+        $parts = wp_parse_url($url);
+        if (!is_array($parts) || empty($parts['host'])) {
+            return $url;
+        }
+
+        $scheme = !empty($parts['scheme']) ? strtolower((string) $parts['scheme']) : 'https';
+        $base = $scheme . '://' . $parts['host'];
+
+        if (!empty($parts['port'])) {
+            $base .= ':' . (int) $parts['port'];
+        }
+
+        $path = (string) ($parts['path'] ?? '/');
+        if ($path === '' || substr($path, -1) === '/') {
+            return $base . ($path ?: '/');
+        }
+
+        $directory = trailingslashit(dirname($path));
+
+        return $base . $directory;
+    }
+
+    private static function sanitize_preview_html(string $html, string $base_url): string
+    {
+        $html = preg_replace('#<script\b[^>]*>.*?</script>#is', '', $html) ?: $html;
+        $html = preg_replace('/\s+on[a-z]+\s*=\s*"[^"]*"/i', '', $html) ?: $html;
+        $html = preg_replace("/\s+on[a-z]+\s*=\s*'[^']*'/i", '', $html) ?: $html;
+        $html = preg_replace('/\s+on[a-z]+\s*=\s*[^\s>]+/i', '', $html) ?: $html;
+
+        $base_tag = '<base href="' . esc_url($base_url) . '">';
+        if (preg_match('/<head\b[^>]*>/i', $html)) {
+            return preg_replace('/(<head\b[^>]*>)/i', '$1' . $base_tag, $html, 1) ?: $html;
+        }
+
+        return $base_tag . $html;
+    }
+
+    private static function get_template_selectors(): array
+    {
+        $keys = [
+            'story_title_selector',
+            'story_author_selector',
+            'story_desc_selector',
+            'story_thumb_selector',
+            'story_cats_selector',
+            'chapter_link_selector',
+            'chapter_title_selector',
+            'chapter_content_selector',
+        ];
+
+        $selectors = [];
+        foreach ($keys as $key) {
+            $selectors[$key] = trim(sanitize_text_field((string) wp_unslash($_POST[$key] ?? '')));
+        }
+
+        return $selectors;
+    }
+
+    private static function get_template_extractors(): array
+    {
+        $fields = [
+            'story_title',
+            'story_author',
+            'story_desc',
+            'story_thumb',
+            'story_cats',
+        ];
+        $extractors = [];
+
+        foreach ($fields as $field) {
+            $mode = sanitize_key((string) wp_unslash($_POST[$field . '_extract_mode'] ?? 'selector'));
+            $value_mode = sanitize_key((string) wp_unslash($_POST[$field . '_value_mode'] ?? 'node_text'));
+
+            $extractors[$field] = [
+                'extract_mode' => in_array($mode, ['selector', 'label'], true) ? $mode : 'selector',
+                'area_selector' => trim(sanitize_text_field((string) wp_unslash($_POST[$field . '_area_selector'] ?? ''))),
+                'label' => trim(sanitize_text_field((string) wp_unslash($_POST[$field . '_label'] ?? ''))),
+                'value_mode' => self::normalize_value_mode($value_mode),
+            ];
+        }
+
+        return $extractors;
+    }
+
+    private static function normalize_value_mode(string $mode): string
+    {
+        $allowed = [
+            'next_text',
+            'first_link_text',
+            'all_link_texts',
+            'first_link_href',
+            'first_image_src',
+            'node_text',
+            'node_html',
+        ];
+
+        return in_array($mode, $allowed, true) ? $mode : 'node_text';
+    }
+
+    private static function extract_template_value(DOMXPath $xpath, string $field, string $selector, array $extractors, string $base_url, string $fallback_value_mode = 'node_text')
+    {
+        $extractor = $extractors[$field] ?? [];
+        $extract_mode = (string) ($extractor['extract_mode'] ?? 'selector');
+
+        if ($extract_mode === 'label') {
+            $value = self::extract_by_label(
+                $xpath,
+                (string) ($extractor['area_selector'] ?? ''),
+                (string) ($extractor['label'] ?? ''),
+                (string) ($extractor['value_mode'] ?? $fallback_value_mode),
+                $base_url
+            );
+
+            if ($value !== '' && $value !== []) {
+                return $value;
+            }
+        }
+
+        if ($selector === '') {
+            return $fallback_value_mode === 'all_link_texts' ? [] : '';
+        }
+
+        if ($fallback_value_mode === 'first_image_src') {
+            return self::first_selector_url($xpath, $selector, $base_url);
+        }
+
+        if ($fallback_value_mode === 'all_link_texts') {
+            return self::selector_texts($xpath, $selector, 20);
+        }
+
+        return self::first_selector_text($xpath, $selector);
+    }
+
+    private static function extract_by_label(DOMXPath $xpath, string $area_selector, string $label, string $value_mode, string $base_url)
+    {
+        if ($area_selector === '' || $label === '') {
+            return $value_mode === 'all_link_texts' ? [] : '';
+        }
+
+        $areas = self::query_selector_all($xpath, $area_selector);
+        if (!$areas || $areas->length < 1) {
+            return $value_mode === 'all_link_texts' ? [] : '';
+        }
+
+        foreach ($areas as $area) {
+            $label_node = self::find_label_node($xpath, $area, $label);
+            if (!$label_node) {
+                continue;
+            }
+
+            $container = self::find_label_value_container($label_node, $area);
+            if (!$container) {
+                continue;
+            }
+
+            $value = self::extract_value_from_container($xpath, $container, $label, $value_mode, $base_url);
+            if ($value !== '' && $value !== []) {
+                return $value;
+            }
+        }
+
+        return $value_mode === 'all_link_texts' ? [] : '';
+    }
+
+    private static function find_label_node(DOMXPath $xpath, DOMNode $area, string $label): ?DOMNode
+    {
+        $label = self::normalize_label($label);
+        if ($label === '') {
+            return null;
+        }
+
+        foreach ($xpath->query('.//*', $area) ?: [] as $node) {
+            $text = self::normalize_label(self::node_text($node));
+            if ($text !== '' && strpos($text, $label) !== false) {
+                return $node;
+            }
+        }
+
+        $area_text = self::normalize_label(self::node_text($area));
+
+        return strpos($area_text, $label) !== false ? $area : null;
+    }
+
+    private static function find_label_value_container(DOMNode $label_node, DOMNode $area): ?DOMNode
+    {
+        $current = $label_node;
+        while ($current && $current !== $area) {
+            if ($current instanceof DOMElement && in_array(strtolower($current->tagName), ['p', 'div', 'li', 'tr', 'section'], true)) {
+                return $current;
+            }
+
+            $current = $current->parentNode;
+        }
+
+        return $label_node;
+    }
+
+    private static function extract_value_from_container(DOMXPath $xpath, DOMNode $container, string $label, string $value_mode, string $base_url)
+    {
+        if ($value_mode === 'first_link_text') {
+            $link = self::first_descendant_element($xpath, $container, './/a');
+
+            return $link ? self::node_text($link) : self::text_after_label($container, $label);
+        }
+
+        if ($value_mode === 'all_link_texts') {
+            $texts = [];
+            foreach ($xpath->query('.//a', $container) ?: [] as $link) {
+                $text = self::node_text($link);
+                if ($text !== '') {
+                    $texts[] = trim($text, " \t\n\r\0\x0B,");
+                }
+            }
+
+            return array_values(array_unique(array_filter($texts)));
+        }
+
+        if ($value_mode === 'first_link_href') {
+            $link = self::first_descendant_element($xpath, $container, './/a[@href]');
+            if ($link instanceof DOMElement) {
+                return self::resolve_url($link->getAttribute('href'), $base_url);
+            }
+
+            return '';
+        }
+
+        if ($value_mode === 'first_image_src') {
+            $image = self::first_descendant_element($xpath, $container, './/img');
+            if ($image instanceof DOMElement) {
+                return self::resolve_url($image->getAttribute('src') ?: $image->getAttribute('data-src'), $base_url);
+            }
+
+            return '';
+        }
+
+        if ($value_mode === 'node_html') {
+            return self::inner_html($container);
+        }
+
+        if ($value_mode === 'next_text') {
+            return self::text_after_label($container, $label);
+        }
+
+        return self::text_after_label($container, $label) ?: self::node_text($container);
+    }
+
+    private static function first_descendant_element(DOMXPath $xpath, DOMNode $context, string $expression): ?DOMElement
+    {
+        $nodes = $xpath->query($expression, $context);
+        if (!$nodes || $nodes->length < 1) {
+            return null;
+        }
+
+        $node = $nodes->item(0);
+
+        return $node instanceof DOMElement ? $node : null;
+    }
+
+    private static function text_after_label(DOMNode $container, string $label): string
+    {
+        $text = self::node_text($container);
+        if ($text === '') {
+            return '';
+        }
+
+        $pattern = '/^\s*' . preg_quote($label, '/') . '\s*:?\s*/iu';
+        $value = preg_replace($pattern, '', $text);
+
+        return trim((string) $value, " \t\n\r\0\x0B:");
+    }
+
+    private static function normalize_label(string $value): string
+    {
+        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = function_exists('remove_accents') ? remove_accents($value) : $value;
+        $value = mb_strtolower($value, 'UTF-8');
+        $value = preg_replace('/\s+/u', ' ', $value) ?: $value;
+
+        return trim($value, " \t\n\r\0\x0B:");
+    }
+
+    private static function load_dom(string $html)
+    {
+        $previous = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded) {
+            return new WP_Error('html_parse_failed', __('Khong the phan tich HTML nguon.', 'extend-site'));
+        }
+
+        return $dom;
+    }
+
+    private static function query_selector_count(DOMXPath $xpath, string $selector): int
+    {
+        $nodes = self::query_selector_all($xpath, $selector);
+
+        return $nodes ? $nodes->length : 0;
+    }
+
+    private static function query_selector_all(DOMXPath $xpath, string $selector, ?DOMNode $context = null)
+    {
+        $expression = self::css_selector_to_xpath($selector);
+        if ($expression === '') {
+            return null;
+        }
+
+        return $context ? $xpath->query($expression, $context) : $xpath->query($expression);
+    }
+
+    private static function css_selector_to_xpath(string $selector): string
+    {
+        $selector = trim($selector);
+        if ($selector === '' || strpos($selector, ',') !== false) {
+            return '';
+        }
+
+        $parts = preg_split('/\s+/', $selector);
+        if (!$parts) {
+            return '';
+        }
+
+        $xpath = '';
+        foreach ($parts as $part) {
+            $segment = self::css_selector_part_to_xpath($part);
+            if ($segment === '') {
+                return '';
+            }
+
+            $xpath .= '//' . $segment;
+        }
+
+        return $xpath;
+    }
+
+    private static function css_selector_part_to_xpath(string $part): string
+    {
+        if (!preg_match('/^([a-zA-Z][a-zA-Z0-9_-]*)?((?:[#.][a-zA-Z0-9_-]+)*)$/', $part, $matches)) {
+            return '';
+        }
+
+        $tag = $matches[1] !== '' ? strtolower($matches[1]) : '*';
+        $suffix = $matches[2] ?? '';
+        $predicates = [];
+
+        if ($suffix !== '') {
+            preg_match_all('/([#.])([a-zA-Z0-9_-]+)/', $suffix, $tokens, PREG_SET_ORDER);
+            foreach ($tokens as $token) {
+                if ($token[1] === '#') {
+                    $predicates[] = '@id=' . self::xpath_literal($token[2]);
+                } else {
+                    $predicates[] = "contains(concat(' ', normalize-space(@class), ' '), " . self::xpath_literal(' ' . $token[2] . ' ') . ')';
+                }
+            }
+        }
+
+        return $tag . ($predicates ? '[' . implode(' and ', $predicates) . ']' : '');
+    }
+
+    private static function xpath_literal(string $value): string
+    {
+        if (strpos($value, "'") === false) {
+            return "'" . $value . "'";
+        }
+
+        if (strpos($value, '"') === false) {
+            return '"' . $value . '"';
+        }
+
+        $parts = explode("'", $value);
+
+        return "concat('" . implode("', \"'\", '", $parts) . "')";
+    }
+
+    private static function first_selector_text(DOMXPath $xpath, string $selector): string
+    {
+        $nodes = self::query_selector_all($xpath, $selector);
+        if (!$nodes || $nodes->length < 1) {
+            return '';
+        }
+
+        return self::node_text($nodes->item(0));
+    }
+
+    private static function selector_texts(DOMXPath $xpath, string $selector, int $limit): array
+    {
+        $nodes = self::query_selector_all($xpath, $selector);
+        if (!$nodes || $nodes->length < 1) {
+            return [];
+        }
+
+        $texts = [];
+        foreach ($nodes as $node) {
+            $text = self::node_text($node);
+            if ($text === '') {
+                continue;
+            }
+
+            $texts[] = $text;
+            if (count($texts) >= $limit) {
+                break;
+            }
+        }
+
+        return array_values(array_unique($texts));
+    }
+
+    private static function first_selector_url(DOMXPath $xpath, string $selector, string $base_url): string
+    {
+        $nodes = self::query_selector_all($xpath, $selector);
+        if (!$nodes || $nodes->length < 1) {
+            return '';
+        }
+
+        $node = $nodes->item(0);
+        if (!$node instanceof DOMElement) {
+            return '';
+        }
+
+        $url = $node->getAttribute('src') ?: $node->getAttribute('data-src') ?: $node->getAttribute('href');
+
+        return self::resolve_url($url, $base_url);
+    }
+
+    private static function chapter_link_samples(DOMXPath $xpath, string $selector, string $base_url): array
+    {
+        $nodes = self::query_selector_all($xpath, $selector);
+        if (!$nodes || $nodes->length < 1) {
+            return [
+                'count' => 0,
+                'samples' => [],
+            ];
+        }
+
+        $links = [];
+        foreach ($nodes as $node) {
+            if ($node instanceof DOMElement && strtolower($node->tagName) === 'a' && $node->hasAttribute('href')) {
+                $href = self::resolve_url($node->getAttribute('href'), $base_url);
+                if ($href !== '') {
+                    $links[$href] = self::node_text($node);
+                }
+                continue;
+            }
+
+            foreach ($xpath->query('.//a[@href]', $node) ?: [] as $link_node) {
+                if (!$link_node instanceof DOMElement) {
+                    continue;
+                }
+
+                $href = self::resolve_url($link_node->getAttribute('href'), $base_url);
+                if ($href !== '') {
+                    $links[$href] = self::node_text($link_node);
+                }
+            }
+        }
+
+        $samples = [];
+        foreach ($links as $href => $text) {
+            $samples[] = [
+                'text' => self::limit_text($text, 120),
+                'href' => $href,
+            ];
+
+            if (count($samples) >= 5) {
+                break;
+            }
+        }
+
+        return [
+            'count' => count($links),
+            'samples' => $samples,
+        ];
+    }
+
+    private static function node_text(?DOMNode $node): string
+    {
+        if (!$node) {
+            return '';
+        }
+
+        return trim(preg_replace('/\s+/u', ' ', html_entity_decode($node->textContent, ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?: '');
+    }
+
+    private static function inner_html(DOMNode $node): string
+    {
+        $html = '';
+        foreach ($node->childNodes as $child) {
+            $html .= $node->ownerDocument ? $node->ownerDocument->saveHTML($child) : '';
+        }
+
+        return $html;
+    }
+
+    private static function limit_text(string $text, int $limit): string
+    {
+        $text = trim($text);
+        if ($text === '' || mb_strlen($text) <= $limit) {
+            return $text;
+        }
+
+        return mb_substr($text, 0, $limit - 3) . '...';
+    }
+
+    private static function resolve_url(string $url, string $base_url): string
+    {
+        $url = trim(html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($url === '' || strpos($url, '#') === 0 || preg_match('/^(javascript|mailto|tel):/i', $url)) {
+            return '';
+        }
+
+        if (strpos($url, '//') === 0) {
+            $scheme = (string) wp_parse_url($base_url, PHP_URL_SCHEME);
+            $url = ($scheme ?: 'https') . ':' . $url;
+        }
+
+        if (wp_http_validate_url($url)) {
+            return esc_url_raw($url);
+        }
+
+        $base = wp_parse_url($base_url);
+        if (!is_array($base) || empty($base['host'])) {
+            return '';
+        }
+
+        $scheme = !empty($base['scheme']) ? strtolower((string) $base['scheme']) : 'https';
+        $host = (string) $base['host'];
+        $port = !empty($base['port']) ? ':' . (int) $base['port'] : '';
+
+        if (strpos($url, '/') === 0) {
+            return esc_url_raw($scheme . '://' . $host . $port . $url);
+        }
+
+        $path = (string) ($base['path'] ?? '/');
+        $directory = substr($path, -1) === '/' ? $path : trailingslashit(dirname($path));
+
+        return esc_url_raw($scheme . '://' . $host . $port . $directory . $url);
     }
 
     private static function verify_request(): void

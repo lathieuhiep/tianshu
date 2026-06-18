@@ -1,0 +1,213 @@
+.es-crawler-template-page {
+    --es-template-border: #dcdcde;
+    --es-template-bg: #f6f7f7;
+    --es-template-panel: #fff;
+    --es-template-text: #1d2327;
+    --es-template-muted: #646970;
+    --es-template-accent: #2271b1;
+    --es-template-error: #b32d2e;
+    --es-template-success: #008a20;
+}
+
+.es-template-layout {
+    display: flex;
+    gap: 20px;
+    margin-top: 18px;
+}
+
+.es-template-form-panel {
+    flex: 0 1 55%;
+}
+
+.es-template-preview-panel {
+    flex: 0 1 45%;
+}
+
+.es-template-panel,
+.es-template-step {
+    background: var(--es-template-panel);
+    border: 1px solid var(--es-template-border);
+    border-radius: 8px;
+    box-sizing: border-box;
+    padding: 18px;
+}
+
+.es-template-panel h2,
+.es-template-step h3 {
+    margin-top: 0;
+}
+
+.es-template-step {
+    margin-bottom: 16px;
+}
+
+.es-template-step h3 {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+}
+
+.es-template-step h3 span {
+    align-items: center;
+    background: var(--es-template-accent);
+    border-radius: 999px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 700;
+    height: 24px;
+    justify-content: center;
+    min-width: 24px;
+}
+
+.es-template-step.is-locked {
+    opacity: 0.68;
+}
+
+.es-template-field {
+    margin-bottom: 16px;
+}
+
+.es-template-field label {
+    color: var(--es-template-text);
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.es-template-field input,
+.es-template-field select,
+.es-template-field textarea {
+    box-sizing: border-box;
+    max-width: 100%;
+    width: 100%;
+}
+
+.es-template-two-cols {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.es-template-three-cols {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.es-template-selector-control {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.es-template-selector-control input {
+    flex: 1 1 auto;
+}
+
+.es-template-selector-control .button {
+    flex: 0 0 auto;
+}
+
+.es-template-extract-field {
+    border: 1px solid #edf0f2;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.es-template-extract-mode-row {
+    margin-bottom: 8px;
+}
+
+.es-template-extract-mode-row select {
+    max-width: 240px;
+}
+
+.es-template-label-controls {
+    background: var(--es-template-bg);
+    border: 1px solid var(--es-template-border);
+    border-radius: 8px;
+    margin-top: 10px;
+    padding: 12px;
+}
+
+.es-template-label-controls.is-hidden,
+.es-template-direct-controls.is-hidden {
+    display: none;
+}
+
+.es-template-actions {
+    background: var(--es-template-bg);
+    border: 1px solid var(--es-template-border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    padding: 12px;
+}
+
+.es-template-preview-status,
+.es-template-test-result {
+    margin-top: 12px;
+}
+
+.es-template-preview-status.is-error,
+.es-template-test-result.is-error {
+    border-left: 4px solid var(--es-template-error);
+    color: var(--es-template-error);
+    padding: 8px 12px;
+}
+
+.es-template-preview-status.is-success {
+    border-left: 4px solid var(--es-template-success);
+    color: var(--es-template-success);
+    padding: 8px 12px;
+}
+
+#es-template-preview-frame {
+    background: #fff;
+    border: 1px solid var(--es-template-border);
+    box-sizing: border-box;
+    height: 600px;
+    margin-top: 14px;
+    width: 100%;
+}
+
+.es-template-result-summary {
+    background: var(--es-template-bg);
+    border: 1px solid var(--es-template-border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 12px;
+}
+
+.es-template-result-table {
+    margin-top: 12px;
+}
+
+.es-template-result-table code {
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.es-template-warning-list {
+    color: #996800;
+    margin: 10px 0 0 18px;
+}
+
+@media (max-width: 1100px) {
+    .es-template-layout {
+        flex-direction: column;
+    }
+
+    .es-template-form-panel,
+    .es-template-preview-panel {
+        flex-basis: auto;
+    }
+
+    .es-template-two-cols {
+        grid-template-columns: 1fr;
+    }
+
+    .es-template-three-cols {
+        grid-template-columns: 1fr;
+    }
+}

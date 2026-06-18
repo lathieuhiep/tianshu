@@ -3,6 +3,7 @@ namespace ExtendSite\Core;
 
 use ExtendSite\Crawler\CrawlerAdmin;
 use ExtendSite\Crawler\CrawlerAjax;
+use ExtendSite\Crawler\CrawlerTemplateAdmin;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -42,9 +43,10 @@ class Enqueue
     {
         $screen = get_current_screen();
         $is_crawler_page = $screen && $screen->id === 'extend-site_page_' . CrawlerAdmin::PAGE_SLUG;
+        $is_crawler_template_page = $screen && $screen->id === 'extend-site_page_' . CrawlerTemplateAdmin::PAGE_SLUG;
 
         // Kiểm tra an toàn
-        if (!$screen || (!$is_crawler_page && !in_array($screen->post_type, ['story', 'chapter'], true))) {
+        if (!$screen || (!$is_crawler_page && !$is_crawler_template_page && !in_array($screen->post_type, ['story', 'chapter'], true))) {
             return;
         }
 
@@ -100,6 +102,40 @@ class Enqueue
 
             return;
         }
+
+        if ($is_crawler_template_page) {
+            wp_enqueue_style(
+                'es-crawler-template',
+                EXTEND_SITE_URL . 'assets/css/backend/crawler-template.css',
+                [],
+                EXTEND_SITE_VERSION
+            );
+
+            wp_enqueue_script(
+                'es-crawler-template',
+                EXTEND_SITE_URL . 'assets/js/backend/crawler-template.js',
+                ['jquery'],
+                EXTEND_SITE_VERSION,
+                true
+            );
+
+            wp_localize_script('es-crawler-template', 'esCrawlerTemplate', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce(CrawlerAjax::NONCE_ACTION),
+                'preview_proxy_action' => CrawlerAjax::ACTION_TEMPLATE_PREVIEW_PROXY,
+                'test_parse_action' => CrawlerAjax::ACTION_TEMPLATE_TEST_PARSE,
+                'i18n' => [
+                    'loading' => esc_html__('Loading...', 'extend-site'),
+                    'preview_loaded' => esc_html__('Preview loaded.', 'extend-site'),
+                    'test_loading' => esc_html__('Testing selectors...', 'extend-site'),
+                    'missing_url' => esc_html__('Please enter a sample URL.', 'extend-site'),
+                    'request_failed' => esc_html__('Request failed.', 'extend-site'),
+                ],
+            ]);
+
+            return;
+        }
+
         // Enqueue style backend story/chapter
         wp_enqueue_style(
             'es-admin-story-chapter',
