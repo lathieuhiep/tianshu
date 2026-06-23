@@ -88,6 +88,7 @@ class Enqueue
                 'story_search_nonce' => wp_create_nonce('es_admin_common'),
                 'story_search_action' => 'es_search_story',
                 'process_action' => CrawlerAjax::ACTION_PROCESS,
+                'template_prepare_action' => CrawlerAjax::ACTION_TEMPLATE_PREPARE_BATCH,
                 'preview_action' => CrawlerAjax::ACTION_PREVIEW,
                 'start_batch_action' => CrawlerAjax::ACTION_START,
                 'heartbeat_action' => CrawlerAjax::ACTION_HEARTBEAT,
@@ -124,12 +125,15 @@ class Enqueue
                 'nonce' => wp_create_nonce(CrawlerAjax::NONCE_ACTION),
                 'preview_proxy_action' => CrawlerAjax::ACTION_TEMPLATE_PREVIEW_PROXY,
                 'test_parse_action' => CrawlerAjax::ACTION_TEMPLATE_TEST_PARSE,
+                'save_action' => CrawlerAjax::ACTION_TEMPLATE_SAVE,
+                'load_action' => CrawlerAjax::ACTION_TEMPLATE_LOAD,
+                'delete_action' => CrawlerAjax::ACTION_TEMPLATE_DELETE,
                 'i18n' => [
-                    'loading' => esc_html__('Loading...', 'extend-site'),
-                    'preview_loaded' => esc_html__('Preview loaded.', 'extend-site'),
-                    'test_loading' => esc_html__('Testing selectors...', 'extend-site'),
-                    'missing_url' => esc_html__('Please enter a sample URL.', 'extend-site'),
-                    'request_failed' => esc_html__('Request failed.', 'extend-site'),
+                    'loading' => esc_html__('Dang tai...', 'extend-site'),
+                    'preview_loaded' => esc_html__('Da tai xem truoc.', 'extend-site'),
+                    'test_loading' => esc_html__('Dang test selector...', 'extend-site'),
+                    'missing_url' => esc_html__('Nhap URL truyen mau truoc.', 'extend-site'),
+                    'request_failed' => esc_html__('Request loi.', 'extend-site'),
                 ],
             ]);
 

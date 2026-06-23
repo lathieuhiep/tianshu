@@ -78,6 +78,87 @@ class Scraper
         ];
     }
 
+    public static function scrape_with_template(string $source_url, array $template, array $replace_rules = [], bool $allow_short_content = false)
+    {
+        $content_selector = trim((string) ($template['chapter_content_selector'] ?? ''));
+        if ($content_selector === '') {
+            return self::scrape($source_url, $replace_rules, $allow_short_content);
+        }
+
+        $clean_url = CrawlerLinkTable::clean_url_for_hash($source_url);
+        if ($clean_url === '' || !wp_http_validate_url($clean_url)) {
+            return new WP_Error('invalid_url', __('URL nguá»“n khÃ´ng há»£p lá»‡.', 'extend-site'));
+        }
+
+        $domain = self::normalize_domain((string) wp_parse_url($clean_url, PHP_URL_HOST));
+        $body = self::fetch($clean_url);
+        if (is_wp_error($body)) {
+            return $body;
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML('<?xml encoding="UTF-8">' . $body, LIBXML_NOWARNING | LIBXML_NOERROR);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded) {
+            return new WP_Error('html_parse_failed', __('KhÃ´ng thá»ƒ phÃ¢n tÃ­ch HTML nguá»“n.', 'extend-site'));
+        }
+
+        $xpath = new DOMXPath($dom);
+        self::remove_unwanted_nodes($xpath, [
+            './/script',
+            './/style',
+            './/noscript',
+            './/iframe',
+        ]);
+
+        $title = self::first_selector_text($xpath, (string) ($template['chapter_title_selector'] ?? ''));
+        if ($title === '') {
+            $title = self::first_text($xpath, '//h1');
+        }
+
+        $content_node = self::first_selector_node($xpath, $content_selector);
+        if (!$content_node) {
+            return new WP_Error('content_selector_missing', __('Selector noi dung chuong khong khop.', 'extend-site'));
+        }
+
+        $content_html = self::inner_html($content_node);
+        $content_html = self::apply_replacements($content_html, $replace_rules);
+        $content_html = wp_kses_post($content_html);
+        $content_html = self::apply_text_node_replacements($content_html, $replace_rules);
+        $content_html = self::cleanup_fragment_html($content_html);
+        $content_length = self::content_length($content_html);
+        $warnings = [];
+        $min_length = (int) apply_filters('es_crawler_min_content_length', self::DEFAULT_MIN_CONTENT_LENGTH, $clean_url, $domain);
+
+        if ($content_length < $min_length) {
+            $warnings[] = sprintf(__('Ná»™i dung quÃ¡ ngáº¯n: %d kÃ½ tá»±.', 'extend-site'), $content_length);
+            if (!$allow_short_content) {
+                return new WP_Error('content_too_short', __('Ná»™i dung phÃ¢n tÃ­ch Ä‘Æ°á»£c ngáº¯n hÆ¡n giá»›i háº¡n tá»‘i thiá»ƒu.', 'extend-site'), [
+                    'content_length' => $content_length,
+                    'warnings' => $warnings,
+                ]);
+            }
+        }
+
+        return [
+            'source_url' => $source_url,
+            'clean_url' => $clean_url,
+            'source_url_hash' => CrawlerLinkTable::hash_url($clean_url),
+            'domain' => $domain,
+            'rule_label' => (string) ($template['name'] ?? $domain),
+            'title' => sanitize_text_field($title),
+            'content_html' => $content_html,
+            'content_length' => $content_length,
+            'source_chapter_number' => self::detect_source_chapter_number($xpath),
+            'source_max_chapter_number' => self::detect_source_max_chapter_number($xpath, $source_url),
+            'warnings' => $warnings,
+        ];
+    }
+
     public static function get_rules(): array
     {
         return apply_filters('es_crawler_domain_rules', []);
@@ -295,6 +376,88 @@ class Scraper
         }
 
         return $nodes->item(0);
+    }
+
+    private static function first_selector_text(DOMXPath $xpath, string $selector): string
+    {
+        $node = self::first_selector_node($xpath, $selector);
+
+        return $node ? trim(preg_replace('/\s+/', ' ', $node->textContent) ?: '') : '';
+    }
+
+    private static function first_selector_node(DOMXPath $xpath, string $selector): ?DOMNode
+    {
+        $expression = self::css_selector_to_xpath($selector);
+        if ($expression === '') {
+            return null;
+        }
+
+        return self::first_node($xpath, $expression);
+    }
+
+    private static function css_selector_to_xpath(string $selector): string
+    {
+        $selector = trim($selector);
+        if ($selector === '' || strpos($selector, ',') !== false) {
+            return '';
+        }
+
+        $parts = preg_split('/\s+/', $selector);
+        if (!$parts) {
+            return '';
+        }
+
+        $xpath = '';
+        foreach ($parts as $part) {
+            $segment = self::css_selector_part_to_xpath($part);
+            if ($segment === '') {
+                return '';
+            }
+
+            $xpath .= '//' . $segment;
+        }
+
+        return $xpath;
+    }
+
+    private static function css_selector_part_to_xpath(string $part): string
+    {
+        if (!preg_match('/^([a-zA-Z][a-zA-Z0-9_-]*)?((?:[#.][a-zA-Z0-9_-]+)*)$/', $part, $matches)) {
+            return '';
+        }
+
+        $tag = $matches[1] !== '' ? strtolower($matches[1]) : '*';
+        $suffix = $matches[2] ?? '';
+        $predicates = [];
+
+        if ($suffix !== '') {
+            preg_match_all('/([#.])([a-zA-Z0-9_-]+)/', $suffix, $tokens, PREG_SET_ORDER);
+            foreach ($tokens as $token) {
+                if ($token[1] === '#') {
+                    $predicates[] = '@id = ' . self::xpath_literal($token[2]);
+                    continue;
+                }
+
+                $predicates[] = 'contains(concat(" ", normalize-space(@class), " "), ' . self::xpath_literal(' ' . $token[2] . ' ') . ')';
+            }
+        }
+
+        return $tag . ($predicates ? '[' . implode(' and ', $predicates) . ']' : '');
+    }
+
+    private static function xpath_literal(string $value): string
+    {
+        if (strpos($value, "'") === false) {
+            return "'" . $value . "'";
+        }
+
+        if (strpos($value, '"') === false) {
+            return '"' . $value . '"';
+        }
+
+        $parts = explode("'", $value);
+
+        return "concat('" . implode("', \"'\", '", $parts) . "')";
     }
 
     private static function best_content_node(DOMXPath $xpath, string $expression): ?DOMNode

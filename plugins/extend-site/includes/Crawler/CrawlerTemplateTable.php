@@ -36,12 +36,9 @@ class CrawlerTemplateTable
             domain VARCHAR(191) NOT NULL,
             toc_type VARCHAR(50) NOT NULL DEFAULT 'selector',
             chapter_link_selector TEXT DEFAULT NULL,
+            toc_page_link_selector TEXT DEFAULT NULL,
             chapter_url_pattern TEXT DEFAULT NULL,
-            story_title_selector TEXT DEFAULT NULL,
-            story_author_selector TEXT DEFAULT NULL,
-            story_desc_selector TEXT DEFAULT NULL,
-            story_thumb_selector TEXT DEFAULT NULL,
-            story_cats_selector TEXT DEFAULT NULL,
+            story_extract_rules LONGTEXT DEFAULT NULL,
             chapter_title_selector TEXT DEFAULT NULL,
             chapter_content_selector TEXT DEFAULT NULL,
             find_replace_rules LONGTEXT DEFAULT NULL,
@@ -105,6 +102,69 @@ class CrawlerTemplateTable
         return is_array($row) ? self::normalize_row($row) : null;
     }
 
+    public static function save(array $data): ?array
+    {
+        global $wpdb;
+
+        $id = isset($data['id']) ? absint($data['id']) : 0;
+        $now = current_time('mysql');
+        $row = [
+            'name' => sanitize_text_field((string) ($data['name'] ?? '')),
+            'domain' => self::normalize_domain((string) ($data['domain'] ?? '')),
+            'toc_type' => in_array(($data['toc_type'] ?? 'selector'), ['selector', 'pattern'], true) ? (string) $data['toc_type'] : 'selector',
+            'chapter_link_selector' => sanitize_text_field((string) ($data['chapter_link_selector'] ?? '')),
+            'toc_page_link_selector' => sanitize_text_field((string) ($data['toc_page_link_selector'] ?? '')),
+            'chapter_url_pattern' => sanitize_text_field((string) ($data['chapter_url_pattern'] ?? '')),
+            'story_extract_rules' => wp_json_encode(self::normalize_story_extract_rules((array) ($data['story_extract_rules'] ?? []))),
+            'chapter_title_selector' => sanitize_text_field((string) ($data['chapter_title_selector'] ?? '')),
+            'chapter_content_selector' => sanitize_text_field((string) ($data['chapter_content_selector'] ?? '')),
+            'find_replace_rules' => wp_json_encode(self::normalize_replace_rules((array) ($data['find_replace_rules'] ?? []))),
+            'delay_between' => max(1, absint($data['delay_between'] ?? 1)),
+            'updated_at' => $now,
+        ];
+
+        if ($row['name'] === '' || $row['domain'] === '') {
+            return null;
+        }
+
+        $formats = [
+            '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s',
+        ];
+
+        if ($id > 0) {
+            $updated = $wpdb->update(self::get_table_name(), $row, ['id' => $id], $formats, ['%d']);
+            if ($updated === false) {
+                return null;
+            }
+
+            return self::find($id);
+        }
+
+        $row['created_at'] = $now;
+        $inserted = $wpdb->insert(
+            self::get_table_name(),
+            $row,
+            array_merge($formats, ['%s'])
+        );
+
+        if (!$inserted) {
+            return null;
+        }
+
+        return self::find((int) $wpdb->insert_id);
+    }
+
+    public static function delete(int $id): bool
+    {
+        global $wpdb;
+
+        if ($id <= 0) {
+            return false;
+        }
+
+        return (bool) $wpdb->delete(self::get_table_name(), ['id' => $id], ['%d']);
+    }
+
     public static function normalize_domain(string $domain): string
     {
         $domain = strtolower(trim($domain));
@@ -123,6 +183,13 @@ class CrawlerTemplateTable
         $row['toc_type'] = isset($row['toc_type']) ? sanitize_key((string) $row['toc_type']) : 'selector';
         $row['delay_between'] = isset($row['delay_between']) ? max(1, absint($row['delay_between'])) : 1;
 
+        $extract_rules = [];
+        if (!empty($row['story_extract_rules'])) {
+            $decoded = json_decode((string) $row['story_extract_rules'], true);
+            $extract_rules = is_array($decoded) ? $decoded : [];
+        }
+        $row['story_extract_rules'] = self::normalize_story_extract_rules($extract_rules);
+
         $rules = [];
         if (!empty($row['find_replace_rules'])) {
             $decoded = json_decode((string) $row['find_replace_rules'], true);
@@ -131,6 +198,45 @@ class CrawlerTemplateTable
         $row['find_replace_rules'] = self::normalize_replace_rules($rules);
 
         return $row;
+    }
+
+    private static function normalize_story_extract_rules(array $rules): array
+    {
+        $defaults = [
+            'story_title' => 'node_text',
+            'story_author' => 'first_link_text',
+            'story_desc' => 'node_text',
+            'story_thumb' => 'first_image_src',
+            'story_cats' => 'all_link_texts',
+        ];
+
+        $normalized = [];
+        foreach ($defaults as $field => $default_value_mode) {
+            $rule = isset($rules[$field]) && is_array($rules[$field]) ? $rules[$field] : [];
+
+            $normalized[$field] = [
+                'selector' => isset($rule['selector']) ? trim(sanitize_text_field((string) $rule['selector'])) : '',
+                'label' => isset($rule['label']) ? trim(sanitize_text_field((string) $rule['label'])) : '',
+                'value_mode' => self::normalize_value_mode((string) ($rule['value_mode'] ?? $default_value_mode)),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    private static function normalize_value_mode(string $mode): string
+    {
+        $allowed = [
+            'next_text',
+            'first_link_text',
+            'all_link_texts',
+            'first_link_href',
+            'first_image_src',
+            'node_text',
+            'node_html',
+        ];
+
+        return in_array($mode, $allowed, true) ? $mode : 'node_text';
     }
 
     private static function normalize_replace_rules(array $rules): array

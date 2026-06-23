@@ -30,7 +30,7 @@ defined('ABSPATH') || exit;
 
 class Plugin
 {
-    private const DB_VERSION = '20260618_crawler_templates';
+    private const DB_VERSION = '20260623_crawler_template_extract_rules';
 
     /**
      * Boot the plugin by initializing all components.

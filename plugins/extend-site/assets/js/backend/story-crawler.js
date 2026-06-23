@@ -11,6 +11,7 @@
         previewNumberTouched: false,
         consecutiveFailures: 0,
         batchId: '',
+        templatePrepared: false,
         storyId: 0,
         heartbeatTimer: null,
         lastFinalizePayload: null,
@@ -45,6 +46,12 @@
     const $logExport = $('#es-crawler-log-export');
     const $logCard = $('.es-crawler-log-card');
     const $helpModal = $('#es-crawler-help-modal');
+    const $mode = $('input[name="es_crawler_mode"]');
+    const $templatePanel = $('.es-crawler-template-panel');
+    const $templateId = $('#es-crawler-template-id');
+    const $storySourceUrl = $('#es-crawler-story-source-url');
+    const $templatePrepareBtn = $('#es-crawler-template-prepare-btn');
+    const $templatePrepareStatus = $('#es-crawler-template-prepare-status');
 
     function ajax(action, data) {
         return $.ajax({
@@ -176,6 +183,7 @@
         state.queue = [];
         state.index = 0;
         state.processed = 0;
+        state.templatePrepared = false;
         updateGeneratedPanel(state.queue);
         updateProgress();
         if (reason) {
@@ -200,6 +208,63 @@
         });
 
         return rules;
+    }
+
+    function crawlerMode() {
+        return $mode.filter(':checked').val() || 'manual';
+    }
+
+    function setTemplateStatus(message, type) {
+        $templatePrepareStatus.removeClass('is-error is-success').empty();
+        if (!message) {
+            return;
+        }
+
+        if (type) {
+            $templatePrepareStatus.addClass('is-' + type);
+        }
+        $templatePrepareStatus.text(message);
+    }
+
+    function fillReplacementRules(rules) {
+        rules = Array.isArray(rules) ? rules : [];
+        $find.val(rules.map(function (rule) {
+            return rule.find || '';
+        }).join('\n'));
+        $replace.val(rules.map(function (rule) {
+            return rule.replace || '';
+        }).join('\n'));
+        $removeContainer.prop('checked', rules.some(function (rule) {
+            return !!rule.remove_container;
+        }));
+    }
+
+    function normalizeHost(value) {
+        try {
+            return new URL(value).hostname.replace(/^www\./, '').toLowerCase();
+        } catch (err) {
+            return '';
+        }
+    }
+
+    function autoSelectTemplateByUrl() {
+        const host = normalizeHost($storySourceUrl.val().trim());
+        if (!host) {
+            return;
+        }
+
+        const $match = $templateId.find('option').filter(function () {
+            return String($(this).data('domain') || '').replace(/^www\./, '').toLowerCase() === host;
+        }).first();
+
+        if ($match.length) {
+            $templateId.val($match.val());
+        }
+    }
+
+    function toggleCrawlerMode() {
+        const isTemplate = crawlerMode() === 'template';
+        $templatePanel.toggleClass('is-hidden', !isTemplate);
     }
 
     function titleOptions() {
@@ -436,7 +501,8 @@
                     source_url: item.url,
                     chapter_number: item.chapterNumber,
                     post_status: $postStatus.val(),
-                    replace_rules: JSON.stringify(replacementRules())
+                    replace_rules: JSON.stringify(replacementRules()),
+                    template_id: crawlerMode() === 'template' ? ($templateId.val() || '') : ''
                 }, titleOptions()));
 
                 const payload = response.data || {};
@@ -550,6 +616,7 @@
     $('#es-crawler-generate-btn').on('click', function () {
         try {
             state.queue = buildQueue();
+            state.templatePrepared = false;
             state.index = 0;
             state.processed = 0;
             updateGeneratedPanel(state.queue);
@@ -558,6 +625,71 @@
         } catch (err) {
             setNotice(err.message, 'error');
             scrollToProgress();
+        }
+    });
+
+    $mode.on('change', toggleCrawlerMode);
+    $storySourceUrl.on('input change', autoSelectTemplateByUrl);
+
+    $templatePrepareBtn.on('click', async function () {
+        const templateId = parseInt($templateId.val(), 10) || 0;
+        const storyUrl = $storySourceUrl.val().trim();
+        if (!templateId) {
+            setTemplateStatus('Hay chon template.', 'error');
+            return;
+        }
+        if (!storyUrl) {
+            setTemplateStatus('Hay nhap URL trang truyen.', 'error');
+            return;
+        }
+
+        const originalText = $templatePrepareBtn.text();
+        $templatePrepareBtn.prop('disabled', true).text('Dang chuan bi...');
+        setTemplateStatus('', '');
+
+        try {
+            const response = await ajax(cfg.template_prepare_action, {
+                template_id: templateId,
+                story_url: storyUrl
+            });
+            const data = response.data || {};
+            state.queue = Array.isArray(data.queue) ? data.queue : [];
+            state.index = 0;
+            state.processed = 0;
+            state.consecutiveFailures = 0;
+            state.logs = [];
+            state.storyId = parseInt(data.story_id, 10) || 0;
+            state.templatePrepared = state.queue.length > 0 && state.storyId > 0;
+            $logBody.empty();
+            $logExport.val('');
+
+            if (state.storyId) {
+                const option = new Option(data.story_title || ('#' + state.storyId), state.storyId, true, true);
+                $story.append(option).trigger('change');
+            }
+            if (data.delay_between) {
+                $delay.val(data.delay_between);
+            }
+            if (data.chapter_url_pattern) {
+                $pattern.val(data.chapter_url_pattern.replace('{chapter_number}', '{n}'));
+            }
+            if (state.queue.length) {
+                $from.val(state.queue[0].chapterNumber || 1);
+                $to.val(state.queue[state.queue.length - 1].chapterNumber || state.queue.length);
+                $previewNumber.val(state.queue[0].chapterNumber || 1);
+                $previewUrl.val(state.queue[0].url || '');
+            }
+            fillReplacementRules(data.find_replace_rules || []);
+            updateGeneratedPanel(state.queue);
+            updateProgress();
+            setButtons();
+            setTemplateStatus(data.message || 'Da chuan bi batch tu Template.', 'success');
+            setNotice('', 'success');
+        } catch (xhr) {
+            state.templatePrepared = false;
+            setTemplateStatus(errorMessage(xhr, 'Chuan bi batch that bai.'), 'error');
+        } finally {
+            $templatePrepareBtn.prop('disabled', false).text(originalText);
         }
     });
 
@@ -612,6 +744,10 @@
 
     $('#es-crawler-start-btn').on('click', async function () {
         try {
+            if (crawlerMode() === 'template' && !state.templatePrepared) {
+                throw new Error('Hay chuan bi batch tu Template truoc.');
+            }
+
             if (!state.queue.length) {
                 state.queue = buildQueue();
                 updateGeneratedPanel(state.queue);
@@ -709,6 +845,7 @@
 
     $(function () {
         initSelect2();
+        toggleCrawlerMode();
         toggleTitleTemplate();
         syncPreviewNumberFromRange(true);
         setButtons();

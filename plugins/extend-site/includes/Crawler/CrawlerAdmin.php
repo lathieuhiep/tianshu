@@ -31,6 +31,7 @@ class CrawlerAdmin
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Bạn không có quyền truy cập trang này.', 'extend-site'));
         }
+        $templates = CrawlerTemplateTable::all();
         ?>
         <div class="wrap es-crawler-page">
             <h1><?php esc_html_e('Crawler truyện', 'extend-site'); ?></h1>
@@ -44,6 +45,39 @@ class CrawlerAdmin
             <div class="es-crawler-grid">
                 <section class="es-crawler-card es-crawler-form-card">
                     <h2><?php esc_html_e('Thiết lập batch', 'extend-site'); ?></h2>
+
+                    <div class="es-crawler-step es-crawler-template-mode">
+                        <h3><span>0</span><?php esc_html_e('Che do cao', 'extend-site'); ?></h3>
+
+                        <div class="es-crawler-mode-toggle">
+                            <label><input type="radio" name="es_crawler_mode" value="manual" checked /> <?php esc_html_e('Cao thu cong', 'extend-site'); ?></label>
+                            <label><input type="radio" name="es_crawler_mode" value="template" /> <?php esc_html_e('Cao bang Template', 'extend-site'); ?></label>
+                        </div>
+
+                        <div class="es-crawler-template-panel is-hidden">
+                            <div class="es-crawler-two-cols">
+                                <div class="es-crawler-field">
+                                    <label for="es-crawler-template-id"><?php esc_html_e('Template', 'extend-site'); ?></label>
+                                    <select id="es-crawler-template-id">
+                                        <option value=""><?php esc_html_e('Chon template', 'extend-site'); ?></option>
+                                        <?php foreach ($templates as $template) : ?>
+                                            <option value="<?php echo esc_attr((string) $template['id']); ?>" data-domain="<?php echo esc_attr($template['domain']); ?>">
+                                                <?php echo esc_html($template['name'] . ' - ' . $template['domain']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <div class="es-crawler-field">
+                                    <label for="es-crawler-story-source-url"><?php esc_html_e('URL trang truyen', 'extend-site'); ?></label>
+                                    <input type="url" id="es-crawler-story-source-url" class="regular-text" placeholder="https://example.com/truyen/abc" />
+                                </div>
+                            </div>
+
+                            <button type="button" class="button button-secondary" id="es-crawler-template-prepare-btn"><?php esc_html_e('Chuan bi batch tu Template', 'extend-site'); ?></button>
+                            <div id="es-crawler-template-prepare-status" class="es-crawler-template-prepare-status" aria-live="polite"></div>
+                        </div>
+                    </div>
 
                     <div class="es-crawler-step">
                         <h3><span>1</span><?php esc_html_e('Truyện & URL nguồn', 'extend-site'); ?></h3>
