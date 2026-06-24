@@ -15,10 +15,6 @@
     const $newBtn = $('#es-template-new');
     const $deleteBtn = $('#es-template-delete');
     const $saveStatus = $('#es-template-save-status');
-    const $listToggle = $('#es-template-list-toggle');
-    const $listPanel = $('#es-template-list-panel');
-    const $listSearch = $('#es-template-list-search');
-    const $listBody = $('#es-template-list-body');
     let previewRequestId = 0;
 
     function ajax(action, data) {
@@ -56,7 +52,7 @@
         if (response && response.data && response.data.message) {
             return response.data.message;
         }
-        return fallback || (cfg.i18n && cfg.i18n.request_failed) || 'Request loi.';
+        return fallback || (cfg.i18n && cfg.i18n.request_failed) || 'Request lỗi.';
     }
 
     function setStatus($target, message, type) {
@@ -116,7 +112,7 @@
             return;
         }
 
-        let html = '<option value="">Chon mau de sua</option>';
+        let html = '<option value="">Chọn mẫu để sửa</option>';
         templates.forEach(function (template) {
             const id = String(template.id || '');
             html += '<option value="' + escapeHtml(id) + '" data-domain="' + escapeHtml(template.domain || '') + '"' + (String(selectedId || '') === id ? ' selected' : '') + '>' +
@@ -124,40 +120,6 @@
                 '</option>';
         });
         $templateExisting.html(html);
-        renderTemplateList(templates);
-    }
-
-    function renderTemplateList(templates) {
-        if (!Array.isArray(templates)) {
-            return;
-        }
-
-        const rows = templates.map(function (template) {
-            const id = String(template.id || '');
-            const name = template.name || '';
-            const domain = template.domain || '';
-            const search = (name + ' ' + domain).toLowerCase();
-
-            return '<tr data-template-id="' + escapeHtml(id) + '" data-search="' + escapeHtml(search) + '">' +
-                '<td>' + escapeHtml(name) + '</td>' +
-                '<td><code>' + escapeHtml(domain) + '</code></td>' +
-                '<td>' +
-                '<button type="button" class="button button-small es-template-list-edit" data-template-id="' + escapeHtml(id) + '">Sua</button> ' +
-                '<button type="button" class="button button-small button-link-delete es-template-list-delete" data-template-id="' + escapeHtml(id) + '">Xoa</button>' +
-                '</td>' +
-                '</tr>';
-        }).join('');
-
-        $listBody.html(rows || '<tr><td colspan="3">Chua co mau nao.</td></tr>');
-        filterTemplateList();
-    }
-
-    function filterTemplateList() {
-        const query = $listSearch.val().trim().toLowerCase();
-        $listBody.find('tr[data-search]').each(function () {
-            const $row = $(this);
-            $row.toggle(!query || String($row.data('search') || '').indexOf(query) !== -1);
-        });
     }
 
     function setTemplateId(id) {
@@ -214,7 +176,7 @@
         });
 
         fillReplacementRules(template.find_replace_rules || []);
-        setSaveStatus('Da tai mau: ' + (template.name || ''), 'success');
+        setSaveStatus('Đã tải mẫu: ' + (template.name || ''), 'success');
     }
 
     async function loadTemplate(id) {
@@ -224,21 +186,21 @@
             return;
         }
 
-        setSaveStatus('Dang tai mau...', '');
+        setSaveStatus('Đang tải mẫu...', '');
         const response = await ajax(cfg.load_action, { template_id: id });
         fillTemplate((response.data && response.data.template) || {});
     }
 
     async function deleteTemplate(id) {
         id = parseInt(id, 10) || 0;
-        if (!id || !window.confirm('Xoa mau crawler nay?')) {
+        if (!id || !window.confirm('Xóa mẫu crawler này?')) {
             return;
         }
 
         const response = await ajax(cfg.delete_action, { template_id: id });
         renderTemplateOptions((response.data && response.data.templates) || [], 0);
         clearForm();
-        setSaveStatus((response.data && response.data.message) || 'Da xoa mau.', 'success');
+        setSaveStatus((response.data && response.data.message) || 'Đã xóa mẫu.', 'success');
     }
 
     function writePreview(html) {
@@ -282,23 +244,23 @@
         const matched = data.matched || {};
 
         let html = '<div class="es-template-result-summary">';
-        html += '<strong>Truyen:</strong> ' + escapeHtml(data.story_title || '(trong)');
-        html += '<br><strong>Tac gia:</strong> ' + escapeHtml(data.story_author || '(trong)');
-        html += '<br><strong>Link chuong:</strong> ' + escapeHtml(data.chapter_link_count || 0) + (data.chapter_link_estimated ? ' (uoc tinh)' : '');
-        html += '<br><strong>Trang muc luc:</strong> ' + escapeHtml(data.toc_pages_scanned || 1) + '/' + escapeHtml(data.toc_page_count || 0);
+        html += '<strong>Truyện:</strong> ' + escapeHtml(data.story_title || '(trống)');
+        html += '<br><strong>Tác giả:</strong> ' + escapeHtml(data.story_author || '(trống)');
+        html += '<br><strong>Link chương:</strong> ' + escapeHtml(data.chapter_link_count || 0) + (data.chapter_link_estimated ? ' (ước tính)' : '');
+        html += '<br><strong>Trang mục lục:</strong> ' + escapeHtml(data.toc_pages_scanned || 1) + '/' + escapeHtml(data.toc_page_count || 0);
         html += warnings;
         html += '</div>';
 
         html += '<table class="widefat striped es-template-result-table"><tbody>';
-        html += resultRow('Mo ta', data.story_desc || '');
-        html += resultRow('Do dai mo ta', data.story_desc_length || 0);
-        html += resultRow('Anh bia', data.story_thumb || '');
-        html += resultRow('The loai', cats);
-        html += resultRow('Ten chuong', data.chapter_title || '');
-        html += resultRow('Do dai noi dung chuong', data.chapter_content_length || 0);
+        html += resultRow('Mô tả', data.story_desc || '');
+        html += resultRow('Độ dài mô tả', data.story_desc_length || 0);
+        html += resultRow('Ảnh bìa', data.story_thumb || '');
+        html += resultRow('Thể loại', cats);
+        html += resultRow('Tên chương', data.chapter_title || '');
+        html += resultRow('Độ dài nội dung chương', data.chapter_content_length || 0);
         html += '</tbody></table>';
 
-        html += '<h3>So phan tu khop selector</h3>';
+        html += '<h3>Số phần tử khớp selector</h3>';
         html += '<table class="widefat striped es-template-result-table"><tbody>';
         Object.keys(matched).forEach(function (key) {
             html += resultRow(key, matched[key]);
@@ -306,7 +268,7 @@
         html += '</tbody></table>';
 
         if (links.length) {
-            html += '<h3>Mau link chuong</h3>';
+            html += '<h3>Mẫu link chương</h3>';
             html += '<table class="widefat striped es-template-result-table"><thead><tr><th>Text</th><th>URL</th></tr></thead><tbody>';
             links.forEach(function (item) {
                 html += '<tr><td>' + escapeHtml(item.text || '') + '</td><td><code>' + escapeHtml(item.href || '') + '</code></td></tr>';
@@ -362,32 +324,9 @@
         }
     });
 
-    $listToggle.on('click', function () {
-        $listPanel.toggleClass('is-hidden');
-    });
-
-    $listSearch.on('input', filterTemplateList);
-
-    $listBody.on('click', '.es-template-list-edit', async function () {
-        try {
-            await loadTemplate($(this).data('template-id'));
-            $listPanel.addClass('is-hidden');
-        } catch (xhr) {
-            setSaveStatus(errorMessage(xhr), 'error');
-        }
-    });
-
-    $listBody.on('click', '.es-template-list-delete', async function () {
-        try {
-            await deleteTemplate($(this).data('template-id'));
-        } catch (xhr) {
-            setSaveStatus(errorMessage(xhr), 'error');
-        }
-    });
-
     $saveBtn.on('click', async function () {
         const originalText = $saveBtn.text();
-        $saveBtn.prop('disabled', true).text('Dang luu...');
+        $saveBtn.prop('disabled', true).text('Đang lưu...');
         setSaveStatus('', '');
 
         try {
@@ -395,7 +334,7 @@
             const data = response.data || {};
             renderTemplateOptions(data.templates || [], data.template && data.template.id);
             fillTemplate(data.template || {});
-            setSaveStatus(data.message || 'Da luu mau.', 'success');
+            setSaveStatus(data.message || 'Đã lưu mẫu.', 'success');
         } catch (xhr) {
             setSaveStatus(errorMessage(xhr), 'error');
         } finally {
@@ -410,7 +349,7 @@
         }
 
         const originalText = $deleteBtn.text();
-        $deleteBtn.prop('disabled', true).text('Dang xoa...');
+        $deleteBtn.prop('disabled', true).text('Đang xóa...');
 
         try {
             await deleteTemplate(id);
@@ -425,15 +364,15 @@
     $previewBtn.on('click', async function () {
         const url = sampleUrl();
         if (!url) {
-            setStatus($previewStatus, (cfg.i18n && cfg.i18n.missing_url) || 'Nhap URL truyen mau truoc.', 'error');
+            setStatus($previewStatus, (cfg.i18n && cfg.i18n.missing_url) || 'Nhập URL truyện mẫu trước.', 'error');
             return;
         }
 
         const originalText = $previewBtn.text();
         const requestId = ++previewRequestId;
-        $previewBtn.prop('disabled', true).text((cfg.i18n && cfg.i18n.loading) || 'Dang tai...');
+        $previewBtn.prop('disabled', true).text((cfg.i18n && cfg.i18n.loading) || 'Đang tải...');
         setStatus($previewStatus, '', '');
-        clearPreview((cfg.i18n && cfg.i18n.loading) || 'Dang tai...');
+        clearPreview((cfg.i18n && cfg.i18n.loading) || 'Đang tải...');
 
         try {
             const response = await ajax(cfg.preview_proxy_action, { target_url: url, cache_buster: Date.now() });
@@ -443,7 +382,7 @@
 
             writePreview((response.data && response.data.html) || '');
             const previewUrl = (response.data && response.data.target_url) || url;
-            setStatus($previewStatus, ((cfg.i18n && cfg.i18n.preview_loaded) || 'Da tai xem truoc.') + ' ' + previewUrl, 'success');
+            setStatus($previewStatus, ((cfg.i18n && cfg.i18n.preview_loaded) || 'Đã tải xem trước.') + ' ' + previewUrl, 'success');
         } catch (xhr) {
             if (requestId !== previewRequestId) {
                 return;
@@ -461,13 +400,13 @@
     $testBtn.on('click', async function () {
         const url = sampleUrl();
         if (!url) {
-            $testResult.addClass('is-error').text((cfg.i18n && cfg.i18n.missing_url) || 'Nhap URL truyen mau truoc.');
+            $testResult.addClass('is-error').text((cfg.i18n && cfg.i18n.missing_url) || 'Nhập URL truyện mẫu trước.');
             return;
         }
 
         const originalText = $testBtn.text();
-        $testBtn.prop('disabled', true).text((cfg.i18n && cfg.i18n.test_loading) || 'Dang test selector...');
-        $testResult.removeClass('is-error').text((cfg.i18n && cfg.i18n.test_loading) || 'Dang test selector...');
+        $testBtn.prop('disabled', true).text((cfg.i18n && cfg.i18n.test_loading) || 'Đang test selector...');
+        $testResult.removeClass('is-error').text((cfg.i18n && cfg.i18n.test_loading) || 'Đang test selector...');
 
         try {
             const payload = Object.assign({ target_url: url }, collectSelectors());

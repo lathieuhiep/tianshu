@@ -129,11 +129,11 @@ class Enqueue
                 'load_action' => CrawlerAjax::ACTION_TEMPLATE_LOAD,
                 'delete_action' => CrawlerAjax::ACTION_TEMPLATE_DELETE,
                 'i18n' => [
-                    'loading' => esc_html__('Dang tai...', 'extend-site'),
-                    'preview_loaded' => esc_html__('Da tai xem truoc.', 'extend-site'),
-                    'test_loading' => esc_html__('Dang test selector...', 'extend-site'),
-                    'missing_url' => esc_html__('Nhap URL truyen mau truoc.', 'extend-site'),
-                    'request_failed' => esc_html__('Request loi.', 'extend-site'),
+                    'loading' => esc_html__('Đang tải...', 'extend-site'),
+                    'preview_loaded' => esc_html__('Đã tải xem trước.', 'extend-site'),
+                    'test_loading' => esc_html__('Đang test selector...', 'extend-site'),
+                    'missing_url' => esc_html__('Nhập URL truyện mẫu trước.', 'extend-site'),
+                    'request_failed' => esc_html__('Request lỗi.', 'extend-site'),
                 ],
             ]);
 

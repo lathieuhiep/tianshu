@@ -118,12 +118,24 @@ class CrawlerAjax
         $chapter_number = self::get_valid_chapter_number();
         $source_url = self::get_source_url();
         $replace_rules = self::get_replace_rules();
+        $template_id = absint($_POST['template_id'] ?? 0);
+        $template = $template_id > 0 ? CrawlerTemplateTable::find($template_id) : null;
+        if ($template_id > 0 && !$template) {
+            wp_send_json_error([
+                'message' => __('Khong tim thay template crawler.', 'extend-site'),
+            ], 404);
+        }
+        if ($template && !$replace_rules) {
+            $replace_rules = is_array($template['find_replace_rules'] ?? null) ? $template['find_replace_rules'] : [];
+        }
         $allow_short = self::get_bool('allow_short_content');
         $title_mode = self::get_title_mode();
         $title_template = self::get_title_template();
         $expected_chapter_number = self::resolve_expected_chapter_number($source_url, $chapter_number);
 
-        $result = Scraper::scrape($source_url, $replace_rules, $allow_short);
+        $result = $template
+            ? Scraper::scrape_with_template($source_url, $template, $replace_rules, $allow_short)
+            : Scraper::scrape($source_url, $replace_rules, $allow_short);
         if (is_wp_error($result)) {
             wp_send_json_error(self::error_payload($result, [
                 'source_url' => $source_url,
@@ -415,6 +427,13 @@ class CrawlerAjax
         $replace_rules = self::get_replace_rules();
         $template_id = absint($_POST['template_id'] ?? 0);
         $template = $template_id > 0 ? CrawlerTemplateTable::find($template_id) : null;
+        if ($template_id > 0 && !$template) {
+            wp_send_json_error(self::result_payload(CrawlerLinkTable::STATUS_FAILED, __('Khong tim thay template crawler.', 'extend-site'), [
+                'source_url' => $source_url,
+                'story_id' => $story_id,
+                'chapter_number' => $chapter_number,
+            ]), 404);
+        }
         if ($template && !$replace_rules) {
             $replace_rules = is_array($template['find_replace_rules'] ?? null) ? $template['find_replace_rules'] : [];
         }

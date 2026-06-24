@@ -24,6 +24,7 @@
     const $to = $('#es-crawler-range-to');
     const $padding = $('#es-crawler-padding');
     const $previewNumber = $('#es-crawler-preview-number');
+    const $previewNumberField = $('.es-crawler-preview-number-field');
     const $previewUrl = $('#es-crawler-preview-url');
     const $postStatus = $('#es-crawler-post-status');
     const $titleMode = $('#es-crawler-title-mode');
@@ -47,11 +48,14 @@
     const $logCard = $('.es-crawler-log-card');
     const $helpModal = $('#es-crawler-help-modal');
     const $mode = $('input[name="es_crawler_mode"]');
+    const $manualPanel = $('.es-crawler-manual-panel');
+    const $manualActions = $('.es-crawler-manual-action');
     const $templatePanel = $('.es-crawler-template-panel');
     const $templateId = $('#es-crawler-template-id');
     const $storySourceUrl = $('#es-crawler-story-source-url');
     const $templatePrepareBtn = $('#es-crawler-template-prepare-btn');
     const $templatePrepareStatus = $('#es-crawler-template-prepare-status');
+    const $templateSummary = $('#es-crawler-template-summary');
 
     function ajax(action, data) {
         return $.ajax({
@@ -175,8 +179,32 @@
         $urlList.val(summary + '\n\nTất cả URL:\n' + queue.map(item => item.url).join('\n'));
     }
 
-    function clearGeneratedQueue(reason) {
-        if (!state.queue.length || state.isRunning || state.batchId) {
+    function clearRunOutput(options) {
+        options = options || {};
+        state.logs = [];
+        state.lastFinalizePayload = null;
+        $logBody.empty();
+        $logExport.val('');
+        $finalizeStatus.empty();
+        $finalizeBtn.addClass('is-hidden');
+        $currentUrl.text('Chưa xử lý URL nào.');
+
+        if (!options.keepPreview) {
+            $previewResult.text('Chưa có kết quả xem thử.');
+        }
+
+        if (!options.keepTemplateStatus) {
+            setTemplateStatus('', '');
+            clearTemplateSummary();
+        }
+    }
+
+    function clearPreviewOutput() {
+        $previewResult.text('Chưa có kết quả xem thử.');
+    }
+
+    function clearGeneratedQueue(reason, options) {
+        if ((!state.queue.length && !state.templatePrepared) || state.isRunning || state.batchId) {
             return;
         }
 
@@ -186,9 +214,21 @@
         state.templatePrepared = false;
         updateGeneratedPanel(state.queue);
         updateProgress();
+        clearRunOutput(options);
+        setButtons();
         if (reason) {
             setNotice(reason, 'warning');
         }
+    }
+
+    function clearCrawlerContext(reason, options) {
+        if (state.isRunning || state.batchId) {
+            return;
+        }
+
+        clearRunOutput(options);
+        clearGeneratedQueue(reason, options);
+        setButtons();
     }
 
     function replacementRules() {
@@ -224,6 +264,29 @@
             $templatePrepareStatus.addClass('is-' + type);
         }
         $templatePrepareStatus.text(message);
+    }
+
+    function clearTemplateSummary() {
+        $templateSummary.addClass('is-hidden').empty();
+    }
+
+    function renderTemplateSummary(data) {
+        const queue = Array.isArray(data.queue) ? data.queue : [];
+        const first = queue.length ? queue[0].url : '';
+        const last = queue.length ? queue[queue.length - 1].url : '';
+        const storyStatus = data.story_created ? 'Mới tạo' : 'Đã có';
+
+        $templateSummary
+            .removeClass('is-hidden')
+            .html(
+                '<dl>' +
+                '<dt>Template</dt><dd>' + escapeHtml(data.template_name || '') + '</dd>' +
+                '<dt>Truyện</dt><dd>' + escapeHtml(data.story_title || '') + ' <small>(' + escapeHtml(storyStatus) + ')</small></dd>' +
+                '<dt>Số chương</dt><dd>' + escapeHtml(data.total_chapters || queue.length || 0) + '</dd>' +
+                '<dt>URL đầu</dt><dd><code>' + escapeHtml(first) + '</code></dd>' +
+                '<dt>URL cuối</dt><dd><code>' + escapeHtml(last) + '</code></dd>' +
+                '</dl>'
+            );
     }
 
     function fillReplacementRules(rules) {
@@ -265,6 +328,9 @@
     function toggleCrawlerMode() {
         const isTemplate = crawlerMode() === 'template';
         $templatePanel.toggleClass('is-hidden', !isTemplate);
+        $manualPanel.toggleClass('is-hidden', isTemplate);
+        $manualActions.toggleClass('is-hidden', isTemplate);
+        $previewNumberField.toggleClass('is-hidden', isTemplate);
     }
 
     function titleOptions() {
@@ -298,14 +364,15 @@
     }
 
     function setButtons() {
-        $('#es-crawler-start-btn').prop('disabled', state.isRunning);
+        const canStart = state.queue.length > 0 && (crawlerMode() !== 'template' || state.templatePrepared);
+        $('#es-crawler-start-btn').prop('disabled', state.isRunning || !canStart);
         $('#es-crawler-pause-btn').prop('disabled', !state.isRunning).text(state.isPaused ? 'Tiếp tục' : 'Tạm dừng');
         $('#es-crawler-stop-btn').prop('disabled', !state.isRunning && !state.batchId);
         setFormLocked(state.isRunning || !!state.batchId);
     }
 
     function setFormLocked(locked) {
-        $('#es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn')
+        $('#es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn, #es-crawler-template-id, #es-crawler-story-source-url, #es-crawler-template-prepare-btn')
             .prop('disabled', locked);
 
         if ($story.length && $.fn.select2) {
@@ -615,6 +682,10 @@
 
     $('#es-crawler-generate-btn').on('click', function () {
         try {
+            if (crawlerMode() === 'template') {
+                throw new Error('Chế độ Template tự tạo danh sách URL khi bấm Chuẩn bị batch từ Template.');
+            }
+            clearRunOutput();
             state.queue = buildQueue();
             state.templatePrepared = false;
             state.index = 0;
@@ -628,23 +699,37 @@
         }
     });
 
-    $mode.on('change', toggleCrawlerMode);
-    $storySourceUrl.on('input change', autoSelectTemplateByUrl);
+    $mode.on('change', function () {
+        toggleCrawlerMode();
+        clearCrawlerContext('Chế độ cào đã thay đổi. Vui lòng chuẩn bị lại batch trước khi bắt đầu.');
+    });
+    $storySourceUrl.on('input change', function () {
+        autoSelectTemplateByUrl();
+        if (crawlerMode() === 'template') {
+            clearCrawlerContext('URL trang truyện đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
+        }
+    });
+    $templateId.on('change', function () {
+        if (crawlerMode() === 'template') {
+            clearCrawlerContext('Template đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
+        }
+    });
 
     $templatePrepareBtn.on('click', async function () {
         const templateId = parseInt($templateId.val(), 10) || 0;
         const storyUrl = $storySourceUrl.val().trim();
         if (!templateId) {
-            setTemplateStatus('Hay chon template.', 'error');
+            setTemplateStatus('Hãy chọn template.', 'error');
             return;
         }
         if (!storyUrl) {
-            setTemplateStatus('Hay nhap URL trang truyen.', 'error');
+            setTemplateStatus('Hãy nhập URL trang truyện.', 'error');
             return;
         }
 
         const originalText = $templatePrepareBtn.text();
-        $templatePrepareBtn.prop('disabled', true).text('Dang chuan bi...');
+        $templatePrepareBtn.prop('disabled', true).text('Đang chuẩn bị...');
+        clearRunOutput({ keepTemplateStatus: true });
         setTemplateStatus('', '');
 
         try {
@@ -657,11 +742,8 @@
             state.index = 0;
             state.processed = 0;
             state.consecutiveFailures = 0;
-            state.logs = [];
             state.storyId = parseInt(data.story_id, 10) || 0;
             state.templatePrepared = state.queue.length > 0 && state.storyId > 0;
-            $logBody.empty();
-            $logExport.val('');
 
             if (state.storyId) {
                 const option = new Option(data.story_title || ('#' + state.storyId), state.storyId, true, true);
@@ -683,11 +765,12 @@
             updateGeneratedPanel(state.queue);
             updateProgress();
             setButtons();
-            setTemplateStatus(data.message || 'Da chuan bi batch tu Template.', 'success');
+            setTemplateStatus(data.message || 'Đã chuẩn bị batch từ Template.', 'success');
+            renderTemplateSummary(data);
             setNotice('', 'success');
         } catch (xhr) {
             state.templatePrepared = false;
-            setTemplateStatus(errorMessage(xhr, 'Chuan bi batch that bai.'), 'error');
+            setTemplateStatus(errorMessage(xhr, 'Chuẩn bị batch thất bại.'), 'error');
         } finally {
             $templatePrepareBtn.prop('disabled', false).text(originalText);
         }
@@ -695,9 +778,24 @@
 
     $('#es-crawler-preview-btn').on('click', async function () {
         try {
-            const base = validateBase();
-            const chapterNumber = parseInt($previewNumber.val(), 10) || base.from;
-            const url = $previewUrl.val().trim() || buildUrl(chapterNumber);
+            const isTemplateMode = crawlerMode() === 'template';
+            const firstQueueItem = state.queue.length ? state.queue[0] : null;
+            const storyId = isTemplateMode ? selectedStoryId() : validateBase().storyId;
+            const fallbackChapterNumber = isTemplateMode
+                ? (firstQueueItem ? firstQueueItem.chapterNumber : 1)
+                : validateBase().from;
+            const chapterNumber = parseInt($previewNumber.val(), 10) || fallbackChapterNumber;
+            const url = $previewUrl.val().trim() || (firstQueueItem ? firstQueueItem.url : '') || buildUrl(chapterNumber);
+
+            if (isTemplateMode && !$templateId.val()) {
+                throw new Error('Hãy chọn template trước khi xem thử.');
+            }
+            if (isTemplateMode && !state.templatePrepared && !$previewUrl.val().trim()) {
+                throw new Error('Hãy chuẩn bị batch từ Template trước khi xem thử.');
+            }
+            if (!storyId) {
+                throw new Error('Thiếu truyện: hãy chuẩn bị batch từ Template hoặc chọn truyện cần thêm chương.');
+            }
             if (!isHttpUrl(url)) {
                 throw new Error('URL xem thử không hợp lệ: vui lòng nhập URL bắt đầu bằng http:// hoặc https://.');
             }
@@ -705,10 +803,11 @@
             scrollToPreview();
 
             const response = await ajax(cfg.preview_action, Object.assign({
-                story_id: base.storyId,
+                story_id: storyId,
                 source_url: url,
                 chapter_number: chapterNumber,
                 replace_rules: JSON.stringify(replacementRules()),
+                template_id: isTemplateMode ? ($templateId.val() || '') : '',
                 allow_short_content: true
             }, titleOptions()));
 
@@ -745,7 +844,7 @@
     $('#es-crawler-start-btn').on('click', async function () {
         try {
             if (crawlerMode() === 'template' && !state.templatePrepared) {
-                throw new Error('Hay chuan bi batch tu Template truoc.');
+                throw new Error('Hãy chuẩn bị batch từ Template trước.');
             }
 
             if (!state.queue.length) {
@@ -757,9 +856,7 @@
             state.index = 0;
             state.processed = 0;
             state.consecutiveFailures = 0;
-            state.logs = [];
-            $logBody.empty();
-            $logExport.val('');
+            clearRunOutput({ keepPreview: true, keepTemplateStatus: true });
             updateProgress();
             setNotice('', 'success');
 
@@ -833,14 +930,33 @@
 
     $titleMode.on('change', toggleTitleTemplate);
     $from.on('input change', function () {
+        const previousPreviewNumber = String($previewNumber.val() || '');
         syncPreviewNumberFromRange(false);
-        clearGeneratedQueue('Khoảng chương đã thay đổi. Vui lòng tạo lại danh sách URL trước khi bắt đầu.');
+        if (crawlerMode() === 'manual') {
+            const previewChanged = String($previewNumber.val() || '') !== previousPreviewNumber;
+            clearCrawlerContext('Khoảng chương đã thay đổi. Vui lòng tạo lại danh sách URL trước khi bắt đầu.', {
+                keepPreview: !previewChanged
+            });
+        }
     });
-    $to.add($padding).add($pattern).on('input change', function () {
-        clearGeneratedQueue('Mẫu URL hoặc khoảng chương đã thay đổi. Vui lòng tạo lại danh sách URL trước khi bắt đầu.');
+    $to.on('input change', function () {
+        if (crawlerMode() === 'manual') {
+            clearCrawlerContext('Khoảng chương đã thay đổi. Vui lòng tạo lại danh sách URL trước khi bắt đầu.', {
+                keepPreview: true
+            });
+        }
+    });
+    $padding.add($pattern).on('input change', function () {
+        if (crawlerMode() === 'manual') {
+            clearCrawlerContext('Mẫu URL hoặc cách đệm số đã thay đổi. Vui lòng tạo lại danh sách URL trước khi bắt đầu.');
+        }
     });
     $previewNumber.on('input change', function () {
         state.previewNumberTouched = true;
+        clearPreviewOutput();
+    });
+    $previewUrl.on('input change', function () {
+        clearPreviewOutput();
     });
 
     $(function () {
