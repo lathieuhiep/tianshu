@@ -31,5 +31,5 @@ defined('ABSPATH') || exit;
 </div>
 
 <div id="er-partner-content-wrapper" hidden>
-    <?php echo wpautop( $content ); ?>
+    <?php echo $content; ?>
 </div>

@@ -2,6 +2,7 @@
 
 namespace ExtendSite\Ajax;
 
+use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\StoryPostType;
 use ExtendSite\Repositories\ChapterRepository;
 use ExtendSite\Repositories\StoryRankingRepository;
@@ -60,9 +61,17 @@ final class LoadRanking
             return esc_html__('Chưa có dữ liệu.', 'extend-site');
         }
 
+        $latest_chapters = [];
+        if ($type === StoryPostType::SLUG) {
+            $latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids(wp_list_pluck($items, 'id'));
+        }
+
         ob_start();
             foreach ( $items as $index => $item ) :
-                $latest_chapter = ChapterRepository::get_latest_chapter( $item['id'] );
+                $latest_chapter = $latest_chapters[$item['id']] ?? null;
+                if ($type === StoryPostType::SLUG && empty($latest_chapter)) {
+                    $latest_chapter = ChapterRepository::get_latest_chapter( $item['id'] );
+                }
         ?>
             <div class="ranking-item es-flex es-gap-3">
                 <div class="stt">

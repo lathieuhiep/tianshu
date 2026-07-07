@@ -140,6 +140,16 @@ class StoryRankingRepository {
      */
     public static function get_ranking_items(string $type, string $period, int $limit = 10): array
     {
+        $type = sanitize_key($type);
+        $period = sanitize_key($period);
+        $limit = max(1, min(50, $limit));
+        $cache_key = sprintf('es_ranking_items_%s_%s_%d', $type, $period, $limit);
+        $cached = get_transient($cache_key);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
         $records = match ($period) {
             'week'  => self::top_7_days($limit),
             'month' => self::top_30_days($limit),
@@ -189,6 +199,18 @@ class StoryRankingRepository {
             }
         }
 
+        set_transient($cache_key, $items, self::get_cache_ttl($period));
+
         return $items;
+    }
+
+    private static function get_cache_ttl(string $period): int
+    {
+        return match ($period) {
+            'week' => 10 * MINUTE_IN_SECONDS,
+            'month' => 30 * MINUTE_IN_SECONDS,
+            'year' => HOUR_IN_SECONDS,
+            default => 2 * MINUTE_IN_SECONDS,
+        };
     }
 }

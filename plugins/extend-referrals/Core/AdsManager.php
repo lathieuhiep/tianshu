@@ -11,6 +11,10 @@ class AdsManager
 {
     public static function inject_ads_into_content(string $content): string
     {
+        if (is_admin() || !is_singular() || !in_the_loop() || !is_main_query()) {
+            return $content;
+        }
+
         // Không hiển thị quảng cáo ở các trang không đủ điều kiện
         if (!DisplayRules::should_display()) {
             return $content;

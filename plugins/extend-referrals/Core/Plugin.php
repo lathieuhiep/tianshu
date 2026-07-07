@@ -24,7 +24,7 @@ class Plugin {
         if (! is_admin()) {
             // Frontend hooks
             add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_frontend']);
-            add_filter('the_content', [AdsManager::class, 'inject_ads_into_content']);
+            add_filter('the_content', [AdsManager::class, 'inject_ads_into_content'], 20);
         }
     }
 

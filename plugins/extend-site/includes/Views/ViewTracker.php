@@ -51,8 +51,36 @@ class ViewTracker {
      * @return void
      */
     private static function increment_meta(int $post_id, string $meta_key): void {
-        $current = (int) get_post_meta($post_id, $meta_key, true);
-        update_post_meta($post_id, $meta_key, $current + 1);
+        global $wpdb;
+
+        $post_id = absint($post_id);
+        if ($post_id <= 0 || $meta_key === '') {
+            return;
+        }
+
+        $updated = $wpdb->query(
+            $wpdb->prepare(
+                "
+                UPDATE {$wpdb->postmeta}
+                SET meta_value = CAST(meta_value AS UNSIGNED) + 1
+                WHERE post_id = %d
+                  AND meta_key = %s
+                LIMIT 1
+                ",
+                $post_id,
+                $meta_key
+            )
+        );
+
+        if ($updated === false) {
+            return;
+        }
+
+        if ($updated === 0) {
+            add_post_meta($post_id, $meta_key, 1, true);
+        }
+
+        wp_cache_delete($post_id, 'post_meta');
     }
 
     /**

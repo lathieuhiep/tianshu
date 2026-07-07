@@ -6,6 +6,7 @@
  * @var WP_Query $query
  */
 
+use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\TemplateLoader;
 use ExtendSite\Search\SearchRepository;
 use ExtendSite\Views\ViewTracker;
@@ -44,11 +45,14 @@ if ( !isset($query)
                 </div>
 
                 <?php if ( $query->have_posts() ) : ?>
+                    <?php $latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids(wp_list_pluck($query->posts, 'ID')); ?>
                     <div class="es-archive-list es-story-list">
                         <div class="es-row es-row-gap-6">
                             <?php
                             while ( $query->have_posts() ) : $query->the_post();
-                                TemplateLoader::part('story/parts/content-archive');
+                                TemplateLoader::part('story/parts/content-archive', [
+                                    'latest_chapters' => $latest_chapters,
+                                ]);
                             endwhile; wp_reset_postdata();
                             ?>
                         </div>

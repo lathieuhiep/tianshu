@@ -1,4 +1,5 @@
 <?php
+use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\TemplateLoader;
 ?>
 
@@ -6,11 +7,17 @@ use ExtendSite\PostType\TemplateLoader;
     <div class="es-col-12<?php echo esc_attr( is_active_sidebar( 'es-sidebar' ) ? ' es-col-md-8 es-col-xl-9' : '' ); ?>">
         <?php
         if ( have_posts() ) : ?>
+            <?php
+            global $wp_query;
+            $latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids(wp_list_pluck($wp_query->posts, 'ID'));
+            ?>
             <div class="es-archive-list es-story-list">
                 <div class="es-row es-row-gap-6">
                     <?php
                     while ( have_posts() ) : the_post();
-                        TemplateLoader::part('story/parts/content-archive');
+                        TemplateLoader::part('story/parts/content-archive', [
+                            'latest_chapters' => $latest_chapters,
+                        ]);
                     endwhile; wp_reset_postdata();
                     ?>
                 </div>

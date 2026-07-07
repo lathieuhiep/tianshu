@@ -35,12 +35,14 @@
     /**
      * Theo dõi lượt xem chương
      */
+    let viewTrackerScheduled = false;
+
     const viewTracker = async () => {
         const $chapter = $('.es-post');
         const chapterID = parseInt($chapter.data('chapter-id'), 10);
         const chapterNumber = parseInt(esSingleChapterAjax.chapter_number || 0, 10);
 
-        if (!chapterID) return;
+        if (!chapterID || viewTrackerScheduled) return;
 
         // Chỉ bỏ qua khi TTL hết hạn & chương > 1
         if (typeof esSingleChapterAjax.ttl_valid !== 'undefined' && !esSingleChapterAjax.ttl_valid && chapterNumber > 1) {
@@ -87,6 +89,8 @@
         const delay = 5000 + Math.random() * 5000; // 5–10s
 
         // ----- Gửi view sau delay -----
+        viewTrackerScheduled = true;
+
         setTimeout(async () => {
             const fingerprint = await getFingerprint();
 
@@ -112,6 +116,7 @@
                 error: function (xhr, status, error) {
                     console.error('AJAX Error:', status, error);
                     console.log('Response text:', xhr.responseText);
+                    viewTrackerScheduled = false;
                 },
             });
         }, delay);
@@ -121,6 +126,11 @@
     $(function () {
         modalChapterList();
         viewTracker();
+
+        $(document).on('extend_referrals_unlocked', function () {
+            esSingleChapterAjax.ttl_valid = true;
+            viewTracker();
+        });
     });
 
 })(jQuery);

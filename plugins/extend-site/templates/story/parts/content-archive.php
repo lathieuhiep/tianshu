@@ -2,8 +2,16 @@
 use ExtendSite\Repositories\ChapterRepository;
 use ExtendSite\Views\ViewTracker;
 
-$latest_chapter = ChapterRepository::get_latest_chapter( get_the_ID() );
-$story_views   = ViewTracker::format_short( ViewTracker::get_story_views( get_the_ID() ) );
+$story_id = get_the_ID();
+$latest_chapter = isset($latest_chapters) && is_array($latest_chapters)
+    ? ($latest_chapters[$story_id] ?? null)
+    : null;
+
+if (empty($latest_chapter)) {
+    $latest_chapter = ChapterRepository::get_latest_chapter($story_id);
+}
+
+$story_views = ViewTracker::format_short( ViewTracker::get_story_views( $story_id ) );
 ?>
 
 <article id="story-<?php the_ID(); ?>"

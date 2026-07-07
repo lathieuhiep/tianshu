@@ -300,6 +300,73 @@ class LatestChapterTable {
     }
 
     /**
+     * Get latest chapters for multiple stories.
+     *
+     * @param array<int> $story_ids Story IDs.
+     * @return array<int,array{id:int,url:string,title:string,number:int}>
+     */
+    public static function get_latest_chapters_by_story_ids(array $story_ids): array {
+        global $wpdb;
+
+        $story_ids = array_values(array_unique(array_filter(array_map('absint', $story_ids))));
+        if (!$story_ids) {
+            return [];
+        }
+
+        $table = self::get_table_name();
+        $placeholders = implode(',', array_fill(0, count($story_ids), '%d'));
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "
+                SELECT story_id, chapter_id
+                FROM $table
+                WHERE story_id IN ($placeholders)
+                ",
+                ...$story_ids
+            ),
+            ARRAY_A
+        );
+
+        if (!$rows) {
+            return [];
+        }
+
+        $chapter_ids = array_values(array_unique(array_map('absint', wp_list_pluck($rows, 'chapter_id'))));
+        if ($chapter_ids) {
+            update_post_cache(get_posts([
+                'post_type' => ChapterPostType::SLUG,
+                'post__in' => $chapter_ids,
+                'posts_per_page' => count($chapter_ids),
+                'post_status' => 'publish',
+                'fields' => 'all',
+                'no_found_rows' => true,
+                'update_post_meta_cache' => true,
+                'update_post_term_cache' => false,
+            ]));
+        }
+
+        $chapters = [];
+        foreach ($rows as $row) {
+            $story_id = absint($row['story_id'] ?? 0);
+            $chapter_id = absint($row['chapter_id'] ?? 0);
+            $chapter = get_post($chapter_id);
+
+            if ($story_id <= 0 || !$chapter || $chapter->post_type !== ChapterPostType::SLUG || $chapter->post_status !== 'publish') {
+                continue;
+            }
+
+            $chapters[$story_id] = [
+                'id' => $chapter_id,
+                'url' => get_permalink($chapter_id),
+                'title' => get_the_title($chapter_id),
+                'number' => (int) get_post_meta($chapter_id, ChapterPostType::META_NUMBER, true),
+            ];
+        }
+
+        return $chapters;
+    }
+
+    /**
      * Register all hooks.
      */
     public static function register_hooks(): void {

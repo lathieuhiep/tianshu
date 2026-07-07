@@ -58,6 +58,8 @@ class LoadLatestStories
      */
     public static function render_view( array $story_ids, string $image_size): string
     {
+        $latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids($story_ids);
+
         $query = new \WP_Query([
             'post_type'      => 'story',
             'post__in'       => $story_ids,
@@ -72,7 +74,11 @@ class LoadLatestStories
 
         ob_start();
         while ($query->have_posts()): $query->the_post();
-            $latest_chapter = ChapterRepository::get_latest_chapter( get_the_ID() );
+            $story_id = get_the_ID();
+            $latest_chapter = $latest_chapters[$story_id] ?? null;
+            if (empty($latest_chapter)) {
+                $latest_chapter = ChapterRepository::get_latest_chapter( $story_id );
+            }
             $story_views = ViewTracker::format_short( ViewTracker::get_story_views( get_the_ID() ) );
         ?>
 

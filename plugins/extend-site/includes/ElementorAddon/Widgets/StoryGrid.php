@@ -5,6 +5,7 @@ namespace ExtendSite\ElementorAddon\Widgets;
 use Elementor\Group_Control_Typography;
 use Elementor\Widget_Base;
 use Elementor\Controls_Manager;
+use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\ElementorAddon\Traits\HasImageSizeControl;
 use ExtendSite\ElementorAddon\Traits\HasQueryControls;
 use ExtendSite\ElementorAddon\Traits\HasPostItemControls;
@@ -422,12 +423,17 @@ class StoryGrid extends Widget_Base
         }
 
         if ($query->have_posts()) :
+            $latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids(wp_list_pluck($query->posts, 'ID'));
         ?>
             <div class="es-addon-story-grid es-grid-layout">
                 <?php
                 while ($query->have_posts()): $query->the_post();
-                    $latest_chapter = ChapterRepository::get_latest_chapter( get_the_ID() );
-                    $story_views = ViewTracker::format_short( ViewTracker::get_story_views( get_the_ID() ) );
+                    $story_id = get_the_ID();
+                    $latest_chapter = $latest_chapters[$story_id] ?? null;
+                    if (empty($latest_chapter)) {
+                        $latest_chapter = ChapterRepository::get_latest_chapter( $story_id );
+                    }
+                    $story_views = ViewTracker::format_short( ViewTracker::get_story_views( $story_id ) );
                 ?>
                     <div class="item">
                         <div class="thumbnail">

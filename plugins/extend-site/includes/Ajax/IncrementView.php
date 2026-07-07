@@ -2,6 +2,7 @@
 
 namespace ExtendSite\Ajax;
 
+use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\Views\ViewTracker;
 
 defined('ABSPATH') || exit;
@@ -24,12 +25,22 @@ class IncrementView
      */
     public static function handle(): void
     {
-        $chapter_id  = (int) $_POST['chapter_id'];
+        check_ajax_referer(EXTEND_SITE_NONCE_ACTION, 'security');
+
+        $chapter_id  = absint($_POST['chapter_id'] ?? 0);
+        if ($chapter_id <= 0) {
+            wp_send_json_error(['message' => 'Invalid chapter ID']);
+        }
+
+        if (get_post_type($chapter_id) !== ChapterPostType::SLUG) {
+            wp_send_json_error(['message' => 'Invalid chapter ID']);
+        }
+
         $fingerprint = sanitize_text_field($_POST['fingerprint'] ?? '');
         $uid         = sanitize_text_field($_POST['uid'] ?? '');
         $ip          = $_SERVER['REMOTE_ADDR'] ?? '';
 
-        $key = sprintf('es_view_%d_%s_%s', $chapter_id, md5($uid), md5($ip));
+        $key = sprintf('es_view_%d_%s', $chapter_id, md5($ip));
         $last_time = get_transient($key);
 
         if ($last_time && time() - $last_time < HOUR_IN_SECONDS) {

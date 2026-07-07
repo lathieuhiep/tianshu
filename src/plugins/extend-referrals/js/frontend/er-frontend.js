@@ -1,19 +1,25 @@
 (function ($) {
     'use strict';
 
-    const TTL_COOKIE = "extend_referrals_ttl";
+    const TTL_COOKIE = "extend_affiliate_ads_ttl";
+    const LEGACY_TTL_COOKIE = "extend_referrals_ttl";
 
     function getTTL() {
-        const match = document.cookie.match(/extend_referrals_ttl=(\d+)/);
-        return match ? parseInt(match[1], 10) : 0;
+        const match = document.cookie.match(new RegExp(TTL_COOKIE + '=(\\d+)'));
+        if (match) {
+            return parseInt(match[1], 10);
+        }
+
+        const legacyMatch = document.cookie.match(new RegExp(LEGACY_TTL_COOKIE + '=(\\d+)'));
+        return legacyMatch ? parseInt(legacyMatch[1], 10) : 0;
     }
 
     function setTTL(ttlMinutes) {
         const ttlSeconds = ttlMinutes * 60;
-        const now = Date.now();
+        const expire = Math.floor(Date.now() / 1000) + ttlSeconds;
 
         document.cookie =
-            TTL_COOKIE + "=" + now +
+            TTL_COOKIE + "=" + expire +
             "; path=/; max-age=" + ttlSeconds +
             "; samesite=Lax";
     }
@@ -22,8 +28,7 @@
         const saved = getTTL();
         if (!saved) return true;
 
-        const ttlMs = ttlMinutes * 60 * 1000;
-        return (Date.now() - saved) > ttlMs;
+        return saved < Math.floor(Date.now() / 1000);
     }
 
     /**
@@ -45,6 +50,8 @@
 
         // Hiện nội dung
         $content.prop('hidden', false);
+
+        $(document).trigger('extend_referrals_unlocked');
     });
 
     /**
