@@ -298,6 +298,8 @@ class StoryFeaturedSlider extends Widget_Base
             echo '<p>' . esc_html__('Không có truyện phù hợp với điều kiện.', 'extend-site') . '</p>';
             return;
         }
+
+        $story_authors = StoryRepository::get_authors_by_story_ids(wp_list_pluck($query->posts, 'ID'));
         ?>
         <div <?php echo $this->get_render_attribute_string( 'classes' ); ?> data-settings-swiper='<?php echo esc_attr( $swiperOptions ); ?>'>
             <div class="swiper-wrapper">
@@ -305,13 +307,14 @@ class StoryFeaturedSlider extends Widget_Base
                 $i = 0;
                 while ( $query->have_posts() ) :
                     $query->the_post();
-                    $authors = StoryRepository::get_authors(get_the_ID());
+                    $story_id = get_the_ID();
+                    $authors = $story_authors[$story_id] ?? [];
 
                     // Lấy excerpt với giới hạn từ
                     $word_limit = (int) $settings['excerpt_words'] ?? 25;
 
-                    $excerpt_raw = get_post_field( 'post_excerpt', get_the_ID() );
-                    $excerpt     = $excerpt_raw ?: get_post_field( 'post_content', get_the_ID() );
+                    $excerpt_raw = get_post_field( 'post_excerpt', $story_id );
+                    $excerpt     = $excerpt_raw ?: get_post_field( 'post_content', $story_id );
 
                     $excerpt     = wp_strip_all_tags( $excerpt );
                     $excerpt     = wp_trim_words( $excerpt, $word_limit, '…' );

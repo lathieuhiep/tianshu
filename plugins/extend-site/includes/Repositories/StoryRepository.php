@@ -41,6 +41,51 @@ class StoryRepository
     }
 
     /**
+     * Get author IDs associated with multiple stories.
+     *
+     * @param array<int> $story_ids Story post IDs.
+     * @return array<int,array<int>> Author IDs keyed by story ID.
+     */
+    public static function get_author_ids_by_story_ids(array $story_ids): array
+    {
+        global $wpdb;
+
+        $story_ids = array_values(array_unique(array_filter(array_map('absint', $story_ids))));
+        if (!$story_ids) {
+            return [];
+        }
+
+        $results = array_fill_keys($story_ids, []);
+        $placeholders = implode(',', array_fill(0, count($story_ids), '%d'));
+        $params = array_merge([StoryPostType::META_AUTHOR_IDS], $story_ids);
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "
+                SELECT post_id, meta_value
+                FROM {$wpdb->postmeta}
+                WHERE meta_key = %s
+                  AND post_id IN ({$placeholders})
+                ",
+                ...$params
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows ?: [] as $row) {
+            $story_id = absint($row['post_id'] ?? 0);
+            if (!$story_id || !array_key_exists($story_id, $results)) {
+                continue;
+            }
+
+            $ids = maybe_unserialize($row['meta_value'] ?? '');
+            $results[$story_id] = array_values(array_unique(array_filter(array_map('absint', (array) $ids))));
+        }
+
+        return $results;
+    }
+
+    /**
      * Get total number of stories written by an author.
      *
      * @param int $author_id Author post (or term) ID.
@@ -68,6 +113,62 @@ class StoryRepository
         ]);
 
         return $query->found_posts;
+    }
+
+    /**
+     * Get total published stories for multiple authors.
+     *
+     * @param array<int> $author_ids Author post IDs.
+     * @return array<int,int> Counts keyed by author ID.
+     */
+    public static function count_by_authors(array $author_ids): array
+    {
+        global $wpdb;
+
+        $author_ids = array_values(array_unique(array_filter(array_map('absint', $author_ids))));
+        if (!$author_ids) {
+            return [];
+        }
+
+        $counts = array_fill_keys($author_ids, 0);
+        $likes = [];
+        $params = [StoryPostType::SLUG, StoryPostType::META_AUTHOR_IDS];
+
+        foreach ($author_ids as $author_id) {
+            $likes[] = 'pm.meta_value LIKE %s';
+            $params[] = '%' . $wpdb->esc_like('i:' . $author_id . ';') . '%';
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "
+                SELECT pm.meta_value
+                FROM {$wpdb->postmeta} pm
+                INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                WHERE p.post_type = %s
+                  AND p.post_status = 'publish'
+                  AND pm.meta_key = %s
+                  AND (" . implode(' OR ', $likes) . ")
+                ",
+                ...$params
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows ?: [] as $row) {
+            $ids = maybe_unserialize($row['meta_value'] ?? '');
+            if (!is_array($ids)) {
+                continue;
+            }
+
+            foreach (array_unique(array_map('absint', $ids)) as $id) {
+                if (isset($counts[$id])) {
+                    $counts[$id]++;
+                }
+            }
+        }
+
+        return $counts;
     }
 
     /**
@@ -126,6 +227,64 @@ class StoryRepository
                 'name' => $post->post_title,
                 'url'  => get_permalink($post),
             ];
+        }
+
+        return $results;
+    }
+
+    /**
+     * Get authors for multiple stories.
+     *
+     * @param array<int> $story_ids Story IDs.
+     * @return array<int,array<int,array{id:int,name:string,url:string}>> Authors keyed by story ID.
+     */
+    public static function get_authors_by_story_ids(array $story_ids): array
+    {
+        $story_ids = array_values(array_unique(array_filter(array_map('absint', $story_ids))));
+        if (!$story_ids) {
+            return [];
+        }
+
+        $story_author_ids = [];
+        $all_author_ids = [];
+
+        foreach ($story_ids as $story_id) {
+            $ids = self::get_author_ids($story_id);
+            $ids = array_values(array_unique(array_filter(array_map('absint', $ids))));
+            $story_author_ids[$story_id] = $ids;
+            $all_author_ids = array_merge($all_author_ids, $ids);
+        }
+
+        $all_author_ids = array_values(array_unique(array_filter($all_author_ids)));
+        if (!$all_author_ids) {
+            return array_fill_keys($story_ids, []);
+        }
+
+        $authors = get_posts([
+            'post_type' => AuthorPostType::SLUG,
+            'post__in' => $all_author_ids,
+            'numberposts' => count($all_author_ids),
+            'orderby' => 'post__in',
+        ]);
+
+        $author_map = [];
+        foreach ($authors as $post) {
+            $author_map[$post->ID] = [
+                'id' => $post->ID,
+                'name' => $post->post_title,
+                'url' => get_permalink($post),
+            ];
+        }
+
+        $results = [];
+        foreach ($story_author_ids as $story_id => $author_ids) {
+            $results[$story_id] = [];
+
+            foreach ($author_ids as $author_id) {
+                if (isset($author_map[$author_id])) {
+                    $results[$story_id][] = $author_map[$author_id];
+                }
+            }
         }
 
         return $results;

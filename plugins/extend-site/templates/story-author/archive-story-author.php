@@ -15,12 +15,17 @@ get_header();
         <div class="es-row">
             <div class="es-col-12<?php echo esc_attr( is_active_sidebar( 'es-sidebar' ) ? ' es-col-sm-9' : '' ); ?>">
                 <?php if ( have_posts() ) : ?>
+                    <?php
+                    global $wp_query;
+                    $story_counts = StoryRepository::count_by_authors(wp_list_pluck($wp_query->posts, 'ID'));
+                    ?>
                     <div class="es-archive-list es-author-list">
                         <div class="es-row es-row-gap-6">
                             <?php
                             while ( have_posts() ) : the_post();
-                                $total_stories = StoryRepository::count_by_author( get_the_ID() );
-                                $total_views = ViewTracker::format_short( ViewTracker::get_author_views( get_the_ID() ) );
+                                $author_id = get_the_ID();
+                                $total_stories = $story_counts[$author_id] ?? 0;
+                                $total_views = ViewTracker::format_short( ViewTracker::get_author_views( $author_id ) );
                             ?>
 
                             <article id="story-author-<?php the_ID(); ?>"

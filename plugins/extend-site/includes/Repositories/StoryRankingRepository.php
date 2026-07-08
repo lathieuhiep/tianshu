@@ -90,13 +90,14 @@ class StoryRankingRepository {
     public static function top_authors_by_stories(array $story_records, int $limit = 10): array
     {
         $author_views = [];
+        $story_author_ids = StoryRepository::get_author_ids_by_story_ids(wp_list_pluck($story_records, 'story_id'));
 
         foreach ($story_records as $row) {
             $story_id = (int) $row['story_id'];
             $views    = (int) $row['total_views'];
 
             // Lấy danh sách tác giả của truyện này
-            $author_ids = StoryRepository::get_author_ids($story_id);
+            $author_ids = $story_author_ids[$story_id] ?? [];
 
             foreach ($author_ids as $aid) {
                 $aid = (int) $aid;
