@@ -163,6 +163,7 @@
         $('#es-template-chapter-link-selector').val(template.chapter_link_selector || '');
         $('#es-template-toc-page-link-selector').val(template.toc_page_link_selector || '');
         $('#es-template-chapter-url-pattern').val(template.chapter_url_pattern || '');
+        $('#es-template-chapter-content-scope-selector').val(template.chapter_content_scope_selector || '');
         $('#es-template-chapter-title-selector').val(template.chapter_title_selector || '');
         $('#es-template-chapter-content-selector').val(template.chapter_content_selector || '');
 
@@ -252,6 +253,7 @@
         html += '</div>';
 
         html += '<table class="widefat striped es-template-result-table"><tbody>';
+        html += resultRow('Story URL', data.target_url || '');
         html += resultRow('Mô tả', data.story_desc || '');
         html += resultRow('Độ dài mô tả', data.story_desc_length || 0);
         html += resultRow('Ảnh bìa', data.story_thumb || '');
@@ -285,6 +287,14 @@
         }
 
         return '<tr><th scope="row">' + escapeHtml(label) + '</th><td>' + escapeHtml(value) + '</td></tr>';
+    }
+
+    function validateTemplateBeforeSave(data) {
+        if (!String(data.chapter_content_scope_selector || '').trim()) {
+            return 'Thieu selector khoi boc noi dung chuong.';
+        }
+
+        return '';
     }
 
     $form.on('focus', '.es-template-selector-input', function () {
@@ -330,7 +340,14 @@
         setSaveStatus('', '');
 
         try {
-            const response = await ajax(cfg.save_action, collectSelectors());
+            const payload = collectSelectors();
+            const validationError = validateTemplateBeforeSave(payload);
+            if (validationError) {
+                setSaveStatus(validationError, 'error');
+                return;
+            }
+
+            const response = await ajax(cfg.save_action, payload);
             const data = response.data || {};
             renderTemplateOptions(data.templates || [], data.template && data.template.id);
             fillTemplate(data.template || {});

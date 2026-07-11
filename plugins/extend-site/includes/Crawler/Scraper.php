@@ -80,9 +80,10 @@ class Scraper
 
     public static function scrape_with_template(string $source_url, array $template, array $replace_rules = [], bool $allow_short_content = false)
     {
+        $scope_selector = trim((string) ($template['chapter_content_scope_selector'] ?? ''));
         $content_selector = trim((string) ($template['chapter_content_selector'] ?? ''));
-        if ($content_selector === '') {
-            return self::scrape($source_url, $replace_rules, $allow_short_content);
+        if ($scope_selector === '') {
+            return new WP_Error('content_scope_selector_required', __('Template chua cau hinh selector khoi boc noi dung chuong.', 'extend-site'));
         }
 
         $clean_url = CrawlerLinkTable::clean_url_for_hash($source_url);
@@ -115,14 +116,21 @@ class Scraper
             './/iframe',
         ]);
 
-        $title = self::first_selector_text($xpath, (string) ($template['chapter_title_selector'] ?? ''));
-        if ($title === '') {
-            $title = self::first_text($xpath, '//h1');
+        $scope_node = self::first_selector_node($xpath, $scope_selector);
+        if (!$scope_node) {
+            return new WP_Error('content_scope_selector_missing', __('Selector khoi boc noi dung chuong khong khop.', 'extend-site'));
         }
 
-        $content_node = self::first_selector_node($xpath, $content_selector);
+        $title = self::first_selector_text($xpath, (string) ($template['chapter_title_selector'] ?? ''), $scope_node);
+        if ($title === '') {
+            $title = self::first_text($xpath, './/h1', $scope_node);
+        }
+
+        $content_node = $content_selector !== ''
+            ? self::first_selector_node($xpath, $content_selector, $scope_node)
+            : $scope_node;
         if (!$content_node) {
-            return new WP_Error('content_selector_missing', __('Selector noi dung chuong khong khop.', 'extend-site'));
+            return new WP_Error('content_selector_missing', __('Selector noi dung chuong khong khop trong khoi boc.', 'extend-site'));
         }
 
         $content_html = self::inner_html($content_node);
@@ -357,20 +365,20 @@ class Scraper
         }
     }
 
-    private static function first_text(DOMXPath $xpath, string $expression): string
+    private static function first_text(DOMXPath $xpath, string $expression, ?DOMNode $context = null): string
     {
-        $node = self::first_node($xpath, $expression);
+        $node = self::first_node($xpath, $expression, $context);
 
         return $node ? trim(preg_replace('/\s+/', ' ', $node->textContent) ?: '') : '';
     }
 
-    private static function first_node(DOMXPath $xpath, string $expression): ?DOMNode
+    private static function first_node(DOMXPath $xpath, string $expression, ?DOMNode $context = null): ?DOMNode
     {
         if ($expression === '') {
             return null;
         }
 
-        $nodes = $xpath->query($expression);
+        $nodes = $context ? $xpath->query($expression, $context) : $xpath->query($expression);
         if (!$nodes || $nodes->length < 1) {
             return null;
         }
@@ -378,21 +386,25 @@ class Scraper
         return $nodes->item(0);
     }
 
-    private static function first_selector_text(DOMXPath $xpath, string $selector): string
+    private static function first_selector_text(DOMXPath $xpath, string $selector, ?DOMNode $context = null): string
     {
-        $node = self::first_selector_node($xpath, $selector);
+        $node = self::first_selector_node($xpath, $selector, $context);
 
         return $node ? trim(preg_replace('/\s+/', ' ', $node->textContent) ?: '') : '';
     }
 
-    private static function first_selector_node(DOMXPath $xpath, string $selector): ?DOMNode
+    private static function first_selector_node(DOMXPath $xpath, string $selector, ?DOMNode $context = null): ?DOMNode
     {
         $expression = self::css_selector_to_xpath($selector);
         if ($expression === '') {
             return null;
         }
 
-        return self::first_node($xpath, $expression);
+        if ($context && strpos($expression, '//') === 0) {
+            $expression = '.' . $expression;
+        }
+
+        return self::first_node($xpath, $expression, $context);
     }
 
     private static function css_selector_to_xpath(string $selector): string

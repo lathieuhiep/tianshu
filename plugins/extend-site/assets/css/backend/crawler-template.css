@@ -54,6 +54,12 @@
     gap: 10px;
 }
 
+.es-template-step-note {
+    color: var(--es-template-muted);
+    font-size: 13px;
+    margin: -4px 0 14px;
+}
+
 .es-template-step h3 span {
     align-items: center;
     background: var(--es-template-accent);
@@ -79,6 +85,24 @@
 
 .es-template-field {
     margin-bottom: 16px;
+}
+
+.es-template-subsection {
+    border-top: 1px solid #edf0f2;
+    margin-top: 16px;
+    padding-top: 16px;
+}
+
+.es-template-subsection:first-of-type {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.es-template-subsection h4 {
+    color: var(--es-template-text);
+    font-size: 14px;
+    margin: 0 0 10px;
 }
 
 .es-template-field label {

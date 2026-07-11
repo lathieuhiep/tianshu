@@ -21,6 +21,7 @@ class CrawlerTemplateTable
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+        self::ensure_columns();
     }
 
     public static function get_creation_sql(): string
@@ -39,6 +40,7 @@ class CrawlerTemplateTable
             toc_page_link_selector TEXT DEFAULT NULL,
             chapter_url_pattern TEXT DEFAULT NULL,
             story_extract_rules LONGTEXT DEFAULT NULL,
+            chapter_content_scope_selector TEXT DEFAULT NULL,
             chapter_title_selector TEXT DEFAULT NULL,
             chapter_content_selector TEXT DEFAULT NULL,
             find_replace_rules LONGTEXT DEFAULT NULL,
@@ -48,6 +50,17 @@ class CrawlerTemplateTable
             PRIMARY KEY (id),
             KEY domain (domain)
         ) ENGINE=InnoDB {$charset};";
+    }
+
+    private static function ensure_columns(): void
+    {
+        global $wpdb;
+
+        $table = self::get_table_name();
+        $column = $wpdb->get_var($wpdb->prepare('SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'chapter_content_scope_selector'));
+        if (!$column) {
+            $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN chapter_content_scope_selector TEXT DEFAULT NULL AFTER story_extract_rules');
+        }
     }
 
     public static function all(): array
@@ -116,6 +129,7 @@ class CrawlerTemplateTable
             'toc_page_link_selector' => sanitize_text_field((string) ($data['toc_page_link_selector'] ?? '')),
             'chapter_url_pattern' => sanitize_text_field((string) ($data['chapter_url_pattern'] ?? '')),
             'story_extract_rules' => wp_json_encode(self::normalize_story_extract_rules((array) ($data['story_extract_rules'] ?? []))),
+            'chapter_content_scope_selector' => sanitize_text_field((string) ($data['chapter_content_scope_selector'] ?? '')),
             'chapter_title_selector' => sanitize_text_field((string) ($data['chapter_title_selector'] ?? '')),
             'chapter_content_selector' => sanitize_text_field((string) ($data['chapter_content_selector'] ?? '')),
             'find_replace_rules' => wp_json_encode(self::normalize_replace_rules((array) ($data['find_replace_rules'] ?? []))),
@@ -128,7 +142,7 @@ class CrawlerTemplateTable
         }
 
         $formats = [
-            '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s',
+            '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s',
         ];
 
         if ($id > 0) {
@@ -181,6 +195,7 @@ class CrawlerTemplateTable
         $row['name'] = isset($row['name']) ? sanitize_text_field((string) $row['name']) : '';
         $row['domain'] = isset($row['domain']) ? self::normalize_domain((string) $row['domain']) : '';
         $row['toc_type'] = isset($row['toc_type']) ? sanitize_key((string) $row['toc_type']) : 'selector';
+        $row['chapter_content_scope_selector'] = isset($row['chapter_content_scope_selector']) ? sanitize_text_field((string) $row['chapter_content_scope_selector']) : '';
         $row['delay_between'] = isset($row['delay_between']) ? max(1, absint($row['delay_between'])) : 1;
 
         $extract_rules = [];

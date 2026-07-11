@@ -238,8 +238,27 @@ class CrawlerAjax
         $story_thumb = self::extract_rule_value($xpath, $rules['story_thumb'], $target_url);
         $story_cats_value = self::extract_rule_value($xpath, $rules['story_cats'], $target_url);
         $story_cats = is_array($story_cats_value) ? $story_cats_value : array_filter(array_map('trim', explode(',', (string) $story_cats_value)));
-        $chapter_title = self::first_selector_text($xpath, $selectors['chapter_title_selector']);
-        $chapter_content = self::first_selector_text($xpath, $selectors['chapter_content_selector']);
+        $chapter_scope = null;
+        $use_chapter_scope = $selectors['chapter_content_scope_selector'] !== '';
+        if ($use_chapter_scope) {
+            $scope_nodes = self::query_selector_all($xpath, $selectors['chapter_content_scope_selector']);
+            $chapter_scope = $scope_nodes && $scope_nodes->length > 0 ? $scope_nodes->item(0) : null;
+            if (!$chapter_scope) {
+                $warnings[] = __('Khong tim thay khoi boc noi dung chuong.', 'extend-site');
+            }
+        }
+        $chapter_title = !$use_chapter_scope || $chapter_scope
+            ? self::first_selector_text($xpath, $selectors['chapter_title_selector'], $chapter_scope)
+            : '';
+        $chapter_content = '';
+        if (!$use_chapter_scope || $chapter_scope) {
+            $chapter_content = $selectors['chapter_content_selector'] !== ''
+                ? self::first_selector_text($xpath, $selectors['chapter_content_selector'], $chapter_scope)
+                : self::node_text($chapter_scope);
+        }
+        if ($selectors['chapter_content_selector'] !== '' && $use_chapter_scope && $chapter_scope && $chapter_content === '') {
+            $warnings[] = __('Khong tim thay noi dung chuong ben trong khoi boc.', 'extend-site');
+        }
         $chapter_links = self::chapter_link_summary(
             $xpath,
             $selectors['chapter_link_selector'],
@@ -270,6 +289,7 @@ class CrawlerAjax
             'toc_page_count' => $chapter_links['toc_page_count'],
             'toc_pages_scanned' => $chapter_links['toc_pages_scanned'],
             'chapter_link_samples' => $chapter_links['samples'],
+            'target_url' => $target_url,
             'matched' => $matched,
             'warnings' => array_values(array_unique($warnings)),
         ]);
@@ -289,6 +309,7 @@ class CrawlerAjax
             'toc_page_link_selector' => $selectors['toc_page_link_selector'],
             'chapter_url_pattern' => trim(sanitize_text_field((string) wp_unslash($_POST['chapter_url_pattern'] ?? ''))),
             'story_extract_rules' => self::get_template_extract_rules($selectors),
+            'chapter_content_scope_selector' => $selectors['chapter_content_scope_selector'],
             'chapter_title_selector' => $selectors['chapter_title_selector'],
             'chapter_content_selector' => $selectors['chapter_content_selector'],
             'find_replace_rules' => self::get_template_find_replace_rules(),
@@ -301,6 +322,10 @@ class CrawlerAjax
 
         if ($data['domain'] === '') {
             wp_send_json_error(['message' => __('Thieu domain template.', 'extend-site')], 400);
+        }
+
+        if ($data['chapter_content_scope_selector'] === '') {
+            wp_send_json_error(['message' => __('Thieu selector khoi boc noi dung chuong.', 'extend-site')], 400);
         }
 
         $template = CrawlerTemplateTable::save($data);
@@ -353,6 +378,9 @@ class CrawlerAjax
         $template = CrawlerTemplateTable::find($template_id);
         if (!$template) {
             wp_send_json_error(['message' => __('Khong tim thay template crawler.', 'extend-site')], 404);
+        }
+        if (trim((string) ($template['chapter_content_scope_selector'] ?? '')) === '') {
+            wp_send_json_error(['message' => __('Template chua cau hinh selector khoi boc noi dung chuong.', 'extend-site')], 400);
         }
 
         $story_url = self::get_target_url('story_url');
@@ -735,6 +763,7 @@ class CrawlerAjax
             'story_cats_selector',
             'chapter_link_selector',
             'toc_page_link_selector',
+            'chapter_content_scope_selector',
             'chapter_title_selector',
             'chapter_content_selector',
         ];
@@ -1278,6 +1307,10 @@ class CrawlerAjax
             return null;
         }
 
+        if ($context && strpos($expression, '//') === 0) {
+            $expression = '.' . $expression;
+        }
+
         return $context ? $xpath->query($expression, $context) : $xpath->query($expression);
     }
 
@@ -1345,9 +1378,9 @@ class CrawlerAjax
         return "concat('" . implode("', \"'\", '", $parts) . "')";
     }
 
-    private static function first_selector_text(DOMXPath $xpath, string $selector): string
+    private static function first_selector_text(DOMXPath $xpath, string $selector, ?DOMNode $context = null): string
     {
-        $nodes = self::query_selector_all($xpath, $selector);
+        $nodes = self::query_selector_all($xpath, $selector, $context);
         if (!$nodes || $nodes->length < 1) {
             return '';
         }
