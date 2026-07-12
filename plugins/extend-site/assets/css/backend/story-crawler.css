@@ -194,6 +194,21 @@
     padding: 12px;
 }
 
+.es-crawler-template-summary-warning {
+    background: #fff3cd;
+    border: 1px solid #f0c36d;
+    border-left: 5px solid var(--es-crawler-warning);
+    border-radius: 6px;
+    color: #4d3600;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+}
+
+.es-crawler-template-summary-warning p {
+    margin: 0;
+}
+
 .es-crawler-template-summary dl {
     display: grid;
     gap: 6px 12px;

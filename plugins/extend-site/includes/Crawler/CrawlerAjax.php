@@ -205,6 +205,11 @@ class CrawlerAjax
         $base_url = self::get_base_url($target_url);
         $html = self::sanitize_preview_html($body, $base_url);
 
+        $warnings = [];
+        if ($detected_total <= 0) {
+            $warnings[] = __('Khong phat hien duoc tong link chuong tu template. Hay kiem tra va nhap dung so chuong ket thuc o o "Den".', 'extend-site');
+        }
+
         wp_send_json_success([
             'html' => $html,
             'base_url' => $base_url,
@@ -299,12 +304,14 @@ class CrawlerAjax
             ? self::first_selector_text($chapter_xpath, $selectors['chapter_title_selector'], $chapter_scope)
             : '';
         $chapter_content = '';
+        $same_chapter_content_selector = trim($selectors['chapter_content_selector']) !== ''
+            && trim($selectors['chapter_content_selector']) === trim($selectors['chapter_content_scope_selector']);
         if (!$use_chapter_scope || $chapter_scope) {
-            $chapter_content = $selectors['chapter_content_selector'] !== ''
+            $chapter_content = $selectors['chapter_content_selector'] !== '' && !$same_chapter_content_selector
                 ? self::first_selector_text($chapter_xpath, $selectors['chapter_content_selector'], $chapter_scope)
                 : self::node_text($chapter_scope);
         }
-        if ($selectors['chapter_content_selector'] !== '' && $use_chapter_scope && $chapter_scope && $chapter_content === '') {
+        if ($selectors['chapter_content_selector'] !== '' && !$same_chapter_content_selector && $use_chapter_scope && $chapter_scope && $chapter_content === '') {
             $warnings[] = sprintf(
                 __('Khong tim thay noi dung chuong ben trong muc "%s".', 'extend-site'),
                 $selector_labels['chapter_content_scope_selector']
@@ -539,7 +546,7 @@ class CrawlerAjax
             'delay_between' => (int) $template['delay_between'],
             'find_replace_rules' => $template['find_replace_rules'],
             'chapter_url_pattern' => (string) ($template['chapter_url_pattern'] ?? ''),
-            'warnings' => [],
+            'warnings' => $warnings,
         ]);
     }
 

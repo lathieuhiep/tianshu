@@ -126,9 +126,9 @@ class Scraper
             $title = self::first_text($xpath, './/h1', $scope_node);
         }
 
-        $content_node = $content_selector !== ''
-            ? self::first_selector_node($xpath, $content_selector, $scope_node)
-            : $scope_node;
+        $content_node = $content_selector === '' || trim($content_selector) === trim($scope_selector)
+            ? $scope_node
+            : self::first_selector_node($xpath, $content_selector, $scope_node);
         if (!$content_node) {
             return new WP_Error('content_selector_missing', __('Selector noi dung chuong khong khop trong khoi boc.', 'extend-site'));
         }

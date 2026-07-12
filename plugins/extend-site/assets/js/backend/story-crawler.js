@@ -285,12 +285,19 @@
         const queueSource = data.queue_source === 'pattern_detected_total'
             ? 'Mẫu URL chương (tổng lấy từ selector)'
             : 'Mẫu URL chương (khoảng nhập tay)';
+        const warnings = Array.isArray(data.warnings) ? data.warnings.filter(Boolean) : [];
+        const warningHtml = warnings.length
+            ? '<div class="es-crawler-template-summary-warning">' + warnings.map(function (warning) {
+                return '<p>' + escapeHtml(warning) + '</p>';
+            }).join('') + '</div>'
+            : '';
         const createTitleInput = storyExists ? '' :
             '<dt>Tên truyện sẽ tạo</dt><dd><input type="text" id="es-crawler-prepared-story-title" class="regular-text" value="' + escapeHtml(data.story_title || '') + '" /></dd>';
 
         $templateSummary
             .removeClass('is-hidden')
             .html(
+                warningHtml +
                 '<dl>' +
                 '<dt>Template</dt><dd>' + escapeHtml(data.template_name || '') + '</dd>' +
                 '<dt>Truyện</dt><dd>' + escapeHtml(data.story_title || '') + ' <small>(' + escapeHtml(storyStatus) + ')</small></dd>' +
@@ -911,6 +918,9 @@
             setButtons();
             setTemplateStatus(data.message || 'Đã chuẩn bị batch từ Template.', 'success');
             renderTemplateSummary(data);
+            if (data.queue_source === 'pattern_manual_range' || parseInt(data.detected_total_chapters, 10) <= 0) {
+                $templateTo.trigger('focus').trigger('select');
+            }
             setNotice('', 'success');
         } catch (xhr) {
             state.templatePrepared = false;
