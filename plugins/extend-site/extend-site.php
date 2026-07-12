@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Extend Site
  * Description: Essential toolkit for WordPress: custom post types, widgets, and site extensions.
- * Version:     1.1.0
+ * Version:     1.1.2
  * Author:      La Thieu Hiep
  * Text Domain: extend-site
  * Requires at least: 6.0

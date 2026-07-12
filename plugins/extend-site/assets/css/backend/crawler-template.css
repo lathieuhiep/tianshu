@@ -87,6 +87,16 @@
     margin-bottom: 16px;
 }
 
+.es-template-preview-url-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.es-template-preview-url-grid .button {
+    margin-top: 8px;
+}
+
 .es-template-subsection {
     border-top: 1px solid #edf0f2;
     margin-top: 16px;
@@ -124,6 +134,28 @@
     color: var(--es-template-muted);
     font-size: 12px;
     margin: 5px 0 0;
+}
+
+.es-template-pattern-check {
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.es-template-pattern-check.is-error {
+    border-left: 4px solid var(--es-template-error);
+    color: var(--es-template-error);
+    padding: 6px 10px;
+}
+
+.es-template-pattern-check.is-success {
+    border-left: 4px solid var(--es-template-success);
+    color: var(--es-template-success);
+    padding: 6px 10px;
+}
+
+.es-template-pattern-check code {
+    overflow-wrap: anywhere;
+    white-space: normal;
 }
 
 .es-template-two-cols {
@@ -181,6 +213,20 @@
     align-items: center;
     display: flex;
     gap: 8px;
+}
+
+.es-template-url-pattern-control {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.es-template-url-pattern-control input {
+    flex: 1 1 auto;
+}
+
+.es-template-url-pattern-control .button {
+    flex: 0 0 auto;
 }
 
 .es-template-selector-control input {
@@ -308,6 +354,57 @@
     white-space: normal;
 }
 
+.es-template-result-note,
+.es-template-result-hint {
+    color: var(--es-template-muted);
+    font-size: 12px;
+    margin: 6px 0 0;
+}
+
+.es-template-result-group {
+    margin-top: 16px;
+}
+
+.es-template-result-group h3 {
+    font-size: 14px;
+    margin: 0 0 8px;
+}
+
+.es-template-field-result-table th,
+.es-template-field-result-table td {
+    vertical-align: top;
+}
+
+.es-template-status-pill {
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 5px 8px;
+    white-space: nowrap;
+}
+
+.es-template-status-pill.is-ok {
+    background: #edfaef;
+    color: var(--es-template-success);
+}
+
+.es-template-status-pill.is-missing {
+    background: #fcf0f1;
+    color: var(--es-template-error);
+}
+
+.es-template-node-samples {
+    color: var(--es-template-muted);
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.es-template-node-samples div + div {
+    margin-top: 3px;
+}
+
 .es-template-warning-list {
     color: #996800;
     margin: 10px 0 0 18px;
@@ -337,6 +434,10 @@
         grid-template-columns: 1fr;
     }
 
+    .es-template-preview-url-grid {
+        grid-template-columns: 1fr;
+    }
+
     .es-template-manage-row {
         grid-template-columns: 1fr;
     }
@@ -352,5 +453,10 @@
 
     .es-template-extract-controls {
         grid-template-columns: 1fr;
+    }
+
+    .es-template-url-pattern-control {
+        align-items: stretch;
+        flex-direction: column;
     }
 }

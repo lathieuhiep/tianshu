@@ -89,6 +89,7 @@ class Enqueue
                 'story_search_action' => 'es_search_story',
                 'process_action' => CrawlerAjax::ACTION_PROCESS,
                 'template_prepare_action' => CrawlerAjax::ACTION_TEMPLATE_PREPARE_BATCH,
+                'template_ensure_story_action' => CrawlerAjax::ACTION_TEMPLATE_ENSURE_STORY,
                 'preview_action' => CrawlerAjax::ACTION_PREVIEW,
                 'start_batch_action' => CrawlerAjax::ACTION_START,
                 'heartbeat_action' => CrawlerAjax::ACTION_HEARTBEAT,

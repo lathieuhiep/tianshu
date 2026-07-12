@@ -13,6 +13,7 @@
         batchId: '',
         templatePrepared: false,
         storyId: 0,
+        preparedStory: null,
         heartbeatTimer: null,
         lastFinalizePayload: null,
         logs: []
@@ -53,6 +54,10 @@
     const $templatePanel = $('.es-crawler-template-panel');
     const $templateId = $('#es-crawler-template-id');
     const $storySourceUrl = $('#es-crawler-story-source-url');
+    const $templatePattern = $('#es-crawler-template-url-pattern');
+    const $templateFrom = $('#es-crawler-template-range-from');
+    const $templateTo = $('#es-crawler-template-range-to');
+    const $templatePadding = $('#es-crawler-template-padding');
     const $templatePrepareBtn = $('#es-crawler-template-prepare-btn');
     const $templatePrepareStatus = $('#es-crawler-template-prepare-status');
     const $templateSummary = $('#es-crawler-template-summary');
@@ -212,6 +217,7 @@
         state.index = 0;
         state.processed = 0;
         state.templatePrepared = false;
+        state.preparedStory = null;
         updateGeneratedPanel(state.queue);
         updateProgress();
         clearRunOutput(options);
@@ -274,7 +280,13 @@
         const queue = Array.isArray(data.queue) ? data.queue : [];
         const first = queue.length ? queue[0].url : '';
         const last = queue.length ? queue[queue.length - 1].url : '';
-        const storyStatus = data.story_created ? 'Mới tạo' : 'Đã có';
+        const storyExists = !!data.story_exists || parseInt(data.story_id, 10) > 0;
+        const storyStatus = storyExists ? 'Đã có' : 'Chưa có, sẽ tạo khi bấm Bắt đầu';
+        const queueSource = data.queue_source === 'pattern_detected_total'
+            ? 'Mẫu URL chương (tổng lấy từ selector)'
+            : 'Mẫu URL chương (khoảng nhập tay)';
+        const createTitleInput = storyExists ? '' :
+            '<dt>Tên truyện sẽ tạo</dt><dd><input type="text" id="es-crawler-prepared-story-title" class="regular-text" value="' + escapeHtml(data.story_title || '') + '" /></dd>';
 
         $templateSummary
             .removeClass('is-hidden')
@@ -282,6 +294,8 @@
                 '<dl>' +
                 '<dt>Template</dt><dd>' + escapeHtml(data.template_name || '') + '</dd>' +
                 '<dt>Truyện</dt><dd>' + escapeHtml(data.story_title || '') + ' <small>(' + escapeHtml(storyStatus) + ')</small></dd>' +
+                createTitleInput +
+                '<dt>Nguồn queue</dt><dd>' + escapeHtml(queueSource) + '</dd>' +
                 '<dt>Số chương</dt><dd>' + escapeHtml(data.total_chapters || queue.length || 0) + '</dd>' +
                 '<dt>URL đầu</dt><dd><code>' + escapeHtml(first) + '</code></dd>' +
                 '<dt>URL cuối</dt><dd><code>' + escapeHtml(last) + '</code></dd>' +
@@ -322,7 +336,113 @@
 
         if ($match.length) {
             $templateId.val($match.val());
+            syncTemplatePatternView();
         }
+    }
+
+    function selectedTemplatePattern() {
+        const $selected = $templateId.find('option:selected');
+        return String($selected.data('chapter-url-pattern') || '').trim();
+    }
+
+    function storySlugFromUrl(url) {
+        try {
+            const parsed = new URL(url);
+            const parts = parsed.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+            return parts.length ? parts[parts.length - 1] : '';
+        } catch (err) {
+            return '';
+        }
+    }
+
+    function resolveTemplatePattern(pattern, chapterNumber) {
+        const storyUrl = $storySourceUrl.val().trim();
+        const storyBase = storyUrl.replace(/\/+$/, '');
+        const storySlug = storySlugFromUrl(storyUrl);
+        const number = padNumber(chapterNumber || 1, $templatePadding.val());
+
+        return String(pattern || '')
+            .replace(/\{story_url\}/g, storyBase || '{story_url}')
+            .replace(/\{story_slug\}/g, storySlug || '{story_slug}')
+            .replace(/\{chapter_number\}/g, number)
+            .replace(/\{n\}/g, number);
+    }
+
+    function syncTemplatePatternView() {
+        const pattern = selectedTemplatePattern();
+        const from = parseInt($templateFrom.val(), 10) || 1;
+        const resolved = resolveTemplatePattern(pattern, from);
+        $templatePattern.val(resolved);
+        if (crawlerMode() === 'template') {
+            $previewNumber.val(from);
+            $previewUrl.val(resolved.indexOf('{') === -1 ? resolved : '');
+        }
+    }
+
+    function templateRangePayload() {
+        const from = parseInt($templateFrom.val(), 10);
+        const to = parseInt($templateTo.val(), 10);
+        const padding = parseInt($templatePadding.val(), 10) || 0;
+
+        if (!Number.isInteger(from) || from < 1) {
+            throw new Error('Ô "Từ" trong Template không hợp lệ.');
+        }
+        if (!Number.isInteger(to) || to < 1) {
+            throw new Error('Ô "Đến" trong Template không hợp lệ.');
+        }
+        if (to < from) {
+            throw new Error('Khoảng chương Template không hợp lệ: ô "Đến" phải lớn hơn hoặc bằng ô "Từ".');
+        }
+
+        return {
+            range_from: from,
+            range_to: to,
+            padding: padding
+        };
+    }
+
+    async function ensureStoryBeforeStart() {
+        if (crawlerMode() !== 'template') {
+            return selectedStoryId();
+        }
+
+        if (state.storyId > 0) {
+            return state.storyId;
+        }
+
+        if (!state.preparedStory) {
+            throw new Error('Thiếu thông tin truyện: vui lòng chuẩn bị batch từ Template trước.');
+        }
+
+        const editedTitle = $('#es-crawler-prepared-story-title').val();
+        const storyTitle = String(editedTitle || state.preparedStory.title || '').trim();
+        if (!storyTitle) {
+            throw new Error('Tên truyện sẽ tạo không được để trống.');
+        }
+
+        setNotice('Đang tạo truyện mới...', 'warning');
+        log(null, 'story', 'Đang tạo truyện mới: ' + storyTitle, 0);
+
+        const response = await ajax(cfg.template_ensure_story_action, {
+            story_title: storyTitle,
+            story_author: state.preparedStory.author || '',
+            story_desc: state.preparedStory.desc || '',
+            story_thumb: state.preparedStory.thumb || '',
+            story_cats: JSON.stringify(state.preparedStory.cats || []),
+            story_url: state.preparedStory.source_url || $storySourceUrl.val().trim()
+        });
+        const data = response.data || {};
+        state.storyId = parseInt(data.story_id, 10) || 0;
+        if (!state.storyId) {
+            throw new Error('Không tạo hoặc tìm được truyện để bắt đầu batch.');
+        }
+
+        const option = new Option(data.story_title || ('#' + state.storyId), state.storyId, true, true);
+        $story.append(option).trigger('change');
+        log(null, 'story', (data.story_created ? 'Đã tạo truyện mới: ' : 'Đã tìm thấy truyện: ') + (data.story_title || storyTitle), 0);
+        setNotice('Đã có truyện. Đang bắt đầu chạy cào...', 'success');
+
+        return state.storyId;
     }
 
     function toggleCrawlerMode() {
@@ -372,7 +492,7 @@
     }
 
     function setFormLocked(locked) {
-        $('#es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn, #es-crawler-template-id, #es-crawler-story-source-url, #es-crawler-template-prepare-btn')
+        $('#es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-template-range-from, #es-crawler-template-range-to, #es-crawler-template-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn, #es-crawler-template-id, #es-crawler-story-source-url, #es-crawler-template-prepare-btn')
             .prop('disabled', locked);
 
         if ($story.length && $.fn.select2) {
@@ -705,13 +825,21 @@
     });
     $storySourceUrl.on('input change', function () {
         autoSelectTemplateByUrl();
+        syncTemplatePatternView();
         if (crawlerMode() === 'template') {
             clearCrawlerContext('URL trang truyện đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
         }
     });
     $templateId.on('change', function () {
+        syncTemplatePatternView();
         if (crawlerMode() === 'template') {
             clearCrawlerContext('Template đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
+        }
+    });
+    $templateFrom.add($templateTo).add($templatePadding).on('input change', function () {
+        syncTemplatePatternView();
+        if (crawlerMode() === 'template') {
+            clearCrawlerContext('Khoảng chương Template đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
         }
     });
 
@@ -727,37 +855,53 @@
             return;
         }
 
+        let rangePayload;
+        try {
+            rangePayload = templateRangePayload();
+        } catch (err) {
+            setTemplateStatus(err.message || 'Khoảng chương Template không hợp lệ.', 'error');
+            return;
+        }
+
         const originalText = $templatePrepareBtn.text();
         $templatePrepareBtn.prop('disabled', true).text('Đang chuẩn bị...');
         clearRunOutput({ keepTemplateStatus: true });
         setTemplateStatus('', '');
 
         try {
-            const response = await ajax(cfg.template_prepare_action, {
+            const response = await ajax(cfg.template_prepare_action, Object.assign({
                 template_id: templateId,
                 story_url: storyUrl
-            });
+            }, rangePayload));
             const data = response.data || {};
             state.queue = Array.isArray(data.queue) ? data.queue : [];
             state.index = 0;
             state.processed = 0;
             state.consecutiveFailures = 0;
             state.storyId = parseInt(data.story_id, 10) || 0;
-            state.templatePrepared = state.queue.length > 0 && state.storyId > 0;
+            state.preparedStory = data.prepared_story || null;
+            state.templatePrepared = state.queue.length > 0;
 
             if (state.storyId) {
                 const option = new Option(data.story_title || ('#' + state.storyId), state.storyId, true, true);
                 $story.append(option).trigger('change');
+            } else {
+                $story.val(null).trigger('change');
             }
             if (data.delay_between) {
                 $delay.val(data.delay_between);
             }
             if (data.chapter_url_pattern) {
-                $pattern.val(data.chapter_url_pattern.replace('{chapter_number}', '{n}'));
+                $templatePattern.val(resolveTemplatePattern(data.chapter_url_pattern, state.queue.length ? state.queue[0].chapterNumber : 1));
+                if (data.chapter_url_pattern.indexOf('{story_url}') === -1 && data.chapter_url_pattern.indexOf('{story_slug}') === -1) {
+                    $pattern.val(data.chapter_url_pattern.replace('{chapter_number}', '{n}'));
+                }
             }
             if (state.queue.length) {
                 $from.val(state.queue[0].chapterNumber || 1);
                 $to.val(state.queue[state.queue.length - 1].chapterNumber || state.queue.length);
+                $templateFrom.val(state.queue[0].chapterNumber || 1);
+                $templateTo.val(state.queue[state.queue.length - 1].chapterNumber || state.queue.length);
                 $previewNumber.val(state.queue[0].chapterNumber || 1);
                 $previewUrl.val(state.queue[0].url || '');
             }
@@ -793,8 +937,11 @@
             if (isTemplateMode && !state.templatePrepared && !$previewUrl.val().trim()) {
                 throw new Error('Hãy chuẩn bị batch từ Template trước khi xem thử.');
             }
-            if (!storyId) {
-                throw new Error('Thiếu truyện: hãy chuẩn bị batch từ Template hoặc chọn truyện cần thêm chương.');
+            const previewStoryTitle = isTemplateMode
+                ? String($('#es-crawler-prepared-story-title').val() || (state.preparedStory && state.preparedStory.title) || '').trim()
+                : '';
+            if (!storyId && !previewStoryTitle) {
+                throw new Error('Thiếu tên truyện: hãy chuẩn bị batch từ Template hoặc nhập tên truyện sẽ tạo.');
             }
             if (!isHttpUrl(url)) {
                 throw new Error('URL xem thử không hợp lệ: vui lòng nhập URL bắt đầu bằng http:// hoặc https://.');
@@ -804,6 +951,7 @@
 
             const response = await ajax(cfg.preview_action, Object.assign({
                 story_id: storyId,
+                preview_story_title: previewStoryTitle,
                 source_url: url,
                 chapter_number: chapterNumber,
                 replace_rules: JSON.stringify(replacementRules()),
@@ -852,13 +1000,16 @@
                 updateGeneratedPanel(state.queue);
             }
 
-            state.storyId = selectedStoryId();
             state.index = 0;
             state.processed = 0;
             state.consecutiveFailures = 0;
             clearRunOutput({ keepPreview: true, keepTemplateStatus: true });
             updateProgress();
             setNotice('', 'success');
+            state.storyId = await ensureStoryBeforeStart();
+            if (!state.storyId) {
+                throw new Error('Thiếu truyện: hãy chuẩn bị batch từ Template hoặc chọn truyện cần thêm chương.');
+            }
 
             const response = await ajax(cfg.start_batch_action, {
                 story_id: state.storyId,
@@ -870,6 +1021,7 @@
             startHeartbeat();
             setButtons();
             log(null, 'batch', 'Đã bắt đầu batch ' + state.batchId, 0);
+            setNotice('Đang chạy cào chương...', 'success');
             scrollToProgress();
             processQueue();
         } catch (xhr) {
@@ -963,6 +1115,7 @@
         initSelect2();
         toggleCrawlerMode();
         toggleTitleTemplate();
+        syncTemplatePatternView();
         syncPreviewNumberFromRange(true);
         setButtons();
         updateProgress();

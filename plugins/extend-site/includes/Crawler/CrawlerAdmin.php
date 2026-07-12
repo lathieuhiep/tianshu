@@ -61,7 +61,11 @@ class CrawlerAdmin
                                     <select id="es-crawler-template-id">
                                         <option value=""><?php esc_html_e('Chọn template', 'extend-site'); ?></option>
                                         <?php foreach ($templates as $template) : ?>
-                                            <option value="<?php echo esc_attr((string) $template['id']); ?>" data-domain="<?php echo esc_attr($template['domain']); ?>">
+                                            <option
+                                                value="<?php echo esc_attr((string) $template['id']); ?>"
+                                                data-domain="<?php echo esc_attr($template['domain']); ?>"
+                                                data-chapter-url-pattern="<?php echo esc_attr((string) ($template['chapter_url_pattern'] ?? '')); ?>"
+                                            >
                                                 <?php echo esc_html($template['name'] . ' - ' . $template['domain']); ?>
                                             </option>
                                         <?php endforeach; ?>
@@ -80,6 +84,34 @@ class CrawlerAdmin
                             </div>
 
                             <button type="button" class="button button-secondary" id="es-crawler-template-prepare-btn"><?php esc_html_e('Chuẩn bị batch từ Template', 'extend-site'); ?></button>
+                            <div class="es-crawler-template-pattern-panel">
+                                <div class="es-crawler-field">
+                                    <label for="es-crawler-template-url-pattern"><?php esc_html_e('URL chương sẽ tạo từ template', 'extend-site'); ?></label>
+                                    <input type="text" id="es-crawler-template-url-pattern" class="regular-text" readonly placeholder="{story_url}/chuong-{chapter_number}/" />
+                                    <p class="description"><?php esc_html_e('Hiển thị URL chương mẫu sau khi thay {story_url}, {story_slug} và số chương. Selector danh sách chương chỉ dùng để phát hiện tổng chương nếu có.', 'extend-site'); ?></p>
+                                </div>
+
+                                <div class="es-crawler-three-cols">
+                                    <div class="es-crawler-field">
+                                        <label for="es-crawler-template-range-from"><?php esc_html_e('Từ', 'extend-site'); ?></label>
+                                        <input type="number" id="es-crawler-template-range-from" min="1" step="1" value="1" />
+                                    </div>
+                                    <div class="es-crawler-field">
+                                        <label for="es-crawler-template-range-to"><?php esc_html_e('Đến', 'extend-site'); ?></label>
+                                        <input type="number" id="es-crawler-template-range-to" min="1" step="1" value="1" />
+                                    </div>
+                                    <div class="es-crawler-field">
+                                        <label for="es-crawler-template-padding"><?php esc_html_e('Đệm số', 'extend-site'); ?></label>
+                                        <select id="es-crawler-template-padding">
+                                            <option value="0"><?php esc_html_e('Không đệm', 'extend-site'); ?></option>
+                                            <option value="2"><?php esc_html_e('2 chữ số', 'extend-site'); ?></option>
+                                            <option value="3"><?php esc_html_e('3 chữ số', 'extend-site'); ?></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <p class="description"><?php esc_html_e('Nếu không phát hiện được tổng chương từ selector, hệ thống sẽ dùng khoảng Từ/Đến này để tạo queue từ Mẫu URL chương.', 'extend-site'); ?></p>
+                            </div>
+
                             <div id="es-crawler-template-prepare-status" class="es-crawler-template-prepare-status" aria-live="polite"></div>
                             <div id="es-crawler-template-summary" class="es-crawler-template-summary is-hidden"></div>
                         </div>

@@ -39,6 +39,8 @@ class CrawlerTemplateTable
             chapter_link_selector TEXT DEFAULT NULL,
             toc_page_link_selector TEXT DEFAULT NULL,
             chapter_url_pattern TEXT DEFAULT NULL,
+            sample_story_url TEXT DEFAULT NULL,
+            sample_chapter_url TEXT DEFAULT NULL,
             story_extract_rules LONGTEXT DEFAULT NULL,
             chapter_content_scope_selector TEXT DEFAULT NULL,
             chapter_title_selector TEXT DEFAULT NULL,
@@ -60,6 +62,16 @@ class CrawlerTemplateTable
         $column = $wpdb->get_var($wpdb->prepare('SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'chapter_content_scope_selector'));
         if (!$column) {
             $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN chapter_content_scope_selector TEXT DEFAULT NULL AFTER story_extract_rules');
+        }
+
+        $sample_story_url = $wpdb->get_var($wpdb->prepare('SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'sample_story_url'));
+        if (!$sample_story_url) {
+            $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN sample_story_url TEXT DEFAULT NULL AFTER chapter_url_pattern');
+        }
+
+        $sample_chapter_url = $wpdb->get_var($wpdb->prepare('SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'sample_chapter_url'));
+        if (!$sample_chapter_url) {
+            $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN sample_chapter_url TEXT DEFAULT NULL AFTER sample_story_url');
         }
     }
 
@@ -128,6 +140,8 @@ class CrawlerTemplateTable
             'chapter_link_selector' => sanitize_text_field((string) ($data['chapter_link_selector'] ?? '')),
             'toc_page_link_selector' => sanitize_text_field((string) ($data['toc_page_link_selector'] ?? '')),
             'chapter_url_pattern' => sanitize_text_field((string) ($data['chapter_url_pattern'] ?? '')),
+            'sample_story_url' => esc_url_raw((string) ($data['sample_story_url'] ?? '')),
+            'sample_chapter_url' => esc_url_raw((string) ($data['sample_chapter_url'] ?? '')),
             'story_extract_rules' => wp_json_encode(self::normalize_story_extract_rules((array) ($data['story_extract_rules'] ?? []))),
             'chapter_content_scope_selector' => sanitize_text_field((string) ($data['chapter_content_scope_selector'] ?? '')),
             'chapter_title_selector' => sanitize_text_field((string) ($data['chapter_title_selector'] ?? '')),
@@ -142,7 +156,7 @@ class CrawlerTemplateTable
         }
 
         $formats = [
-            '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s',
+            '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s',
         ];
 
         if ($id > 0) {
@@ -195,6 +209,8 @@ class CrawlerTemplateTable
         $row['name'] = isset($row['name']) ? sanitize_text_field((string) $row['name']) : '';
         $row['domain'] = isset($row['domain']) ? self::normalize_domain((string) $row['domain']) : '';
         $row['toc_type'] = isset($row['toc_type']) ? sanitize_key((string) $row['toc_type']) : 'selector';
+        $row['sample_story_url'] = isset($row['sample_story_url']) ? esc_url_raw((string) $row['sample_story_url']) : '';
+        $row['sample_chapter_url'] = isset($row['sample_chapter_url']) ? esc_url_raw((string) $row['sample_chapter_url']) : '';
         $row['chapter_content_scope_selector'] = isset($row['chapter_content_scope_selector']) ? sanitize_text_field((string) $row['chapter_content_scope_selector']) : '';
         $row['delay_between'] = isset($row['delay_between']) ? max(1, absint($row['delay_between'])) : 1;
 

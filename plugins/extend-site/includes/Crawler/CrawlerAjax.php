@@ -29,6 +29,7 @@ class CrawlerAjax
     public const ACTION_TEMPLATE_LOAD = 'es_crawler_template_load';
     public const ACTION_TEMPLATE_DELETE = 'es_crawler_template_delete';
     public const ACTION_TEMPLATE_PREPARE_BATCH = 'es_crawler_prepare_template_batch';
+    public const ACTION_TEMPLATE_ENSURE_STORY = 'es_crawler_template_ensure_story';
     public const ACTION_PROCESS = 'es_crawler_process_url';
     public const ACTION_FINALIZE = 'es_crawler_finalize_story';
     public const MAX_BATCH_SIZE = 200;
@@ -50,6 +51,7 @@ class CrawlerAjax
         add_action('wp_ajax_' . self::ACTION_TEMPLATE_LOAD, [self::class, 'load_template']);
         add_action('wp_ajax_' . self::ACTION_TEMPLATE_DELETE, [self::class, 'delete_template']);
         add_action('wp_ajax_' . self::ACTION_TEMPLATE_PREPARE_BATCH, [self::class, 'prepare_template_batch']);
+        add_action('wp_ajax_' . self::ACTION_TEMPLATE_ENSURE_STORY, [self::class, 'ensure_template_story']);
         add_action('wp_ajax_' . self::ACTION_PROCESS, [self::class, 'process_url']);
         add_action('wp_ajax_' . self::ACTION_FINALIZE, [self::class, 'finalize_story']);
     }
@@ -114,7 +116,15 @@ class CrawlerAjax
     {
         self::verify_request();
 
-        $story_id = self::get_valid_story_id();
+        $story_id = absint($_POST['story_id'] ?? 0);
+        $preview_story_title = sanitize_text_field((string) wp_unslash($_POST['preview_story_title'] ?? ''));
+        if ($story_id <= 0 && $preview_story_title === '') {
+            $story_id = self::get_valid_story_id();
+        } elseif ($story_id > 0 && get_post_type($story_id) !== StoryPostType::SLUG) {
+            wp_send_json_error([
+                'message' => __('ID truyen khong hop le.', 'extend-site'),
+            ], 400);
+        }
         $chapter_number = self::get_valid_chapter_number();
         $source_url = self::get_source_url();
         $replace_rules = self::get_replace_rules();
@@ -156,7 +166,9 @@ class CrawlerAjax
             ]));
         }
 
-        $final_title = self::build_chapter_title($story_id, $expected_chapter_number, (string) $result['title'], $title_mode, $title_template);
+        $final_title = $story_id > 0
+            ? self::build_chapter_title($story_id, $expected_chapter_number, (string) $result['title'], $title_mode, $title_template)
+            : self::build_chapter_title_from_story_title($preview_story_title, $expected_chapter_number, (string) $result['title'], $title_mode, $title_template);
 
         wp_send_json_success([
             'status' => 'success',
@@ -204,76 +216,139 @@ class CrawlerAjax
     {
         self::verify_request();
 
-        $target_url = self::get_target_url('target_url');
+        $story_url = self::get_target_url_with_fallback('story_url', 'target_url');
+        $chapter_url = self::get_target_url_with_fallback('chapter_url', 'target_url');
         $selectors = self::get_template_selectors();
         $warnings = [];
 
-        $body = self::fetch_html($target_url, 20);
-        if (is_wp_error($body)) {
+        $story_body = self::fetch_html($story_url, 20);
+        if (is_wp_error($story_body)) {
             wp_send_json_error([
-                'message' => $body->get_error_message(),
+                'message' => $story_body->get_error_message(),
             ], 400);
         }
 
-        $dom = self::load_dom($body);
-        if (is_wp_error($dom)) {
+        $story_dom = self::load_dom($story_body);
+        if (is_wp_error($story_dom)) {
             wp_send_json_error([
-                'message' => $dom->get_error_message(),
+                'message' => $story_dom->get_error_message(),
             ], 400);
         }
 
-        $xpath = new DOMXPath($dom);
+        $chapter_body = self::fetch_html($chapter_url, 20);
+        if (is_wp_error($chapter_body)) {
+            wp_send_json_error([
+                'message' => $chapter_body->get_error_message(),
+            ], 400);
+        }
+
+        $chapter_dom = self::load_dom($chapter_body);
+        if (is_wp_error($chapter_dom)) {
+            wp_send_json_error([
+                'message' => $chapter_dom->get_error_message(),
+            ], 400);
+        }
+
+        $story_xpath = new DOMXPath($story_dom);
+        $chapter_xpath = new DOMXPath($chapter_dom);
         $matched = [];
+        $match_samples = [];
+        $selector_counts = [];
+        $selector_samples = [];
+        $selector_labels = self::template_selector_labels();
         foreach ($selectors as $key => $selector) {
-            $matched[$key] = $selector !== '' ? self::query_selector_count($xpath, $selector) : 0;
-            if ($selector !== '' && $matched[$key] === 0) {
-                $warnings[] = sprintf(__('Selector khong co ket qua: %s.', 'extend-site'), $key);
+            $label = $selector_labels[$key] ?? $key;
+            $selector_xpath = in_array($key, ['chapter_content_scope_selector', 'chapter_title_selector', 'chapter_content_selector'], true)
+                ? $chapter_xpath
+                : $story_xpath;
+            $match_count = $selector !== '' ? self::query_selector_count($selector_xpath, $selector) : 0;
+            $samples = $selector !== '' ? self::query_selector_samples($selector_xpath, $selector, 3) : [];
+            $selector_counts[$key] = $match_count;
+            $selector_samples[$key] = $samples;
+            $matched[$label] = $match_count;
+            $match_samples[$label] = $samples;
+            if ($selector !== '' && $match_count === 0) {
+                $warnings[] = sprintf(
+                    __('Selector khong co ket qua o muc "%1$s": %2$s', 'extend-site'),
+                    $label,
+                    $selector
+                );
             }
         }
 
         $rules = self::get_template_extract_rules($selectors);
-        $story_title = self::extract_rule_value($xpath, $rules['story_title'], $target_url);
-        $story_author = self::extract_rule_value($xpath, $rules['story_author'], $target_url);
-        $story_desc = self::extract_rule_value($xpath, $rules['story_desc'], $target_url);
-        $story_thumb = self::extract_rule_value($xpath, $rules['story_thumb'], $target_url);
-        $story_cats_value = self::extract_rule_value($xpath, $rules['story_cats'], $target_url);
+        $story_title = self::extract_rule_value($story_xpath, $rules['story_title'], $story_url);
+        $story_author = self::extract_rule_value($story_xpath, $rules['story_author'], $story_url);
+        $story_desc = self::extract_rule_value($story_xpath, $rules['story_desc'], $story_url);
+        $story_thumb = self::extract_rule_value($story_xpath, $rules['story_thumb'], $story_url);
+        $story_cats_value = self::extract_rule_value($story_xpath, $rules['story_cats'], $story_url);
         $story_cats = is_array($story_cats_value) ? $story_cats_value : array_filter(array_map('trim', explode(',', (string) $story_cats_value)));
         $chapter_scope = null;
         $use_chapter_scope = $selectors['chapter_content_scope_selector'] !== '';
         if ($use_chapter_scope) {
-            $scope_nodes = self::query_selector_all($xpath, $selectors['chapter_content_scope_selector']);
+            $scope_nodes = self::query_selector_all($chapter_xpath, $selectors['chapter_content_scope_selector']);
             $chapter_scope = $scope_nodes && $scope_nodes->length > 0 ? $scope_nodes->item(0) : null;
             if (!$chapter_scope) {
-                $warnings[] = __('Khong tim thay khoi boc noi dung chuong.', 'extend-site');
+                $warnings[] = sprintf(
+                    __('Khong tim thay khoi boc noi dung chuong o muc "%s".', 'extend-site'),
+                    $selector_labels['chapter_content_scope_selector']
+                );
             }
         }
         $chapter_title = !$use_chapter_scope || $chapter_scope
-            ? self::first_selector_text($xpath, $selectors['chapter_title_selector'], $chapter_scope)
+            ? self::first_selector_text($chapter_xpath, $selectors['chapter_title_selector'], $chapter_scope)
             : '';
         $chapter_content = '';
         if (!$use_chapter_scope || $chapter_scope) {
             $chapter_content = $selectors['chapter_content_selector'] !== ''
-                ? self::first_selector_text($xpath, $selectors['chapter_content_selector'], $chapter_scope)
+                ? self::first_selector_text($chapter_xpath, $selectors['chapter_content_selector'], $chapter_scope)
                 : self::node_text($chapter_scope);
         }
         if ($selectors['chapter_content_selector'] !== '' && $use_chapter_scope && $chapter_scope && $chapter_content === '') {
-            $warnings[] = __('Khong tim thay noi dung chuong ben trong khoi boc.', 'extend-site');
+            $warnings[] = sprintf(
+                __('Khong tim thay noi dung chuong ben trong muc "%s".', 'extend-site'),
+                $selector_labels['chapter_content_scope_selector']
+            );
         }
         $chapter_links = self::chapter_link_summary(
-            $xpath,
+            $story_xpath,
             $selectors['chapter_link_selector'],
             $selectors['toc_page_link_selector'],
-            $target_url
+            $story_url
         );
         $warnings = array_merge($warnings, $chapter_links['warnings']);
 
         if ($story_title === '') {
-            $warnings[] = __('Khong boc duoc tieu de truyen.', 'extend-site');
+            $warnings[] = sprintf(
+                __('Khong boc duoc ten truyen o muc "%s".', 'extend-site'),
+                $selector_labels['story_title_selector']
+            );
         }
 
         if ($selectors['chapter_link_selector'] !== '' && $chapter_links['count'] === 0) {
-            $warnings[] = __('Khong tim thay link chuong tu selector muc luc.', 'extend-site');
+            $warnings[] = sprintf(
+                __('Khong tim thay link chuong o muc "%s".', 'extend-site'),
+                $selector_labels['chapter_link_selector']
+            );
         }
+
+        $field_results = self::template_test_field_results(
+            $selectors,
+            $selector_counts,
+            $selector_samples,
+            [
+                'story_title' => $story_title,
+                'story_author' => $story_author,
+                'story_desc' => $story_desc,
+                'story_desc_length' => mb_strlen($story_desc),
+                'story_thumb' => $story_thumb,
+                'story_cats' => $story_cats,
+                'chapter_title' => $chapter_title,
+                'chapter_content_length' => mb_strlen($chapter_content),
+                'chapter_link_count' => $chapter_links['count'],
+                'toc_page_count' => $chapter_links['toc_page_count'],
+            ]
+        );
 
         wp_send_json_success([
             'story_title' => $story_title,
@@ -289,8 +364,12 @@ class CrawlerAjax
             'toc_page_count' => $chapter_links['toc_page_count'],
             'toc_pages_scanned' => $chapter_links['toc_pages_scanned'],
             'chapter_link_samples' => $chapter_links['samples'],
-            'target_url' => $target_url,
+            'target_url' => $story_url,
+            'story_url' => $story_url,
+            'chapter_url' => $chapter_url,
             'matched' => $matched,
+            'match_samples' => $match_samples,
+            'field_results' => $field_results,
             'warnings' => array_values(array_unique($warnings)),
         ]);
     }
@@ -307,7 +386,9 @@ class CrawlerAjax
             'toc_type' => sanitize_key((string) wp_unslash($_POST['toc_type'] ?? 'selector')),
             'chapter_link_selector' => $selectors['chapter_link_selector'],
             'toc_page_link_selector' => $selectors['toc_page_link_selector'],
-            'chapter_url_pattern' => trim(sanitize_text_field((string) wp_unslash($_POST['chapter_url_pattern'] ?? ''))),
+            'chapter_url_pattern' => self::normalize_chapter_url_pattern((string) wp_unslash($_POST['chapter_url_pattern'] ?? '')),
+            'sample_story_url' => esc_url_raw(trim((string) wp_unslash($_POST['sample_story_url'] ?? ''))),
+            'sample_chapter_url' => esc_url_raw(trim((string) wp_unslash($_POST['sample_chapter_url'] ?? ''))),
             'story_extract_rules' => self::get_template_extract_rules($selectors),
             'chapter_content_scope_selector' => $selectors['chapter_content_scope_selector'],
             'chapter_title_selector' => $selectors['chapter_title_selector'],
@@ -326,6 +407,14 @@ class CrawlerAjax
 
         if ($data['chapter_content_scope_selector'] === '') {
             wp_send_json_error(['message' => __('Thieu selector khoi boc noi dung chuong.', 'extend-site')], 400);
+        }
+
+        if ($data['chapter_url_pattern'] === '') {
+            wp_send_json_error(['message' => __('Mau URL chuong la bat buoc vi crawler dung mau nay de tao URL tung chuong.', 'extend-site')], 400);
+        }
+
+        if (strpos($data['chapter_url_pattern'], '{chapter_number}') === false) {
+            wp_send_json_error(['message' => __('Mau URL chuong phai co bien so chuong {chapter_number} hoac {n}, vi du: {story_url}/chuong-{chapter_number}/', 'extend-site')], 400);
         }
 
         $template = CrawlerTemplateTable::save($data);
@@ -408,17 +497,18 @@ class CrawlerAjax
             ? $story_cats_value
             : array_filter(array_map('trim', explode(',', (string) $story_cats_value)));
 
-        $story_result = self::find_or_create_story($story_title, $story_desc, $story_author, $story_cats, $story_thumb, $story_url);
-        if (is_wp_error($story_result)) {
-            wp_send_json_error(['message' => $story_result->get_error_message()], 500);
-        }
+        $existing_story_id = self::find_story_by_title($story_title);
 
         $links = self::template_chapter_links($xpath, $template, $story_url);
-        if (!$links) {
-            wp_send_json_error(['message' => __('Khong tim thay link chuong tu template.', 'extend-site')], 400);
+        $detected_total = count($links);
+        $queue = self::chapter_queue_from_template_pattern($template, $story_url, $detected_total);
+        if (is_wp_error($queue)) {
+            wp_send_json_error([
+                'message' => $queue->get_error_message(),
+            ], 400);
         }
+        $queue_source = $detected_total > 0 ? 'pattern_detected_total' : 'pattern_manual_range';
 
-        $queue = self::chapter_queue_from_links($links);
         $max = (int) apply_filters('es_crawler_max_batch_size', self::MAX_BATCH_SIZE);
         if (count($queue) > $max) {
             $queue = array_slice($queue, 0, $max);
@@ -426,19 +516,64 @@ class CrawlerAjax
 
         wp_send_json_success([
             'message' => sprintf(__('Da chuan bi %d URL chuong tu template.', 'extend-site'), count($queue)),
-            'story_id' => (int) $story_result['story_id'],
-            'story_title' => get_the_title((int) $story_result['story_id']),
-            'story_created' => (bool) $story_result['created'],
+            'story_id' => $existing_story_id,
+            'story_title' => $existing_story_id > 0 ? get_the_title($existing_story_id) : $story_title,
+            'story_created' => false,
+            'story_exists' => $existing_story_id > 0,
+            'prepared_story' => [
+                'title' => $story_title,
+                'author' => $story_author,
+                'desc' => $story_desc,
+                'thumb' => $story_thumb,
+                'cats' => array_values($story_cats),
+                'source_url' => $story_url,
+            ],
             'template_id' => (int) $template['id'],
             'template_name' => (string) $template['name'],
             'template_domain' => (string) $template['domain'],
             'story_url' => $story_url,
             'total_chapters' => count($queue),
+            'detected_total_chapters' => $detected_total,
+            'queue_source' => $queue_source,
             'queue' => $queue,
             'delay_between' => (int) $template['delay_between'],
             'find_replace_rules' => $template['find_replace_rules'],
             'chapter_url_pattern' => (string) ($template['chapter_url_pattern'] ?? ''),
             'warnings' => [],
+        ]);
+    }
+
+    public static function ensure_template_story(): void
+    {
+        self::verify_request();
+
+        $title = sanitize_text_field((string) wp_unslash($_POST['story_title'] ?? ''));
+        $desc = wp_kses_post((string) wp_unslash($_POST['story_desc'] ?? ''));
+        $author = sanitize_text_field((string) wp_unslash($_POST['story_author'] ?? ''));
+        $thumb = esc_url_raw(trim((string) wp_unslash($_POST['story_thumb'] ?? '')));
+        $source_url = self::get_target_url('story_url');
+        $cats_raw = wp_unslash($_POST['story_cats'] ?? []);
+        if (is_string($cats_raw)) {
+            $decoded = json_decode($cats_raw, true);
+            $cats_raw = is_array($decoded) ? $decoded : explode(',', $cats_raw);
+        }
+        $cats = is_array($cats_raw)
+            ? array_values(array_filter(array_map(static fn($cat) => sanitize_text_field((string) $cat), $cats_raw)))
+            : [];
+
+        $story_result = self::find_or_create_story($title, $desc, $author, $cats, $thumb, $source_url);
+        if (is_wp_error($story_result)) {
+            wp_send_json_error(['message' => $story_result->get_error_message()], 500);
+        }
+
+        $story_id = (int) $story_result['story_id'];
+        wp_send_json_success([
+            'message' => !empty($story_result['created'])
+                ? __('Da tao truyen moi.', 'extend-site')
+                : __('Da tim thay truyen co san.', 'extend-site'),
+            'story_id' => $story_id,
+            'story_title' => get_the_title($story_id),
+            'story_created' => (bool) $story_result['created'],
         ]);
     }
 
@@ -682,6 +817,25 @@ class CrawlerAjax
         return $url;
     }
 
+    private static function get_target_url_with_fallback(string $key, string $fallback_key): string
+    {
+        $raw = trim((string) wp_unslash($_POST[$key] ?? ''));
+        if ($raw === '') {
+            $raw = trim((string) wp_unslash($_POST[$fallback_key] ?? ''));
+        }
+
+        $url = esc_url_raw($raw);
+        $scheme = strtolower((string) wp_parse_url($url, PHP_URL_SCHEME));
+
+        if ($url === '' || !in_array($scheme, ['http', 'https'], true) || !wp_http_validate_url($url)) {
+            wp_send_json_error([
+                'message' => __('URL khong hop le.', 'extend-site'),
+            ], 400);
+        }
+
+        return $url;
+    }
+
     private static function fetch_html(string $url, int $timeout = 20)
     {
         $response = wp_remote_get($url, [
@@ -774,6 +928,136 @@ class CrawlerAjax
         }
 
         return $selectors;
+    }
+
+    private static function normalize_chapter_url_pattern(string $pattern): string
+    {
+        $pattern = trim(sanitize_text_field($pattern));
+        if ($pattern === '') {
+            return '';
+        }
+
+        return str_replace('{n}', '{chapter_number}', $pattern);
+    }
+
+    private static function template_selector_labels(): array
+    {
+        return [
+            'story_title_selector' => __('Thong tin truyen > Ten truyen', 'extend-site'),
+            'story_author_selector' => __('Thong tin truyen > Tac gia', 'extend-site'),
+            'story_desc_selector' => __('Thong tin truyen > Mo ta', 'extend-site'),
+            'story_thumb_selector' => __('Thong tin truyen > Anh bia', 'extend-site'),
+            'story_cats_selector' => __('Thong tin truyen > The loai', 'extend-site'),
+            'chapter_link_selector' => __('Danh sach chuong tren trang truyen > Khoi/link danh sach chuong', 'extend-site'),
+            'toc_page_link_selector' => __('Danh sach chuong tren trang truyen > Link phan trang muc luc', 'extend-site'),
+            'chapter_content_scope_selector' => __('Trang chi tiet chuong > Vung chi tiet chuong', 'extend-site'),
+            'chapter_title_selector' => __('Trang chi tiet chuong > Ten chuong', 'extend-site'),
+            'chapter_content_selector' => __('Trang chi tiet chuong > Noi dung truyen', 'extend-site'),
+        ];
+    }
+
+    private static function template_test_field_results(array $selectors, array $counts, array $samples, array $values): array
+    {
+        $fields = [
+            [
+                'key' => 'story_title_selector',
+                'group' => __('Thong tin truyen', 'extend-site'),
+                'label' => __('Ten truyen', 'extend-site'),
+                'value' => (string) ($values['story_title'] ?? ''),
+                'result' => (string) ($values['story_title'] ?? ''),
+            ],
+            [
+                'key' => 'story_author_selector',
+                'group' => __('Thong tin truyen', 'extend-site'),
+                'label' => __('Tac gia', 'extend-site'),
+                'value' => (string) ($values['story_author'] ?? ''),
+                'result' => (string) ($values['story_author'] ?? ''),
+            ],
+            [
+                'key' => 'story_cats_selector',
+                'group' => __('Thong tin truyen', 'extend-site'),
+                'label' => __('The loai', 'extend-site'),
+                'value' => implode(', ', (array) ($values['story_cats'] ?? [])),
+                'result' => implode(', ', (array) ($values['story_cats'] ?? [])),
+            ],
+            [
+                'key' => 'story_desc_selector',
+                'group' => __('Thong tin truyen', 'extend-site'),
+                'label' => __('Mo ta', 'extend-site'),
+                'value' => (string) ($values['story_desc'] ?? ''),
+                'result' => sprintf(__('%d ky tu', 'extend-site'), (int) ($values['story_desc_length'] ?? 0)),
+            ],
+            [
+                'key' => 'story_thumb_selector',
+                'group' => __('Thong tin truyen', 'extend-site'),
+                'label' => __('Anh bia', 'extend-site'),
+                'value' => (string) ($values['story_thumb'] ?? ''),
+                'result' => (string) ($values['story_thumb'] ?? ''),
+            ],
+            [
+                'key' => 'chapter_link_selector',
+                'group' => __('Danh sach chuong', 'extend-site'),
+                'label' => __('Link chuong', 'extend-site'),
+                'value' => (string) ((int) ($values['chapter_link_count'] ?? 0)),
+                'result' => sprintf(__('%d link', 'extend-site'), (int) ($values['chapter_link_count'] ?? 0)),
+                'missing_hint' => __('Khong tim thay link chuong trong HTML goc. Neu danh sach chuong van hien tren trinh duyet nhung khong hien o preview, nguon co the tai bang JavaScript/AJAX.', 'extend-site'),
+            ],
+            [
+                'key' => 'toc_page_link_selector',
+                'group' => __('Danh sach chuong', 'extend-site'),
+                'label' => __('Link phan trang muc luc', 'extend-site'),
+                'value' => (string) ((int) ($values['toc_page_count'] ?? 0)),
+                'result' => sprintf(__('%d link', 'extend-site'), (int) ($values['toc_page_count'] ?? 0)),
+            ],
+            [
+                'key' => 'chapter_content_scope_selector',
+                'group' => __('Trang chi tiet chuong', 'extend-site'),
+                'label' => __('Vung chi tiet chuong', 'extend-site'),
+                'value' => (string) ((int) ($counts['chapter_content_scope_selector'] ?? 0)),
+                'result' => sprintf(__('%d phan tu khop', 'extend-site'), (int) ($counts['chapter_content_scope_selector'] ?? 0)),
+            ],
+            [
+                'key' => 'chapter_title_selector',
+                'group' => __('Trang chi tiet chuong', 'extend-site'),
+                'label' => __('Ten chuong', 'extend-site'),
+                'value' => (string) ($values['chapter_title'] ?? ''),
+                'result' => (string) ($values['chapter_title'] ?? ''),
+            ],
+            [
+                'key' => 'chapter_content_selector',
+                'group' => __('Trang chi tiet chuong', 'extend-site'),
+                'label' => __('Noi dung truyen', 'extend-site'),
+                'value' => (string) ((int) ($values['chapter_content_length'] ?? 0)),
+                'result' => sprintf(__('%d ky tu', 'extend-site'), (int) ($values['chapter_content_length'] ?? 0)),
+            ],
+        ];
+
+        $results = [];
+        foreach ($fields as $field) {
+            $key = (string) $field['key'];
+            $selector = trim((string) ($selectors[$key] ?? ''));
+            if ($selector === '') {
+                continue;
+            }
+
+            $count = (int) ($counts[$key] ?? 0);
+            $has_value = trim((string) ($field['value'] ?? '')) !== '' && trim((string) ($field['value'] ?? '')) !== '0';
+            $status = $count > 0 && $has_value ? 'ok' : 'missing';
+            $hint = (string) ($field['missing_hint'] ?? __('Khong tim thay phan tu cho field nay. Nguyen nhan thuong gap: selector sai, class nam o the khac, hoac noi dung duoc tai bang JavaScript nen crawler khong thay trong HTML goc.', 'extend-site'));
+
+            $results[] = [
+                'group' => (string) $field['group'],
+                'label' => (string) $field['label'],
+                'selector' => $selector,
+                'status' => $status,
+                'result' => $status === 'ok' ? (string) ($field['result'] ?? '') : __('Khong tim thay', 'extend-site'),
+                'hint' => $status === 'missing' ? $hint : '',
+                'match_count' => $count,
+                'samples' => $samples[$key] ?? [],
+            ];
+        }
+
+        return $results;
     }
 
     private static function get_template_extract_rules(array $selectors): array
@@ -1015,6 +1299,63 @@ class CrawlerAjax
         }
 
         return $links;
+    }
+
+    private static function chapter_queue_from_template_pattern(array $template, string $story_url, int $detected_total = 0)
+    {
+        $pattern = trim((string) ($template['chapter_url_pattern'] ?? ''));
+        if ($pattern === '') {
+            return new WP_Error(
+                'missing_chapter_url_pattern',
+                __('Template chua co Mau URL chuong de tao queue. Hay cau hinh Mau URL chuong trong template.', 'extend-site')
+            );
+        }
+
+        $from = $detected_total > 0 ? 1 : absint($_POST['range_from'] ?? 0);
+        $to = $detected_total > 0 ? $detected_total : absint($_POST['range_to'] ?? 0);
+        $padding = absint($_POST['padding'] ?? 0);
+        if ($from < 1 || $to < 1 || $to < $from) {
+            return new WP_Error(
+                'invalid_template_range',
+                __('Khong phat hien duoc tong chuong tu selector. Hay nhap khoang chuong Tu/Den hop le de tao queue tu Mau URL chuong.', 'extend-site')
+            );
+        }
+
+        $max = (int) apply_filters('es_crawler_max_batch_size', self::MAX_BATCH_SIZE);
+        if (($to - $from + 1) > $max) {
+            return new WP_Error(
+                'template_range_too_large',
+                sprintf(__('Khoang chuong vuot gioi han an toan: %d URL.', 'extend-site'), $max)
+            );
+        }
+
+        $story_url_base = untrailingslashit($story_url);
+        $story_slug = trim(basename(untrailingslashit((string) wp_parse_url($story_url, PHP_URL_PATH))), '/');
+        $queue = [];
+        for ($chapter = $from; $chapter <= $to; $chapter++) {
+            $chapter_number = $padding > 0 ? str_pad((string) $chapter, $padding, '0', STR_PAD_LEFT) : (string) $chapter;
+            $url = str_replace(
+                ['{story_url}', '{story_slug}', '{chapter_number}', '{n}'],
+                [$story_url_base, $story_slug, $chapter_number, $chapter_number],
+                $pattern
+            );
+            $url = esc_url_raw($url);
+            if ($url === '' || !wp_http_validate_url($url)) {
+                return new WP_Error(
+                    'invalid_template_pattern_url',
+                    __('Mau URL chuong tao ra URL khong hop le. Hay kiem tra {story_url}, {story_slug} va {chapter_number}.', 'extend-site')
+                );
+            }
+
+            $queue[] = [
+                'chapterNumber' => $chapter,
+                'url' => $url,
+                'retries' => 0,
+                'completed' => false,
+            ];
+        }
+
+        return $queue;
     }
 
     private static function chapter_queue_from_links(array $links): array
@@ -1298,6 +1639,43 @@ class CrawlerAjax
         $nodes = self::query_selector_all($xpath, $selector);
 
         return $nodes ? $nodes->length : 0;
+    }
+
+    private static function query_selector_samples(DOMXPath $xpath, string $selector, int $limit): array
+    {
+        $nodes = self::query_selector_all($xpath, $selector);
+        if (!$nodes || $nodes->length < 1) {
+            return [];
+        }
+
+        $samples = [];
+        foreach ($nodes as $node) {
+            if (!$node instanceof DOMElement) {
+                continue;
+            }
+
+            $tag = strtolower($node->tagName);
+            $id = trim((string) $node->getAttribute('id'));
+            $class = trim((string) $node->getAttribute('class'));
+            $label = $tag;
+            if ($id !== '') {
+                $label .= '#' . $id;
+            }
+            if ($class !== '') {
+                $label .= '.' . preg_replace('/\s+/', '.', $class);
+            }
+
+            $samples[] = [
+                'node' => $label,
+                'text' => self::limit_text(self::node_text($node), 100),
+            ];
+
+            if (count($samples) >= $limit) {
+                break;
+            }
+        }
+
+        return $samples;
     }
 
     private static function query_selector_all(DOMXPath $xpath, string $selector, ?DOMNode $context = null)
@@ -1937,6 +2315,13 @@ class CrawlerAjax
     private static function build_chapter_title(int $story_id, int $chapter_number, string $source_title, string $mode, string $template = ''): string
     {
         $story_title = sanitize_text_field((string) get_the_title($story_id));
+
+        return self::build_chapter_title_from_story_title($story_title, $chapter_number, $source_title, $mode, $template);
+    }
+
+    private static function build_chapter_title_from_story_title(string $story_title, int $chapter_number, string $source_title, string $mode, string $template = ''): string
+    {
+        $story_title = sanitize_text_field($story_title);
         $source_title = sanitize_text_field(trim(wp_strip_all_tags($source_title)));
         $chapter_label = sprintf("Ch\xC6\xB0\xC6\xA1ng %d", $chapter_number);
 

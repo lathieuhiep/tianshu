@@ -119,7 +119,13 @@ class CrawlerTemplateAdmin
                                     ); ?>
                                     <?php self::render_selector_field('es-template-toc-page-link-selector', 'toc_page_link_selector', __('Link phân trang mục lục', 'extend-site')); ?>
                                 </div>
-                                <?php self::render_text_field('es-template-chapter-url-pattern', 'chapter_url_pattern', __('Mẫu URL chương', 'extend-site'), 'https://example.com/story/chapter-{chapter_number}/'); ?>
+                                <?php self::render_text_field(
+                                    'es-template-chapter-url-pattern',
+                                    'chapter_url_pattern',
+                                    __('Mẫu URL chương', 'extend-site'),
+                                    '{story_url}/chuong-{chapter_number}/',
+                                    __('Dung {story_url} de lay URL truyen dang cao, roi thay vi tri so chuong bang {chapter_number}. Vi du: {story_url}/chuong-{chapter_number}/. Neu site dung slug ngay sau domain, co the dung https://domain.com/{story_slug}/chuong-{chapter_number}/. Khong nen nhap cung slug cua truyen mau.', 'extend-site')
+                                ); ?>
                             </div>
                         </div>
 
@@ -181,15 +187,25 @@ class CrawlerTemplateAdmin
                 <aside class="es-template-panel es-template-preview-panel">
                     <h2><?php esc_html_e('Xem trước selector', 'extend-site'); ?></h2>
 
-                    <div class="es-template-field">
-                        <label for="es-template-target-url"><?php esc_html_e('URL xem trước / test selector', 'extend-site'); ?></label>
-                        <input type="url" id="es-template-target-url" class="regular-text" placeholder="https://example.com/story/" />
-                        <p class="description"><?php esc_html_e('Nhập URL trang truyện để test thông tin/mục lục, hoặc URL chương để test vùng chi tiết chương.', 'extend-site'); ?></p>
-                    </div>
+                    <div class="es-template-preview-url-grid">
+                        <div class="es-template-field">
+                            <label for="es-template-target-url"><?php esc_html_e('URL trang truyện / mục lục', 'extend-site'); ?></label>
+                            <input type="url" id="es-template-target-url" class="regular-text" placeholder="https://example.com/story/" />
+                            <p class="description"><?php esc_html_e('Chỉ dùng để test selector khi sửa template và sẽ được lưu theo template. Không ảnh hưởng URL truyện khi cào thật.', 'extend-site'); ?></p>
+                            <button type="button" class="button button-primary" id="es-template-load-preview">
+                                <?php esc_html_e('Xem trước trang truyện', 'extend-site'); ?>
+                            </button>
+                        </div>
 
-                    <button type="button" class="button button-primary" id="es-template-load-preview">
-                        <?php esc_html_e('Tải xem trước', 'extend-site'); ?>
-                    </button>
+                        <div class="es-template-field">
+                            <label for="es-template-chapter-url"><?php esc_html_e('URL chương mẫu', 'extend-site'); ?></label>
+                            <input type="url" id="es-template-chapter-url" class="regular-text" placeholder="https://example.com/story/chapter-1/" />
+                            <p class="description"><?php esc_html_e('Chỉ dùng để test vùng chi tiết chương, tên chương và nội dung truyện; sẽ được lưu theo template để lần sau mở lại dùng tiếp.', 'extend-site'); ?></p>
+                            <button type="button" class="button button-secondary" id="es-template-load-chapter-preview">
+                                <?php esc_html_e('Xem trước chương mẫu', 'extend-site'); ?>
+                            </button>
+                        </div>
+                    </div>
 
                     <div id="es-template-preview-status" class="es-template-preview-status" aria-live="polite"></div>
                     <iframe id="es-template-preview-frame" title="<?php echo esc_attr__('Xem trước mẫu crawler', 'extend-site'); ?>"></iframe>
@@ -199,12 +215,25 @@ class CrawlerTemplateAdmin
         <?php
     }
 
-    private static function render_text_field(string $id, string $name, string $label, string $placeholder = ''): void
+    private static function render_text_field(string $id, string $name, string $label, string $placeholder = '', string $description = ''): void
     {
         ?>
         <div class="es-template-field">
             <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html($label); ?></label>
-            <input type="text" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="regular-text" placeholder="<?php echo esc_attr($placeholder); ?>" />
+            <?php if ($id === 'es-template-chapter-url-pattern') : ?>
+                <div class="es-template-url-pattern-control">
+                    <input type="text" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="regular-text" placeholder="<?php echo esc_attr($placeholder); ?>" value="{story_url}/chuong-{chapter_number}/" />
+                    <button type="button" class="button" id="es-template-build-pattern-from-preview"><?php esc_html_e('Tạo từ URL chương mẫu', 'extend-site'); ?></button>
+                </div>
+            <?php else : ?>
+                <input type="text" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="regular-text" placeholder="<?php echo esc_attr($placeholder); ?>" />
+            <?php endif; ?>
+            <?php if ($description !== '') : ?>
+                <p class="description"><?php echo esc_html($description); ?></p>
+            <?php endif; ?>
+            <?php if ($id === 'es-template-chapter-url-pattern') : ?>
+                <div id="es-template-chapter-url-pattern-check" class="es-template-pattern-check" aria-live="polite"></div>
+            <?php endif; ?>
         </div>
         <?php
     }
