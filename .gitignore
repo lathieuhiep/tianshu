@@ -21,6 +21,9 @@ package-lock.json
 !src/
 !src/**
 
+!.codex/
+!.codex/AGENTS.md
+
 !.gitignore
 !gulpfile.js
 !package.json
