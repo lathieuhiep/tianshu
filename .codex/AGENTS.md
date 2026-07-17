@@ -127,8 +127,10 @@
   - frontend/admin AJAX handlers
   - widgets
   - latest chapter DB hooks
+  - system job queue and system job AJAX status
   - search controller and shortcode
   - story/chapter admin linking
+  - story clone admin action
 - Add new boot steps only for real plugin-level subsystems.
 
 ### Extend Site Post Types
@@ -202,9 +204,40 @@
 - Services/tools live in `plugins/extend-site/includes/Services`.
 - Current tools include:
   - `Services/Tools/ChapterSyncTool.php`
+  - `Services/Tools/SystemJobCleanupTool.php`
+  - `Services/Tools/SystemJobRunnerTool.php`
   - `Services/Tools/ToolManager.php`
   - `Services/Tools/ToolInterface.php`
+- Current workflow services include:
+  - `Services/SystemJobQueue.php`
+  - `Services/StoryCloneService.php`
+  - `Services/StoryChapterStatusSyncJob.php`
 - Services/tools own workflows and business actions; they should call repositories instead of scattering queries through UI code.
+
+### Extend Site System Jobs
+
+- Owned by `plugins/extend-site/includes/Services/SystemJobQueue.php` and `plugins/extend-site/includes/DB/SystemJobTable.php`.
+- Jobs are persisted in the custom table `{$wpdb->prefix}es_system_jobs`, not in `wp_options`.
+- `SystemJobTable` owns table creation, row insert/update/query, active-job checks, and manual cleanup of finished jobs.
+- Job table creation must run through `DBInstaller::install()` and `Plugin::maybe_run_db_updates()` by bumping the Extend Site DB version.
+- Current job types include:
+  - `clone_story_chapters`: clones chapters from a source story to the newly cloned story.
+  - `sync_story_chapter_status`: syncs all chapters of one selected story to `publish` or `draft`.
+- Job payloads should store stable IDs. Display labels can be mapped from IDs at render time so renamed stories show current titles.
+- Long-running story/chapter work must be chunked through this queue or another explicit batch mechanism, not performed in one admin request.
+- The system job UI lives in `Extend Site -> Công cụ`; progress is polled through AJAX and should remain read-only unless a specific tool action is requested.
+- Manual cleanup should delete only finished jobs (`done`, `failed`, `cancelled`) and must not delete `pending` or `running` jobs.
+
+### Extend Site Story Clone And Status Sync
+
+- Story clone is owned by `plugins/extend-site/includes/Services/StoryCloneService.php` and `plugins/extend-site/includes/Admin/StoryCloneAdmin.php`.
+- The `story` row action `Nhân bản` creates the cloned story immediately as `draft`.
+- Chapter cloning is queued as `clone_story_chapters`; chapters are cloned in batches and default to `draft`.
+- Cloned chapters must point to the cloned story via `ChapterPostType::META_STORY_ID`.
+- Clone workflow should copy content/meta/taxonomies/thumbnail-like references as content data, but reset runtime counters such as story/chapter views and story chapter count.
+- Changing a story status must not automatically cascade chapter statuses. Chapter status sync is an explicit tool/job.
+- Chapter status sync is owned by `StoryChapterStatusSyncJob` and is initiated from `Extend Site -> Công cụ` after selecting a story and target status.
+- Status sync currently supports only `publish` and `draft`; non-publish story statuses map to `draft` when using "follow story status".
 
 ### Extend Site Admin, Widgets, And Elementor
 
@@ -212,10 +245,13 @@
 - Current admin modules include:
   - `MenuPage`
   - `PermalinkSettings`
+  - `StoryCloneAdmin`
   - `StoryChapterLink`
+  - `SystemJobAjax`
 - Widgets live in `plugins/extend-site/includes/Widgets`.
 - Elementor addon code lives in `plugins/extend-site/includes/ElementorAddon`.
 - Admin modules must keep nonce and capability checks close to the request handling code.
+- The system tools page is rendered by `includes/Admin/views/tools.php` and may enqueue page-specific admin JS from `assets/js/backend/system-jobs.js`.
 
 ### Extend Referrals Boot Flow
 
