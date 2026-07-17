@@ -8,6 +8,7 @@ class DBInstaller {
     public static function install(): void {
         LatestChapterTable::create();
         ViewsStoryDailyTable::create();
+        SystemJobTable::create();
         CrawlerLinkTable::create();
         CrawlerTemplateTable::create();
     }

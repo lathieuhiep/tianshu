@@ -1,7 +1,10 @@
 <?php
 namespace ExtendSite\Admin;
 
+use ExtendSite\Services\StoryChapterStatusSyncJob;
 use ExtendSite\Services\Tools\ChapterSyncTool;
+use ExtendSite\Services\Tools\SystemJobCleanupTool;
+use ExtendSite\Services\Tools\SystemJobRunnerTool;
 use ExtendSite\Services\Tools\ToolManager;
 
 defined('ABSPATH') || exit;
@@ -78,8 +81,27 @@ class MenuPage
         $message = null;
         $tools = [
             'chapter_sync' => ChapterSyncTool::class,
+            'system_job_runner' => SystemJobRunnerTool::class,
+            'system_job_cleanup' => SystemJobCleanupTool::class,
             // thêm tool khác sau này ở đây
         ];
+
+        if (!empty($_POST['create_status_sync_job'])) {
+            check_admin_referer('create_status_sync_job_action', 'create_status_sync_job_nonce');
+
+            $story_id = absint($_POST['sync_story_id'] ?? 0);
+            $status_mode = sanitize_key((string) ($_POST['sync_status_mode'] ?? 'story'));
+            $result = StoryChapterStatusSyncJob::create($story_id, $status_mode);
+
+            if (is_wp_error($result)) {
+                $message = $result->get_error_message();
+            } else {
+                $message = sprintf(
+                    __('Đã tạo job đồng bộ trạng thái chương: %s', 'extend-site'),
+                    $result
+                );
+            }
+        }
 
         if (!empty($_POST['run_tool'])) {
             check_admin_referer('run_tool_action', 'run_tool_nonce');

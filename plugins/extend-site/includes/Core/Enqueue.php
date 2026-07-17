@@ -1,6 +1,7 @@
 <?php
 namespace ExtendSite\Core;
 
+use ExtendSite\Admin\SystemJobAjax;
 use ExtendSite\Crawler\CrawlerAdmin;
 use ExtendSite\Crawler\CrawlerAjax;
 use ExtendSite\Crawler\CrawlerTemplateAdmin;
@@ -44,6 +45,60 @@ class Enqueue
         $screen = get_current_screen();
         $is_crawler_page = $screen && $screen->id === 'extend-site_page_' . CrawlerAdmin::PAGE_SLUG;
         $is_crawler_template_page = $screen && $screen->id === 'extend-site_page_' . CrawlerTemplateAdmin::PAGE_SLUG;
+        $is_tools_page = $screen && $screen->id === 'extend-site_page_extend-site-tools';
+
+        if ($is_tools_page) {
+            wp_enqueue_style(
+                'select2',
+                EXTEND_SITE_URL . 'assets/vendor/select2/select2.min.css',
+                [],
+                '4.0.13'
+            );
+
+            wp_enqueue_script(
+                'select2',
+                EXTEND_SITE_URL . 'assets/vendor/select2/select2.min.js',
+                ['jquery'],
+                '4.0.13',
+                true
+            );
+
+            wp_enqueue_script(
+                'es-admin-story-chapter',
+                EXTEND_SITE_URL . 'assets/js/extend-site.min.js',
+                ['jquery', 'select2'],
+                EXTEND_SITE_VERSION,
+                true
+            );
+
+            wp_localize_script('es-admin-story-chapter', 'esAdminStoryChapter', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('es_admin_common'),
+            ]);
+
+            wp_enqueue_script(
+                'es-system-jobs',
+                EXTEND_SITE_URL . 'assets/js/backend/system-jobs.js',
+                ['jquery'],
+                EXTEND_SITE_VERSION,
+                true
+            );
+
+            wp_localize_script('es-system-jobs', 'esSystemJobs', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce(SystemJobAjax::NONCE_ACTION),
+                'action' => SystemJobAjax::ACTION_STATUS,
+                'create_status_sync_action' => SystemJobAjax::ACTION_CREATE_STATUS_SYNC,
+                'poll_interval' => 5000,
+                'i18n' => [
+                    'empty' => esc_html__('Chưa có job nền nào.', 'extend-site'),
+                    'error' => esc_html__('Không tải được tiến trình job.', 'extend-site'),
+                    'creating' => esc_html__('Đang tạo job đồng bộ...', 'extend-site'),
+                ],
+            ]);
+
+            return;
+        }
 
         // Kiểm tra an toàn
         if (!$screen || (!$is_crawler_page && !$is_crawler_template_page && !in_array($screen->post_type, ['story', 'chapter'], true))) {

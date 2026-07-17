@@ -4,7 +4,9 @@ namespace ExtendSite\Core;
 
 use ExtendSite\Admin\MenuPage;
 use ExtendSite\Admin\PermalinkSettings;
+use ExtendSite\Admin\StoryCloneAdmin;
 use ExtendSite\Admin\StoryChapterLink;
+use ExtendSite\Admin\SystemJobAjax;
 use ExtendSite\Ajax\IncrementView;
 use ExtendSite\Ajax\LoadChapters;
 use ExtendSite\Ajax\LoadLatestStories;
@@ -16,6 +18,7 @@ use ExtendSite\Crawler\CrawlerLinkTable;
 use ExtendSite\Crawler\CrawlerTemplateAdmin;
 use ExtendSite\Crawler\CrawlerTemplateTable;
 use ExtendSite\DB\LatestChapterTable;
+use ExtendSite\DB\SystemJobTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -24,13 +27,16 @@ use ExtendSite\PostType\TemplateLoader;
 use ExtendSite\Search\AjaxHandler;
 use ExtendSite\Search\SearchController;
 use ExtendSite\Search\SearchShortcode;
+use ExtendSite\Services\StoryCloneService;
+use ExtendSite\Services\StoryChapterStatusSyncJob;
+use ExtendSite\Services\SystemJobQueue;
 use ExtendSite\Widgets\Register;
 
 defined('ABSPATH') || exit;
 
 class Plugin
 {
-    private const DB_VERSION = '20260712_crawler_template_sample_urls';
+    private const DB_VERSION = '20260717_system_jobs_table';
 
     /**
      * Boot the plugin by initializing all components.
@@ -64,6 +70,12 @@ class Plugin
 
         // Initialize Story-Chapter link in admin
         StoryChapterLink::init();
+        StoryCloneAdmin::init();
+        SystemJobAjax::init();
+
+        SystemJobQueue::init();
+        StoryCloneService::init();
+        StoryChapterStatusSyncJob::init();
     }
 
     /**
@@ -87,6 +99,7 @@ class Plugin
 
         CrawlerLinkTable::create();
         CrawlerTemplateTable::create();
+        SystemJobTable::create();
         if (CrawlerLinkTable::has_story_hash_index()) {
             update_option('extend_site_db_version', self::DB_VERSION, false);
         }
