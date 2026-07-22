@@ -282,9 +282,9 @@
         const last = queue.length ? queue[queue.length - 1].url : '';
         const storyExists = !!data.story_exists || parseInt(data.story_id, 10) > 0;
         const storyStatus = storyExists ? 'Đã có' : 'Chưa có, sẽ tạo khi bấm Bắt đầu';
-        const queueSource = data.queue_source === 'pattern_detected_total'
-            ? 'Mẫu URL chương (tổng lấy từ selector)'
-            : 'Mẫu URL chương (khoảng nhập tay)';
+        const queueSource = 'Mẫu URL chương (khoảng nhập tay)';
+        const detectedTotal = parseInt(data.detected_total_chapters, 10) || 0;
+        const detectedTotalLabel = detectedTotal > 0 ? detectedTotal + ' chương (ước lượng)' : 'Không phát hiện được';
         const warnings = Array.isArray(data.warnings) ? data.warnings.filter(Boolean) : [];
         const warningHtml = warnings.length
             ? '<div class="es-crawler-template-summary-warning">' + warnings.map(function (warning) {
@@ -303,6 +303,7 @@
                 '<dt>Truyện</dt><dd>' + escapeHtml(data.story_title || '') + ' <small>(' + escapeHtml(storyStatus) + ')</small></dd>' +
                 createTitleInput +
                 '<dt>Nguồn queue</dt><dd>' + escapeHtml(queueSource) + '</dd>' +
+                '<dt>Tổng phát hiện</dt><dd>' + escapeHtml(detectedTotalLabel) + '</dd>' +
                 '<dt>Số chương</dt><dd>' + escapeHtml(data.total_chapters || queue.length || 0) + '</dd>' +
                 '<dt>URL đầu</dt><dd><code>' + escapeHtml(first) + '</code></dd>' +
                 '<dt>URL cuối</dt><dd><code>' + escapeHtml(last) + '</code></dd>' +
@@ -408,6 +409,58 @@
         };
     }
 
+    function buildTemplateQueue() {
+        const range = templateRangePayload();
+        const pattern = selectedTemplatePattern();
+        const max = parseInt(cfg.max_batch_size, 10) || 200;
+        const count = range.range_to - range.range_from + 1;
+
+        if (!pattern) {
+            throw new Error('Template chưa có Mẫu URL chương.');
+        }
+        if (!$storySourceUrl.val().trim()) {
+            throw new Error('Hãy nhập URL trang truyện.');
+        }
+        if (count > max) {
+            throw new Error('Số URL vượt quá giới hạn batch: ' + max + '.');
+        }
+
+        const queue = [];
+        for (let chapter = range.range_from; chapter <= range.range_to; chapter += 1) {
+            const url = resolveTemplatePattern(pattern, chapter);
+            if (!isHttpUrl(url)) {
+                throw new Error('Mẫu URL chương tạo ra URL không hợp lệ.');
+            }
+
+            queue.push({
+                chapterNumber: chapter,
+                url: url,
+                retries: 0,
+                completed: false
+            });
+        }
+
+        return queue;
+    }
+
+    function refreshTemplateQueueFromRange() {
+        state.queue = buildTemplateQueue();
+        state.index = 0;
+        state.processed = 0;
+        state.consecutiveFailures = 0;
+
+        if (state.queue.length) {
+            $from.val(state.queue[0].chapterNumber || 1);
+            $to.val(state.queue[state.queue.length - 1].chapterNumber || state.queue.length);
+            $previewNumber.val(state.queue[0].chapterNumber || 1);
+            $previewUrl.val(state.queue[0].url || '');
+        }
+
+        updateGeneratedPanel(state.queue);
+        updateProgress();
+        setButtons();
+    }
+
     async function ensureStoryBeforeStart() {
         if (crawlerMode() !== 'template') {
             return selectedStoryId();
@@ -499,7 +552,7 @@
     }
 
     function setFormLocked(locked) {
-        $('#es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-template-range-from, #es-crawler-template-range-to, #es-crawler-template-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn, #es-crawler-template-id, #es-crawler-story-source-url, #es-crawler-template-prepare-btn')
+        $('input[name="es_crawler_mode"], #es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-template-range-from, #es-crawler-template-range-to, #es-crawler-template-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn, #es-crawler-template-id, #es-crawler-story-source-url, #es-crawler-template-prepare-btn')
             .prop('disabled', locked);
 
         if ($story.length && $.fn.select2) {
@@ -846,7 +899,19 @@
     $templateFrom.add($templateTo).add($templatePadding).on('input change', function () {
         syncTemplatePatternView();
         if (crawlerMode() === 'template') {
-            clearCrawlerContext('Khoảng chương Template đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
+            clearPreviewOutput();
+            if (state.templatePrepared) {
+                try {
+                    refreshTemplateQueueFromRange();
+                    setNotice('Đã cập nhật danh sách URL theo khoảng chương mới.', 'success');
+                } catch (err) {
+                    state.queue = [];
+                    updateGeneratedPanel(state.queue);
+                    updateProgress();
+                    setButtons();
+                    setNotice(err.message || 'Khoảng chương Template không hợp lệ.', 'error');
+                }
+            }
         }
     });
 
@@ -869,6 +934,7 @@
             setTemplateStatus(err.message || 'Khoảng chương Template không hợp lệ.', 'error');
             return;
         }
+        const shouldPrefillDetectedRange = rangePayload.range_from === 1 && rangePayload.range_to === 1;
 
         const originalText = $templatePrepareBtn.text();
         $templatePrepareBtn.prop('disabled', true).text('Đang chuẩn bị...');
@@ -912,13 +978,20 @@
                 $previewNumber.val(state.queue[0].chapterNumber || 1);
                 $previewUrl.val(state.queue[0].url || '');
             }
+            const detectedTotal = parseInt(data.detected_total_chapters, 10) || 0;
+            if (shouldPrefillDetectedRange && detectedTotal > 1) {
+                const max = parseInt(cfg.max_batch_size, 10) || 200;
+                $templateFrom.val(1);
+                $templateTo.val(Math.min(detectedTotal, max));
+                refreshTemplateQueueFromRange();
+            }
             fillReplacementRules(data.find_replace_rules || []);
             updateGeneratedPanel(state.queue);
             updateProgress();
             setButtons();
             setTemplateStatus(data.message || 'Đã chuẩn bị batch từ Template.', 'success');
             renderTemplateSummary(data);
-            if (data.queue_source === 'pattern_manual_range' || parseInt(data.detected_total_chapters, 10) <= 0) {
+            if (detectedTotal <= 0) {
                 $templateTo.trigger('focus').trigger('select');
             }
             setNotice('', 'success');
@@ -1005,7 +1078,9 @@
                 throw new Error('Hãy chuẩn bị batch từ Template trước.');
             }
 
-            if (!state.queue.length) {
+            if (crawlerMode() === 'template') {
+                refreshTemplateQueueFromRange();
+            } else if (!state.queue.length) {
                 state.queue = buildQueue();
                 updateGeneratedPanel(state.queue);
             }

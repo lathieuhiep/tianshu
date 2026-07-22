@@ -508,13 +508,29 @@ class CrawlerAjax
 
         $links = self::template_chapter_links($xpath, $template, $story_url);
         $detected_total = count($links);
-        $queue = self::chapter_queue_from_template_pattern($template, $story_url, $detected_total);
+        $warnings = [];
+        $queue = self::chapter_queue_from_template_pattern($template, $story_url);
         if (is_wp_error($queue)) {
             wp_send_json_error([
                 'message' => $queue->get_error_message(),
             ], 400);
         }
-        $queue_source = $detected_total > 0 ? 'pattern_detected_total' : 'pattern_manual_range';
+        $queue_source = 'pattern_manual_range';
+        $range_to = absint($_POST['range_to'] ?? 0);
+        if ($detected_total > 0) {
+            $warnings[] = sprintf(
+                __('Tong chuong phat hien chi la uoc luong: %d chuong.', 'extend-site'),
+                $detected_total
+            );
+            if ($range_to > $detected_total) {
+                $warnings[] = sprintf(
+                    __('Khoang chuong dang chon vuot tong uoc luong (%d). Crawler van se chay theo khoang da nhap va tu dung neu gap nhieu loi lien tiep.', 'extend-site'),
+                    $detected_total
+                );
+            }
+        } else {
+            $warnings[] = __('Khong phat hien duoc tong link chuong tu template. Crawler se chay theo khoang Tu/Den da nhap.', 'extend-site');
+        }
 
         $max = (int) apply_filters('es_crawler_max_batch_size', self::MAX_BATCH_SIZE);
         if (count($queue) > $max) {
@@ -1308,7 +1324,7 @@ class CrawlerAjax
         return $links;
     }
 
-    private static function chapter_queue_from_template_pattern(array $template, string $story_url, int $detected_total = 0)
+    private static function chapter_queue_from_template_pattern(array $template, string $story_url)
     {
         $pattern = trim((string) ($template['chapter_url_pattern'] ?? ''));
         if ($pattern === '') {
@@ -1318,13 +1334,13 @@ class CrawlerAjax
             );
         }
 
-        $from = $detected_total > 0 ? 1 : absint($_POST['range_from'] ?? 0);
-        $to = $detected_total > 0 ? $detected_total : absint($_POST['range_to'] ?? 0);
+        $from = absint($_POST['range_from'] ?? 0);
+        $to = absint($_POST['range_to'] ?? 0);
         $padding = absint($_POST['padding'] ?? 0);
         if ($from < 1 || $to < 1 || $to < $from) {
             return new WP_Error(
                 'invalid_template_range',
-                __('Khong phat hien duoc tong chuong tu selector. Hay nhap khoang chuong Tu/Den hop le de tao queue tu Mau URL chuong.', 'extend-site')
+                __('Hay nhap khoang chuong Tu/Den hop le de tao queue tu Mau URL chuong.', 'extend-site')
             );
         }
 
