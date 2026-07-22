@@ -276,12 +276,67 @@
         $templateSummary.addClass('is-hidden').empty();
     }
 
+    function templateStoryTitle() {
+        return String($('#es-crawler-template-story-title').val() || (state.preparedStory && state.preparedStory.title) || '').trim();
+    }
+
+    function updateTemplateStoryTargetView() {
+        const title = state.storyId > 0
+            ? String($('#es-crawler-template-story-target-label').data('storyTitle') || $story.find('option:selected').text() || ('#' + state.storyId)).trim()
+            : templateStoryTitle();
+        const status = state.storyId > 0 ? 'Đã có' : 'Chưa có, sẽ tạo khi bấm Bắt đầu';
+        const label = title ? title + ' (' + status + ')' : status;
+
+        $('#es-crawler-template-story-target-label').text(label);
+    }
+
+    function initTemplateStoryTargetSelect() {
+        const $target = $('#es-crawler-template-story-target');
+        if (!$target.length || !$.fn.select2) {
+            return;
+        }
+
+        $target.select2({
+            width: '100%',
+            placeholder: 'Tìm truyện đã có...',
+            allowClear: true,
+            minimumInputLength: 2,
+            language: {
+                inputTooShort: function () {
+                    return 'Nhập ít nhất 2 ký tự để tìm truyện.';
+                },
+                searching: function () {
+                    return 'Đang tìm...';
+                },
+                noResults: function () {
+                    return 'Không tìm thấy truyện phù hợp.';
+                }
+            },
+            ajax: {
+                url: cfg.ajax_url,
+                dataType: 'json',
+                delay: 400,
+                data: function (params) {
+                    return {
+                        action: cfg.story_search_action,
+                        nonce: cfg.story_search_nonce,
+                        q: params.term || ''
+                    };
+                },
+                processResults: function (data) {
+                    return { results: data || [] };
+                }
+            }
+        });
+    }
+
     function renderTemplateSummary(data) {
         const queue = Array.isArray(data.queue) ? data.queue : [];
         const first = queue.length ? queue[0].url : '';
         const last = queue.length ? queue[queue.length - 1].url : '';
         const storyExists = !!data.story_exists || parseInt(data.story_id, 10) > 0;
         const storyStatus = storyExists ? 'Đã có' : 'Chưa có, sẽ tạo khi bấm Bắt đầu';
+        const storyTitle = data.story_title || (state.preparedStory && state.preparedStory.title) || '';
         const queueSource = 'Mẫu URL chương (khoảng nhập tay)';
         const detectedTotal = parseInt(data.detected_total_chapters, 10) || 0;
         const detectedTotalLabel = detectedTotal > 0 ? detectedTotal + ' chương (ước lượng)' : 'Không phát hiện được';
@@ -291,8 +346,9 @@
                 return '<p>' + escapeHtml(warning) + '</p>';
             }).join('') + '</div>'
             : '';
-        const createTitleInput = storyExists ? '' :
-            '<dt>Tên truyện sẽ tạo</dt><dd><input type="text" id="es-crawler-prepared-story-title" class="regular-text" value="' + escapeHtml(data.story_title || '') + '" /></dd>';
+        const selectedStoryOption = storyExists
+            ? '<option value="' + escapeHtml(data.story_id || '') + '" selected>' + escapeHtml(storyTitle) + '</option>'
+            : '';
 
         $templateSummary
             .removeClass('is-hidden')
@@ -300,8 +356,23 @@
                 warningHtml +
                 '<dl>' +
                 '<dt>Template</dt><dd>' + escapeHtml(data.template_name || '') + '</dd>' +
-                '<dt>Truyện</dt><dd>' + escapeHtml(data.story_title || '') + ' <small>(' + escapeHtml(storyStatus) + ')</small></dd>' +
-                createTitleInput +
+                '<dt>Truyện</dt><dd>' +
+                '<div class="es-crawler-template-story-target">' +
+                '<span id="es-crawler-template-story-target-label" data-story-title="' + escapeHtml(storyTitle) + '">' + escapeHtml(storyTitle) + ' <small>(' + escapeHtml(storyStatus) + ')</small></span>' +
+                '<button type="button" class="button button-small es-crawler-template-story-edit" title="Sửa hoặc chọn truyện đích" aria-label="Sửa hoặc chọn truyện đích"><span class="dashicons dashicons-edit"></span></button>' +
+                '</div>' +
+                '<div class="es-crawler-template-story-editor is-hidden">' +
+                '<label for="es-crawler-template-story-target">Tìm truyện đã có</label>' +
+                '<select id="es-crawler-template-story-target" class="regular-text es-crawler-template-story-control">' + selectedStoryOption + '</select>' +
+                '<label for="es-crawler-template-story-title">Hoặc tên truyện mới</label>' +
+                '<input type="text" id="es-crawler-template-story-title" class="regular-text es-crawler-template-story-control" value="' + escapeHtml(storyTitle) + '" />' +
+                '<div class="es-crawler-template-story-actions">' +
+                '<button type="button" class="button button-primary es-crawler-template-story-apply">Áp dụng</button>' +
+                '<button type="button" class="button es-crawler-template-story-cancel">Hủy</button>' +
+                '</div>' +
+                '<p class="description">Chọn truyện đã có để cào vào truyện đó, hoặc nhập tên mới nếu truyện chưa tồn tại.</p>' +
+                '</div>' +
+                '</dd>' +
                 '<dt>Nguồn queue</dt><dd>' + escapeHtml(queueSource) + '</dd>' +
                 '<dt>Tổng phát hiện</dt><dd>' + escapeHtml(detectedTotalLabel) + '</dd>' +
                 '<dt>Số chương</dt><dd>' + escapeHtml(data.total_chapters || queue.length || 0) + '</dd>' +
@@ -309,6 +380,8 @@
                 '<dt>URL cuối</dt><dd><code>' + escapeHtml(last) + '</code></dd>' +
                 '</dl>'
             );
+
+        initTemplateStoryTargetSelect();
     }
 
     function fillReplacementRules(rules) {
@@ -474,8 +547,7 @@
             throw new Error('Thiếu thông tin truyện: vui lòng chuẩn bị batch từ Template trước.');
         }
 
-        const editedTitle = $('#es-crawler-prepared-story-title').val();
-        const storyTitle = String(editedTitle || state.preparedStory.title || '').trim();
+        const storyTitle = templateStoryTitle();
         if (!storyTitle) {
             throw new Error('Tên truyện sẽ tạo không được để trống.');
         }
@@ -552,11 +624,14 @@
     }
 
     function setFormLocked(locked) {
-        $('input[name="es_crawler_mode"], #es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-template-range-from, #es-crawler-template-range-to, #es-crawler-template-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn, #es-crawler-template-id, #es-crawler-story-source-url, #es-crawler-template-prepare-btn')
+        $('input[name="es_crawler_mode"], #es-crawler-story, #es-crawler-url-pattern, #es-crawler-range-from, #es-crawler-range-to, #es-crawler-padding, #es-crawler-template-range-from, #es-crawler-template-range-to, #es-crawler-template-padding, #es-crawler-preview-number, #es-crawler-post-status, #es-crawler-title-mode, #es-crawler-title-template, #es-crawler-delay, #es-crawler-preview-url, #es-crawler-find, #es-crawler-replace, #es-crawler-generate-btn, #es-crawler-preview-btn, #es-crawler-template-id, #es-crawler-story-source-url, #es-crawler-template-prepare-btn, .es-crawler-template-story-control, .es-crawler-template-story-edit, .es-crawler-template-story-apply, .es-crawler-template-story-cancel')
             .prop('disabled', locked);
 
         if ($story.length && $.fn.select2) {
             $story.prop('disabled', locked).trigger('change.select2');
+        }
+        if ($.fn.select2) {
+            $('#es-crawler-template-story-target').prop('disabled', locked).trigger('change.select2');
         }
     }
 
@@ -860,6 +935,49 @@
         });
     }
 
+    $templateSummary.on('click', '.es-crawler-template-story-edit', function () {
+        $('.es-crawler-template-story-editor').removeClass('is-hidden');
+        $('#es-crawler-template-story-title').trigger('focus').trigger('select');
+    });
+
+    $templateSummary.on('click', '.es-crawler-template-story-cancel', function () {
+        $('.es-crawler-template-story-editor').addClass('is-hidden');
+    });
+
+    $templateSummary.on('click', '.es-crawler-template-story-apply', function () {
+        const $target = $('#es-crawler-template-story-target');
+        const selectedId = parseInt($target.val(), 10) || 0;
+        const selectedData = $.fn.select2 && $target.length ? ($target.select2('data')[0] || null) : null;
+        const selectedTitle = selectedData && selectedData.text ? String(selectedData.text).trim() : '';
+        const newTitle = String($('#es-crawler-template-story-title').val() || '').trim();
+
+        if (selectedId > 0) {
+            state.storyId = selectedId;
+            $('#es-crawler-template-story-target-label')
+                .data('storyTitle', selectedTitle || ('#' + selectedId));
+
+            const option = new Option(selectedTitle || ('#' + selectedId), selectedId, true, true);
+            $story.append(option).trigger('change');
+        } else {
+            if (!newTitle) {
+                setNotice('Tên truyện mới không được để trống.', 'error');
+                return;
+            }
+
+            state.storyId = 0;
+            if (state.preparedStory) {
+                state.preparedStory.title = newTitle;
+            }
+            $story.val(null).trigger('change');
+            $('#es-crawler-template-story-target-label')
+                .data('storyTitle', newTitle);
+        }
+
+        updateTemplateStoryTargetView();
+        $('.es-crawler-template-story-editor').addClass('is-hidden');
+        setNotice('Đã cập nhật truyện đích.', 'success');
+    });
+
     $('#es-crawler-generate-btn').on('click', function () {
         try {
             if (crawlerMode() === 'template') {
@@ -1021,7 +1139,7 @@
                 throw new Error('Hãy chuẩn bị batch từ Template trước khi xem thử.');
             }
             const previewStoryTitle = isTemplateMode
-                ? String($('#es-crawler-prepared-story-title').val() || (state.preparedStory && state.preparedStory.title) || '').trim()
+                ? templateStoryTitle()
                 : '';
             if (!storyId && !previewStoryTitle) {
                 throw new Error('Thiếu tên truyện: hãy chuẩn bị batch từ Template hoặc nhập tên truyện sẽ tạo.');
@@ -1038,8 +1156,7 @@
                 source_url: url,
                 chapter_number: chapterNumber,
                 replace_rules: JSON.stringify(replacementRules()),
-                template_id: isTemplateMode ? ($templateId.val() || '') : '',
-                allow_short_content: true
+                template_id: isTemplateMode ? ($templateId.val() || '') : ''
             }, titleOptions()));
 
             const data = response.data || {};

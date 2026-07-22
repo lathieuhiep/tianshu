@@ -226,6 +226,46 @@
     overflow-wrap: anywhere;
 }
 
+.es-crawler-template-story-target {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.es-crawler-template-story-edit {
+    align-items: center;
+    display: inline-flex;
+    min-height: 28px;
+}
+
+.es-crawler-template-story-edit .dashicons {
+    font-size: 16px;
+    height: 16px;
+    line-height: 16px;
+    width: 16px;
+}
+
+.es-crawler-template-story-editor {
+    margin-top: 10px;
+    max-width: 520px;
+}
+
+.es-crawler-template-story-editor label {
+    display: block;
+    font-weight: 600;
+    margin: 8px 0 4px;
+}
+
+.es-crawler-template-story-editor .select2-container {
+    max-width: 100%;
+}
+
+.es-crawler-template-story-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
 .es-crawler-field {
     margin-bottom: 16px;
 }

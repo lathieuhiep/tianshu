@@ -66,13 +66,13 @@ class CrawlerAjax
 
         if (!$lock_result['acquired']) {
             wp_send_json_error([
-                'message' => __('Dang co mot batch crawler khac chay.', 'extend-site'),
+                'message' => __('Đang có một batch crawler khác chạy.', 'extend-site'),
                 'lock' => $lock_result['lock'],
             ], 409);
         }
 
         wp_send_json_success([
-            'message' => __('Batch crawler da bat dau.', 'extend-site'),
+            'message' => __('Batch crawler đã bắt đầu.', 'extend-site'),
             'batch_id' => $lock_result['lock']['batch_id'],
             'lock' => $lock_result['lock'],
         ]);
@@ -86,12 +86,12 @@ class CrawlerAjax
         $lock = CrawlerLock::heartbeat($batch_id);
         if (!$lock) {
             wp_send_json_error([
-                'message' => __('Lock crawler bi thieu, da het han hoac khong khop.', 'extend-site'),
+                'message' => __('Lock crawler bị thiếu, đã hết hạn hoặc không khớp.', 'extend-site'),
             ], 409);
         }
 
         wp_send_json_success([
-            'message' => __('Heartbeat crawler da duoc chap nhan.', 'extend-site'),
+            'message' => __('Heartbeat crawler đã được chấp nhận.', 'extend-site'),
             'lock' => $lock,
         ]);
     }
@@ -103,12 +103,12 @@ class CrawlerAjax
         $batch_id = self::get_batch_id();
         if (!CrawlerLock::release($batch_id)) {
             wp_send_json_error([
-                'message' => __('Lock crawler bi thieu, da het han hoac khong khop.', 'extend-site'),
+                'message' => __('Lock crawler bị thiếu, đã hết hạn hoặc không khớp.', 'extend-site'),
             ], 409);
         }
 
         wp_send_json_success([
-            'message' => __('Batch crawler da dung.', 'extend-site'),
+            'message' => __('Batch crawler đã dừng.', 'extend-site'),
         ]);
     }
 
@@ -122,7 +122,7 @@ class CrawlerAjax
             $story_id = self::get_valid_story_id();
         } elseif ($story_id > 0 && get_post_type($story_id) !== StoryPostType::SLUG) {
             wp_send_json_error([
-                'message' => __('ID truyen khong hop le.', 'extend-site'),
+                'message' => __('ID truyện không hợp lệ.', 'extend-site'),
             ], 400);
         }
         $chapter_number = self::get_valid_chapter_number();
@@ -132,20 +132,19 @@ class CrawlerAjax
         $template = $template_id > 0 ? CrawlerTemplateTable::find($template_id) : null;
         if ($template_id > 0 && !$template) {
             wp_send_json_error([
-                'message' => __('Khong tim thay template crawler.', 'extend-site'),
+                'message' => __('Không tìm thấy template crawler.', 'extend-site'),
             ], 404);
         }
         if ($template && !$replace_rules) {
             $replace_rules = is_array($template['find_replace_rules'] ?? null) ? $template['find_replace_rules'] : [];
         }
-        $allow_short = self::get_bool('allow_short_content');
         $title_mode = self::get_title_mode();
         $title_template = self::get_title_template();
         $expected_chapter_number = self::resolve_expected_chapter_number($source_url, $chapter_number);
 
         $result = $template
-            ? Scraper::scrape_with_template($source_url, $template, $replace_rules, $allow_short)
-            : Scraper::scrape($source_url, $replace_rules, $allow_short);
+            ? Scraper::scrape_with_template($source_url, $template, $replace_rules)
+            : Scraper::scrape($source_url, $replace_rules);
         if (is_wp_error($result)) {
             wp_send_json_error(self::error_payload($result, [
                 'source_url' => $source_url,
@@ -172,7 +171,7 @@ class CrawlerAjax
 
         wp_send_json_success([
             'status' => 'success',
-            'message' => __('Da phan tich ban xem thu thanh cong.', 'extend-site'),
+            'message' => __('Đã phân tích bản xem thử thành công.', 'extend-site'),
             'source_url' => $source_url,
             'clean_url' => $result['clean_url'],
             'domain' => $result['domain'],
@@ -207,7 +206,7 @@ class CrawlerAjax
 
         $warnings = [];
         if ($detected_total <= 0) {
-            $warnings[] = __('Khong phat hien duoc tong link chuong tu template. Hay kiem tra va nhap dung so chuong ket thuc o o "Den".', 'extend-site');
+            $warnings[] = __('Không phát hiện được tổng link chương từ template. Hãy kiểm tra và nhập đúng số chương kết thúc ở ô "Đến".', 'extend-site');
         }
 
         wp_send_json_success([
@@ -274,7 +273,7 @@ class CrawlerAjax
             $match_samples[$label] = $samples;
             if ($selector !== '' && $match_count === 0) {
                 $warnings[] = sprintf(
-                    __('Selector khong co ket qua o muc "%1$s": %2$s', 'extend-site'),
+                    __('Selector không có kết quả ở mục "%1$s": %2$s', 'extend-site'),
                     $label,
                     $selector
                 );
@@ -295,7 +294,7 @@ class CrawlerAjax
             $chapter_scope = $scope_nodes && $scope_nodes->length > 0 ? $scope_nodes->item(0) : null;
             if (!$chapter_scope) {
                 $warnings[] = sprintf(
-                    __('Khong tim thay khoi boc noi dung chuong o muc "%s".', 'extend-site'),
+                __('Không tìm thấy khối bọc nội dung chương ở mục "%s".', 'extend-site'),
                     $selector_labels['chapter_content_scope_selector']
                 );
             }
@@ -313,7 +312,7 @@ class CrawlerAjax
         }
         if ($selectors['chapter_content_selector'] !== '' && !$same_chapter_content_selector && $use_chapter_scope && $chapter_scope && $chapter_content === '') {
             $warnings[] = sprintf(
-                __('Khong tim thay noi dung chuong ben trong muc "%s".', 'extend-site'),
+                __('Không tìm thấy nội dung chương bên trong mục "%s".', 'extend-site'),
                 $selector_labels['chapter_content_scope_selector']
             );
         }
@@ -327,14 +326,14 @@ class CrawlerAjax
 
         if ($story_title === '') {
             $warnings[] = sprintf(
-                __('Khong boc duoc ten truyen o muc "%s".', 'extend-site'),
+                __('Không bóc được tên truyện ở mục "%s".', 'extend-site'),
                 $selector_labels['story_title_selector']
             );
         }
 
         if ($selectors['chapter_link_selector'] !== '' && $chapter_links['count'] === 0) {
             $warnings[] = sprintf(
-                __('Khong tim thay link chuong o muc "%s".', 'extend-site'),
+                __('Không tìm thấy link chương ở mục "%s".', 'extend-site'),
                 $selector_labels['chapter_link_selector']
             );
         }
@@ -405,32 +404,32 @@ class CrawlerAjax
         ];
 
         if ($data['name'] === '') {
-            wp_send_json_error(['message' => __('Thieu ten nguon/template.', 'extend-site')], 400);
+            wp_send_json_error(['message' => __('Thiếu tên nguồn/template.', 'extend-site')], 400);
         }
 
         if ($data['domain'] === '') {
-            wp_send_json_error(['message' => __('Thieu domain template.', 'extend-site')], 400);
+            wp_send_json_error(['message' => __('Thiếu domain template.', 'extend-site')], 400);
         }
 
         if ($data['chapter_content_scope_selector'] === '') {
-            wp_send_json_error(['message' => __('Thieu selector khoi boc noi dung chuong.', 'extend-site')], 400);
+            wp_send_json_error(['message' => __('Thiếu selector khối bọc nội dung chương.', 'extend-site')], 400);
         }
 
         if ($data['chapter_url_pattern'] === '') {
-            wp_send_json_error(['message' => __('Mau URL chuong la bat buoc vi crawler dung mau nay de tao URL tung chuong.', 'extend-site')], 400);
+            wp_send_json_error(['message' => __('Mẫu URL chương là bắt buộc vì crawler dùng mẫu này để tạo URL từng chương.', 'extend-site')], 400);
         }
 
         if (strpos($data['chapter_url_pattern'], '{chapter_number}') === false) {
-            wp_send_json_error(['message' => __('Mau URL chuong phai co bien so chuong {chapter_number} hoac {n}, vi du: {story_url}/chuong-{chapter_number}/', 'extend-site')], 400);
+            wp_send_json_error(['message' => __('Mẫu URL chương phải có biến số chương {chapter_number} hoặc {n}, ví dụ: {story_url}/chuong-{chapter_number}/', 'extend-site')], 400);
         }
 
         $template = CrawlerTemplateTable::save($data);
         if (!$template) {
-            wp_send_json_error(['message' => __('Khong the luu template crawler.', 'extend-site')], 500);
+            wp_send_json_error(['message' => __('Không thể lưu template crawler.', 'extend-site')], 500);
         }
 
         wp_send_json_success([
-            'message' => __('Da luu template crawler.', 'extend-site'),
+            'message' => __('Đã lưu template crawler.', 'extend-site'),
             'template' => $template,
             'templates' => CrawlerTemplateTable::all(),
         ]);
@@ -443,7 +442,7 @@ class CrawlerAjax
         $id = absint($_POST['template_id'] ?? 0);
         $template = CrawlerTemplateTable::find($id);
         if (!$template) {
-            wp_send_json_error(['message' => __('Khong tim thay template crawler.', 'extend-site')], 404);
+            wp_send_json_error(['message' => __('Không tìm thấy template crawler.', 'extend-site')], 404);
         }
 
         wp_send_json_success([
@@ -457,11 +456,11 @@ class CrawlerAjax
 
         $id = absint($_POST['template_id'] ?? 0);
         if (!CrawlerTemplateTable::delete($id)) {
-            wp_send_json_error(['message' => __('Khong the xoa template crawler.', 'extend-site')], 400);
+            wp_send_json_error(['message' => __('Không thể xóa template crawler.', 'extend-site')], 400);
         }
 
         wp_send_json_success([
-            'message' => __('Da xoa template crawler.', 'extend-site'),
+            'message' => __('Đã xóa template crawler.', 'extend-site'),
             'templates' => CrawlerTemplateTable::all(),
         ]);
     }
@@ -473,10 +472,10 @@ class CrawlerAjax
         $template_id = absint($_POST['template_id'] ?? 0);
         $template = CrawlerTemplateTable::find($template_id);
         if (!$template) {
-            wp_send_json_error(['message' => __('Khong tim thay template crawler.', 'extend-site')], 404);
+            wp_send_json_error(['message' => __('Không tìm thấy template crawler.', 'extend-site')], 404);
         }
         if (trim((string) ($template['chapter_content_scope_selector'] ?? '')) === '') {
-            wp_send_json_error(['message' => __('Template chua cau hinh selector khoi boc noi dung chuong.', 'extend-site')], 400);
+            wp_send_json_error(['message' => __('Template chưa cấu hình selector khối bọc nội dung chương.', 'extend-site')], 400);
         }
 
         $story_url = self::get_target_url('story_url');
@@ -519,17 +518,17 @@ class CrawlerAjax
         $range_to = absint($_POST['range_to'] ?? 0);
         if ($detected_total > 0) {
             $warnings[] = sprintf(
-                __('Tong chuong phat hien chi la uoc luong: %d chuong.', 'extend-site'),
+                __('Tổng chương phát hiện chỉ là ước lượng: %d chương.', 'extend-site'),
                 $detected_total
             );
             if ($range_to > $detected_total) {
                 $warnings[] = sprintf(
-                    __('Khoang chuong dang chon vuot tong uoc luong (%d). Crawler van se chay theo khoang da nhap va tu dung neu gap nhieu loi lien tiep.', 'extend-site'),
+                    __('Khoảng chương đang chọn vượt tổng ước lượng (%d). Crawler vẫn sẽ chạy theo khoảng đã nhập và tự dừng nếu gặp nhiều lỗi liên tiếp.', 'extend-site'),
                     $detected_total
                 );
             }
         } else {
-            $warnings[] = __('Khong phat hien duoc tong link chuong tu template. Crawler se chay theo khoang Tu/Den da nhap.', 'extend-site');
+            $warnings[] = __('Không phát hiện được tổng link chương từ template. Crawler sẽ chạy theo khoảng Từ/Đến đã nhập.', 'extend-site');
         }
 
         $max = (int) apply_filters('es_crawler_max_batch_size', self::MAX_BATCH_SIZE);
@@ -538,7 +537,7 @@ class CrawlerAjax
         }
 
         wp_send_json_success([
-            'message' => sprintf(__('Da chuan bi %d URL chuong tu template.', 'extend-site'), count($queue)),
+            'message' => sprintf(__('Đã chuẩn bị %d URL chương từ template.', 'extend-site'), count($queue)),
             'story_id' => $existing_story_id,
             'story_title' => $existing_story_id > 0 ? get_the_title($existing_story_id) : $story_title,
             'story_created' => false,
@@ -592,8 +591,8 @@ class CrawlerAjax
         $story_id = (int) $story_result['story_id'];
         wp_send_json_success([
             'message' => !empty($story_result['created'])
-                ? __('Da tao truyen moi.', 'extend-site')
-                : __('Da tim thay truyen co san.', 'extend-site'),
+                ? __('Đã tạo truyện mới.', 'extend-site')
+                : __('Đã tìm thấy truyện có sẵn.', 'extend-site'),
             'story_id' => $story_id,
             'story_title' => get_the_title($story_id),
             'story_created' => (bool) $story_result['created'],
@@ -614,7 +613,7 @@ class CrawlerAjax
         $template_id = absint($_POST['template_id'] ?? 0);
         $template = $template_id > 0 ? CrawlerTemplateTable::find($template_id) : null;
         if ($template_id > 0 && !$template) {
-            wp_send_json_error(self::result_payload(CrawlerLinkTable::STATUS_FAILED, __('Khong tim thay template crawler.', 'extend-site'), [
+            wp_send_json_error(self::result_payload(CrawlerLinkTable::STATUS_FAILED, __('Không tìm thấy template crawler.', 'extend-site'), [
                 'source_url' => $source_url,
                 'story_id' => $story_id,
                 'chapter_number' => $chapter_number,
@@ -623,7 +622,6 @@ class CrawlerAjax
         if ($template && !$replace_rules) {
             $replace_rules = is_array($template['find_replace_rules'] ?? null) ? $template['find_replace_rules'] : [];
         }
-        $allow_short = self::get_bool('allow_short_content');
         $title_mode = self::get_title_mode();
         $title_template = self::get_title_template();
         $expected_chapter_number = self::resolve_expected_chapter_number($source_url, $chapter_number);
@@ -641,7 +639,7 @@ class CrawlerAjax
             if (!$existing_chapter_id) {
                 $existing = null;
             } else {
-                wp_send_json_success(self::result_payload(CrawlerLinkTable::STATUS_DUPLICATE, __('URL nguon nay da crawl thanh cong truoc do.', 'extend-site'), [
+                wp_send_json_success(self::result_payload(CrawlerLinkTable::STATUS_DUPLICATE, __('URL nguồn này đã crawl thành công trước đó.', 'extend-site'), [
                     'source_url' => $source_url,
                     'clean_url' => $clean_url,
                     'story_id' => $story_id,
@@ -665,7 +663,7 @@ class CrawlerAjax
         ]);
 
         if (!$tracking_id) {
-            wp_send_json_error(self::result_payload(CrawlerLinkTable::STATUS_FAILED, __('Khong the tao dong tracking crawler.', 'extend-site'), [
+            wp_send_json_error(self::result_payload(CrawlerLinkTable::STATUS_FAILED, __('Không thể tạo dòng tracking crawler.', 'extend-site'), [
                 'source_url' => $source_url,
                 'clean_url' => $clean_url,
                 'story_id' => $story_id,
@@ -688,7 +686,7 @@ class CrawlerAjax
 
         $existing_chapter_id = self::find_existing_chapter($story_id, $chapter_number);
         if ($existing_chapter_id) {
-            $message = __('So chuong nay da ton tai trong truyen.', 'extend-site');
+            $message = __('Số chương này đã tồn tại trong truyện.', 'extend-site');
             CrawlerLinkTable::mark_duplicate((int) $tracking_id, $message);
             wp_send_json_success(self::result_payload(CrawlerLinkTable::STATUS_DUPLICATE, $message, [
                 'source_url' => $source_url,
@@ -700,8 +698,8 @@ class CrawlerAjax
         }
 
         $scrape = $template
-            ? Scraper::scrape_with_template($source_url, $template, $replace_rules, $allow_short)
-            : Scraper::scrape($source_url, $replace_rules, $allow_short);
+            ? Scraper::scrape_with_template($source_url, $template, $replace_rules)
+            : Scraper::scrape($source_url, $replace_rules);
         if (is_wp_error($scrape)) {
             $message = $scrape->get_error_message();
             CrawlerLinkTable::mark_failed((int) $tracking_id, $message);
@@ -774,7 +772,7 @@ class CrawlerAjax
 
         CrawlerLinkTable::mark_success((int) $tracking_id, $chapter_id);
 
-        wp_send_json_success(self::result_payload(CrawlerLinkTable::STATUS_SUCCESS, __('Da them chuong thanh cong.', 'extend-site'), [
+        wp_send_json_success(self::result_payload(CrawlerLinkTable::STATUS_SUCCESS, __('Đã thêm chương thành công.', 'extend-site'), [
             'source_url' => $source_url,
             'clean_url' => $scrape['clean_url'],
             'story_id' => $story_id,
@@ -800,7 +798,7 @@ class CrawlerAjax
         if ($lock && !CrawlerLock::is_expired($lock)) {
             if ($batch_id === '' || !CrawlerLock::matches($batch_id, $lock) || (int) ($lock['story_id'] ?? 0) !== $story_id) {
                 wp_send_json_error([
-                    'message' => __('Lock crawler dang hoat dong va khong khop batch nay.', 'extend-site'),
+                    'message' => __('Lock crawler đang hoạt động và không khớp batch này.', 'extend-site'),
                     'lock' => $lock,
                 ], 409);
             }
@@ -817,7 +815,7 @@ class CrawlerAjax
 
         wp_send_json_success([
             'status' => 'success',
-            'message' => __('Da hoan tat crawler.', 'extend-site'),
+            'message' => __('Đã hoàn tất crawler.', 'extend-site'),
             'story_id' => $story_id,
             'chapter_count' => $count,
             'chapter_status_counts' => self::get_story_chapter_status_counts($story_id),
@@ -966,16 +964,16 @@ class CrawlerAjax
     private static function template_selector_labels(): array
     {
         return [
-            'story_title_selector' => __('Thong tin truyen > Ten truyen', 'extend-site'),
-            'story_author_selector' => __('Thong tin truyen > Tac gia', 'extend-site'),
-            'story_desc_selector' => __('Thong tin truyen > Mo ta', 'extend-site'),
-            'story_thumb_selector' => __('Thong tin truyen > Anh bia', 'extend-site'),
-            'story_cats_selector' => __('Thong tin truyen > The loai', 'extend-site'),
-            'chapter_link_selector' => __('Danh sach chuong tren trang truyen > Khoi/link danh sach chuong', 'extend-site'),
-            'toc_page_link_selector' => __('Danh sach chuong tren trang truyen > Link phan trang muc luc', 'extend-site'),
-            'chapter_content_scope_selector' => __('Trang chi tiet chuong > Vung chi tiet chuong', 'extend-site'),
-            'chapter_title_selector' => __('Trang chi tiet chuong > Ten chuong', 'extend-site'),
-            'chapter_content_selector' => __('Trang chi tiet chuong > Noi dung truyen', 'extend-site'),
+            'story_title_selector' => __('Thông tin truyện > Tên truyện', 'extend-site'),
+            'story_author_selector' => __('Thông tin truyện > Tác giả', 'extend-site'),
+            'story_desc_selector' => __('Thông tin truyện > Mô tả', 'extend-site'),
+            'story_thumb_selector' => __('Thông tin truyện > Ảnh bìa', 'extend-site'),
+            'story_cats_selector' => __('Thông tin truyện > Thể loại', 'extend-site'),
+            'chapter_link_selector' => __('Danh sách chương trên trang truyện > Khối/link danh sách chương', 'extend-site'),
+            'toc_page_link_selector' => __('Danh sách chương trên trang truyện > Link phân trang mục lục', 'extend-site'),
+            'chapter_content_scope_selector' => __('Trang chi tiết chương > Vùng chi tiết chương', 'extend-site'),
+            'chapter_title_selector' => __('Trang chi tiết chương > Tên chương', 'extend-site'),
+            'chapter_content_selector' => __('Trang chi tiết chương > Nội dung truyện', 'extend-site'),
         ];
     }
 
@@ -984,72 +982,72 @@ class CrawlerAjax
         $fields = [
             [
                 'key' => 'story_title_selector',
-                'group' => __('Thong tin truyen', 'extend-site'),
-                'label' => __('Ten truyen', 'extend-site'),
+                'group' => __('Thông tin truyện', 'extend-site'),
+                'label' => __('Tên truyện', 'extend-site'),
                 'value' => (string) ($values['story_title'] ?? ''),
                 'result' => (string) ($values['story_title'] ?? ''),
             ],
             [
                 'key' => 'story_author_selector',
-                'group' => __('Thong tin truyen', 'extend-site'),
-                'label' => __('Tac gia', 'extend-site'),
+                'group' => __('Thông tin truyện', 'extend-site'),
+                'label' => __('Tác giả', 'extend-site'),
                 'value' => (string) ($values['story_author'] ?? ''),
                 'result' => (string) ($values['story_author'] ?? ''),
             ],
             [
                 'key' => 'story_cats_selector',
-                'group' => __('Thong tin truyen', 'extend-site'),
-                'label' => __('The loai', 'extend-site'),
+                'group' => __('Thông tin truyện', 'extend-site'),
+                'label' => __('Thể loại', 'extend-site'),
                 'value' => implode(', ', (array) ($values['story_cats'] ?? [])),
                 'result' => implode(', ', (array) ($values['story_cats'] ?? [])),
             ],
             [
                 'key' => 'story_desc_selector',
-                'group' => __('Thong tin truyen', 'extend-site'),
-                'label' => __('Mo ta', 'extend-site'),
+                'group' => __('Thông tin truyện', 'extend-site'),
+                'label' => __('Mô tả', 'extend-site'),
                 'value' => (string) ($values['story_desc'] ?? ''),
                 'result' => sprintf(__('%d ky tu', 'extend-site'), (int) ($values['story_desc_length'] ?? 0)),
             ],
             [
                 'key' => 'story_thumb_selector',
-                'group' => __('Thong tin truyen', 'extend-site'),
-                'label' => __('Anh bia', 'extend-site'),
+                'group' => __('Thông tin truyện', 'extend-site'),
+                'label' => __('Ảnh bìa', 'extend-site'),
                 'value' => (string) ($values['story_thumb'] ?? ''),
                 'result' => (string) ($values['story_thumb'] ?? ''),
             ],
             [
                 'key' => 'chapter_link_selector',
-                'group' => __('Danh sach chuong', 'extend-site'),
-                'label' => __('Link chuong', 'extend-site'),
+                'group' => __('Danh sách chương', 'extend-site'),
+                'label' => __('Link chương', 'extend-site'),
                 'value' => (string) ((int) ($values['chapter_link_count'] ?? 0)),
                 'result' => sprintf(__('%d link', 'extend-site'), (int) ($values['chapter_link_count'] ?? 0)),
-                'missing_hint' => __('Khong tim thay link chuong trong HTML goc. Neu danh sach chuong van hien tren trinh duyet nhung khong hien o preview, nguon co the tai bang JavaScript/AJAX.', 'extend-site'),
+                'missing_hint' => __('Không tìm thấy link chương trong HTML gốc. Nếu danh sách chương vẫn hiện trên trình duyệt nhưng không hiện ở preview, nguồn có thể tải bằng JavaScript/AJAX.', 'extend-site'),
             ],
             [
                 'key' => 'toc_page_link_selector',
-                'group' => __('Danh sach chuong', 'extend-site'),
+                'group' => __('Danh sách chương', 'extend-site'),
                 'label' => __('Link phan trang muc luc', 'extend-site'),
                 'value' => (string) ((int) ($values['toc_page_count'] ?? 0)),
                 'result' => sprintf(__('%d link', 'extend-site'), (int) ($values['toc_page_count'] ?? 0)),
             ],
             [
                 'key' => 'chapter_content_scope_selector',
-                'group' => __('Trang chi tiet chuong', 'extend-site'),
-                'label' => __('Vung chi tiet chuong', 'extend-site'),
+                'group' => __('Trang chi tiết chương', 'extend-site'),
+                'label' => __('Vùng chi tiết chương', 'extend-site'),
                 'value' => (string) ((int) ($counts['chapter_content_scope_selector'] ?? 0)),
                 'result' => sprintf(__('%d phan tu khop', 'extend-site'), (int) ($counts['chapter_content_scope_selector'] ?? 0)),
             ],
             [
                 'key' => 'chapter_title_selector',
-                'group' => __('Trang chi tiet chuong', 'extend-site'),
-                'label' => __('Ten chuong', 'extend-site'),
+                'group' => __('Trang chi tiết chương', 'extend-site'),
+                'label' => __('Tên chương', 'extend-site'),
                 'value' => (string) ($values['chapter_title'] ?? ''),
                 'result' => (string) ($values['chapter_title'] ?? ''),
             ],
             [
                 'key' => 'chapter_content_selector',
-                'group' => __('Trang chi tiet chuong', 'extend-site'),
-                'label' => __('Noi dung truyen', 'extend-site'),
+                'group' => __('Trang chi tiết chương', 'extend-site'),
+                'label' => __('Nội dung truyện', 'extend-site'),
                 'value' => (string) ((int) ($values['chapter_content_length'] ?? 0)),
                 'result' => sprintf(__('%d ky tu', 'extend-site'), (int) ($values['chapter_content_length'] ?? 0)),
             ],
@@ -1066,14 +1064,14 @@ class CrawlerAjax
             $count = (int) ($counts[$key] ?? 0);
             $has_value = trim((string) ($field['value'] ?? '')) !== '' && trim((string) ($field['value'] ?? '')) !== '0';
             $status = $count > 0 && $has_value ? 'ok' : 'missing';
-            $hint = (string) ($field['missing_hint'] ?? __('Khong tim thay phan tu cho field nay. Nguyen nhan thuong gap: selector sai, class nam o the khac, hoac noi dung duoc tai bang JavaScript nen crawler khong thay trong HTML goc.', 'extend-site'));
+            $hint = (string) ($field['missing_hint'] ?? __('Không tìm thấy phần tử cho field này. Nguyên nhân thường gặp: selector sai, class nằm ở thẻ khác, hoặc nội dung được tải bằng JavaScript nên crawler không thấy trong HTML gốc.', 'extend-site'));
 
             $results[] = [
                 'group' => (string) $field['group'],
                 'label' => (string) $field['label'],
                 'selector' => $selector,
                 'status' => $status,
-                'result' => $status === 'ok' ? (string) ($field['result'] ?? '') : __('Khong tim thay', 'extend-site'),
+                'result' => $status === 'ok' ? (string) ($field['result'] ?? '') : __('Không tìm thấy', 'extend-site'),
                 'hint' => $status === 'missing' ? $hint : '',
                 'match_count' => $count,
                 'samples' => $samples[$key] ?? [],
@@ -1162,7 +1160,7 @@ class CrawlerAjax
     {
         $title = sanitize_text_field(trim($title));
         if ($title === '') {
-            return new WP_Error('missing_story_title', __('Khong boc duoc ten truyen.', 'extend-site'));
+            return new WP_Error('missing_story_title', __('Không bóc được tên truyện.', 'extend-site'));
         }
 
         $existing = self::find_story_by_title($title);
@@ -1330,7 +1328,7 @@ class CrawlerAjax
         if ($pattern === '') {
             return new WP_Error(
                 'missing_chapter_url_pattern',
-                __('Template chua co Mau URL chuong de tao queue. Hay cau hinh Mau URL chuong trong template.', 'extend-site')
+                __('Template chưa có Mẫu URL chương để tạo queue. Hãy cấu hình Mẫu URL chương trong template.', 'extend-site')
             );
         }
 
@@ -1340,7 +1338,7 @@ class CrawlerAjax
         if ($from < 1 || $to < 1 || $to < $from) {
             return new WP_Error(
                 'invalid_template_range',
-                __('Hay nhap khoang chuong Tu/Den hop le de tao queue tu Mau URL chuong.', 'extend-site')
+                __('Hãy nhập khoảng chương Từ/Đến hợp lệ để tạo queue từ Mẫu URL chương.', 'extend-site')
             );
         }
 
@@ -1348,7 +1346,7 @@ class CrawlerAjax
         if (($to - $from + 1) > $max) {
             return new WP_Error(
                 'template_range_too_large',
-                sprintf(__('Khoang chuong vuot gioi han an toan: %d URL.', 'extend-site'), $max)
+                sprintf(__('Khoảng chương vượt giới hạn an toàn: %d URL.', 'extend-site'), $max)
             );
         }
 
@@ -1366,7 +1364,7 @@ class CrawlerAjax
             if ($url === '' || !wp_http_validate_url($url)) {
                 return new WP_Error(
                     'invalid_template_pattern_url',
-                    __('Mau URL chuong tao ra URL khong hop le. Hay kiem tra {story_url}, {story_slug} va {chapter_number}.', 'extend-site')
+                    __('Mẫu URL chương tạo ra URL không hợp lệ. Hãy kiểm tra {story_url}, {story_slug} và {chapter_number}.', 'extend-site')
                 );
             }
 
@@ -1651,7 +1649,7 @@ class CrawlerAjax
         libxml_use_internal_errors($previous);
 
         if (!$loaded) {
-            return new WP_Error('html_parse_failed', __('Khong the phan tich HTML nguon.', 'extend-site'));
+            return new WP_Error('html_parse_failed', __('Không thể phân tích HTML nguồn.', 'extend-site'));
         }
 
         return $dom;
@@ -1952,11 +1950,11 @@ class CrawlerAjax
         if ($last_page_number > 1 && $last_clean !== '' && $last_clean !== $base_clean) {
             $body = self::fetch_html($last_page_url, 20);
             if (is_wp_error($body)) {
-                $warnings[] = sprintf(__('Khong tai duoc trang muc luc cuoi: %s.', 'extend-site'), $last_page_url);
+                $warnings[] = sprintf(__('Không tải được trang mục lục cuối: %s.', 'extend-site'), $last_page_url);
             } else {
                 $dom = self::load_dom($body);
                 if (is_wp_error($dom)) {
-                    $warnings[] = sprintf(__('Khong phan tich duoc trang muc luc cuoi: %s.', 'extend-site'), $last_page_url);
+                    $warnings[] = sprintf(__('Không phân tích được trang mục lục cuối: %s.', 'extend-site'), $last_page_url);
                 } else {
                     $scanned++;
                     $page_xpath = new DOMXPath($dom);
@@ -2125,7 +2123,7 @@ class CrawlerAjax
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error([
-                'message' => __('Ban khong co quyen chay crawler.', 'extend-site'),
+                'message' => __('Bạn không có quyền chạy crawler.', 'extend-site'),
             ], 403);
         }
     }
@@ -2135,7 +2133,7 @@ class CrawlerAjax
         $story_id = absint($_POST['story_id'] ?? 0);
         if ($story_id <= 0 || get_post_type($story_id) !== StoryPostType::SLUG) {
             wp_send_json_error([
-                'message' => __('ID truyen khong hop le.', 'extend-site'),
+                'message' => __('ID truyện không hợp lệ.', 'extend-site'),
             ], 400);
         }
 
@@ -2147,7 +2145,7 @@ class CrawlerAjax
         $total = absint($_POST['expected_total'] ?? 0);
         if ($total <= 0) {
             wp_send_json_error([
-                'message' => __('Thieu tong so URL crawler du kien.', 'extend-site'),
+                'message' => __('Thiếu tổng số URL crawler dự kiến.', 'extend-site'),
             ], 400);
         }
 
@@ -2167,7 +2165,7 @@ class CrawlerAjax
         $chapter_number = absint($_POST['chapter_number'] ?? 0);
         if ($chapter_number <= 0) {
             wp_send_json_error([
-                'message' => __('So chuong khong hop le.', 'extend-site'),
+                'message' => __('Số chương không hợp lệ.', 'extend-site'),
             ], 400);
         }
 
@@ -2179,7 +2177,7 @@ class CrawlerAjax
         $batch_id = sanitize_text_field((string) ($_POST['batch_id'] ?? ''));
         if ($required && $batch_id === '') {
             wp_send_json_error([
-                'message' => __('Thieu batch ID cua crawler.', 'extend-site'),
+                'message' => __('Thiếu batch ID của crawler.', 'extend-site'),
             ], 400);
         }
 
@@ -2191,7 +2189,7 @@ class CrawlerAjax
         $source_url = esc_url_raw(trim((string) ($_POST['source_url'] ?? '')));
         if ($source_url === '') {
             wp_send_json_error([
-                'message' => __('Thieu URL nguon.', 'extend-site'),
+                'message' => __('Thiếu URL nguồn.', 'extend-site'),
             ], 400);
         }
 
@@ -2306,7 +2304,7 @@ class CrawlerAjax
             return new WP_Error(
                 'source_chapter_out_of_range',
                 sprintf(
-                    __('Khong tim thay chuong %2$d trong nguon, chuong cuoi phat hien duoc la %1$d.', 'extend-site'),
+                    __('Không tìm thấy chương %2$d trong nguồn, chương cuối phát hiện được là %1$d.', 'extend-site'),
                     $source_max_chapter_number,
                     $expected_chapter_number
                 ),
@@ -2324,7 +2322,7 @@ class CrawlerAjax
         return new WP_Error(
             'source_chapter_mismatch',
             sprintf(
-                __('Nguon tra ve chuong %1$d, khong khop chuong dang crawl %2$d. Co the URL khong ton tai va site dang fallback ve chuong khac.', 'extend-site'),
+                __('Nguồn trả về chương %1$d, không khớp chương đang crawl %2$d. Có thể URL không tồn tại và site đang fallback về chương khác.', 'extend-site'),
                 $source_chapter_number,
                 $expected_chapter_number
             ),
@@ -2421,7 +2419,7 @@ class CrawlerAjax
         $lock = CrawlerLock::get();
         if (!CrawlerLock::matches($batch_id, $lock) || (int) ($lock['story_id'] ?? 0) !== $story_id) {
             wp_send_json_error([
-                'message' => __('Lock crawler bi thieu, da het han hoac khong khop.', 'extend-site'),
+                'message' => __('Lock crawler bị thiếu, đã hết hạn hoặc không khớp.', 'extend-site'),
                 'lock' => $lock,
             ], 409);
         }

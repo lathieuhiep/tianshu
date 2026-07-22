@@ -287,8 +287,8 @@
         });
         html += '</tbody></table>';
 
-        html += '<h3>Mau phan tu khop selector</h3>';
-        html += '<table class="widefat striped es-template-result-table"><thead><tr><th>Muc</th><th>Phan tu khop</th></tr></thead><tbody>';
+        html += '<h3>Mẫu phần tử khớp selector</h3>';
+        html += '<table class="widefat striped es-template-result-table"><thead><tr><th>Mục</th><th>Phần tử khớp</th></tr></thead><tbody>';
         Object.keys(matchSamples).forEach(function (key) {
             const samples = Array.isArray(matchSamples[key]) ? matchSamples[key] : [];
             if (!samples.length) {
@@ -328,30 +328,30 @@
         }).length;
 
         let html = '<div class="es-template-result-summary">';
-        html += '<strong>Ket qua test:</strong> ' + escapeHtml(okCount) + ' muc co du lieu, ' + escapeHtml(missingCount) + ' muc chua tim thay';
-        html += '<br><strong>Truyen:</strong> ' + escapeHtml(data.story_title || '(trong)');
-        html += '<br><strong>Tac gia:</strong> ' + escapeHtml(data.story_author || '(trong)');
-        html += '<br><strong>Link chuong:</strong> ' + escapeHtml(data.chapter_link_count || 0) + (data.chapter_link_estimated ? ' (uoc tinh)' : '');
-        html += '<br><strong>Trang muc luc:</strong> ' + escapeHtml(data.toc_pages_scanned || 1) + '/' + escapeHtml(data.toc_page_count || 0);
+        html += '<strong>Kết quả test:</strong> ' + escapeHtml(okCount) + ' mục có dữ liệu, ' + escapeHtml(missingCount) + ' mục chưa tìm thấy';
+        html += '<br><strong>Truyện:</strong> ' + escapeHtml(data.story_title || '(trống)');
+        html += '<br><strong>Tác giả:</strong> ' + escapeHtml(data.story_author || '(trống)');
+        html += '<br><strong>Link chương:</strong> ' + escapeHtml(data.chapter_link_count || 0) + (data.chapter_link_estimated ? ' (ước tính)' : '');
+        html += '<br><strong>Trang mục lục:</strong> ' + escapeHtml(data.toc_pages_scanned || 1) + '/' + escapeHtml(data.toc_page_count || 0);
         if (fieldResults.length && Number(data.chapter_link_count || 0) < 1) {
-            html += '<p class="es-template-result-note">Chua tao duoc danh sach chuong neu khong tim thay link chuong trong HTML goc.</p>';
+            html += '<p class="es-template-result-note">Chưa tạo được danh sách chương nếu không tìm thấy link chương trong HTML gốc.</p>';
         }
         html += '</div>';
 
         html += '<table class="widefat striped es-template-result-table"><tbody>';
         html += resultRow('Story URL', data.target_url || '');
-        html += resultRow('Mo ta', data.story_desc || '');
-        html += resultRow('Do dai mo ta', data.story_desc_length || 0);
-        html += resultRow('Anh bia', data.story_thumb || '');
-        html += resultRow('The loai', Array.isArray(data.story_cats) ? data.story_cats.join(', ') : '');
-        html += resultRow('Ten chuong', data.chapter_title || '');
-        html += resultRow('Do dai noi dung chuong', data.chapter_content_length || 0);
+        html += resultRow('Mô tả', data.story_desc || '');
+        html += resultRow('Độ dài mô tả', data.story_desc_length || 0);
+        html += resultRow('Ảnh bìa', data.story_thumb || '');
+        html += resultRow('Thể loại', Array.isArray(data.story_cats) ? data.story_cats.join(', ') : '');
+        html += resultRow('Tên chương', data.chapter_title || '');
+        html += resultRow('Độ dài nội dung chương', data.chapter_content_length || 0);
         html += '</tbody></table>';
 
         html += renderFieldResultGroups(fieldResults);
 
         if (links.length) {
-            html += '<h3>Mau link chuong</h3>';
+            html += '<h3>Mẫu link chương</h3>';
             html += '<table class="widefat striped es-template-result-table"><thead><tr><th>Text</th><th>URL</th></tr></thead><tbody>';
             links.forEach(function (item) {
                 html += '<tr><td>' + escapeHtml(item.text || '') + '</td><td><code>' + escapeHtml(item.href || '') + '</code></td></tr>';
@@ -369,7 +369,7 @@
 
         const groups = {};
         fieldResults.forEach(function (item) {
-            const group = item && item.group ? item.group : 'Khac';
+            const group = item && item.group ? item.group : 'Khác';
             if (!groups[group]) {
                 groups[group] = [];
             }
@@ -381,13 +381,13 @@
             html += '<section class="es-template-result-group">';
             html += '<h3>' + escapeHtml(group) + '</h3>';
             html += '<table class="widefat striped es-template-result-table es-template-field-result-table">';
-            html += '<thead><tr><th>Field</th><th>Trang thai</th><th>Selector</th><th>Ket qua</th></tr></thead><tbody>';
+            html += '<thead><tr><th>Trường</th><th>Trạng thái</th><th>Selector</th><th>Kết quả</th></tr></thead><tbody>';
             groups[group].forEach(function (item) {
                 const status = item.status === 'ok' ? 'ok' : 'missing';
                 const samples = Array.isArray(item.samples) ? item.samples : [];
                 html += '<tr class="es-template-field-row is-' + escapeHtml(status) + '">';
                 html += '<th scope="row">' + escapeHtml(item.label || '') + '</th>';
-                html += '<td><span class="es-template-status-pill is-' + escapeHtml(status) + '">' + (status === 'ok' ? 'Co du lieu' : 'Khong thay') + '</span></td>';
+                html += '<td><span class="es-template-status-pill is-' + escapeHtml(status) + '">' + (status === 'ok' ? 'Có dữ liệu' : 'Không thấy') + '</span></td>';
                 html += '<td><code>' + escapeHtml(item.selector || '') + '</code></td>';
                 html += '<td>' + escapeHtml(item.result || '') + renderSampleNodes(samples);
                 if (status === 'missing' && item.hint) {
@@ -424,15 +424,15 @@
 
     function validateTemplateBeforeSave(data) {
         if (!String(data.chapter_content_scope_selector || '').trim()) {
-            return 'Thieu selector khoi boc noi dung chuong.';
+            return 'Thiếu selector khối bọc nội dung chương.';
         }
 
         const chapterUrlPattern = String(data.chapter_url_pattern || '').trim();
         if (!chapterUrlPattern) {
-            return 'Mau URL chuong la bat buoc vi crawler dung mau nay de tao URL tung chuong.';
+            return 'Mẫu URL chương là bắt buộc vì crawler dùng mẫu này để tạo URL từng chương.';
         }
         if (chapterUrlPattern.indexOf('{chapter_number}') === -1 && chapterUrlPattern.indexOf('{n}') === -1) {
-            return 'Mau URL chuong phai co bien so chuong {chapter_number} hoac {n}. Vi du: {story_url}/chuong-{chapter_number}/';
+            return 'Mẫu URL chương phải có biến số chương {chapter_number} hoặc {n}. Ví dụ: {story_url}/chuong-{chapter_number}/';
         }
 
         return '';
@@ -449,7 +449,7 @@
         }
 
         if (pattern.indexOf('{story_url}') === -1 && pattern.indexOf('{story_slug}') === -1) {
-            return 'Luu y: Mau URL chuong khong co {story_url} hoac {story_slug}, nen co the chi dung duoc cho mot truyen cu the.';
+            return 'Lưu ý: Mẫu URL chương không có {story_url} hoặc {story_slug}, nên có thể chỉ dùng được cho một truyện cụ thể.';
         }
 
         return '';
@@ -505,10 +505,10 @@
         const storyUrl = sampleUrl();
         const chapterUrl = chapterSampleUrl();
         if (!storyUrl) {
-            return { error: 'Nhap URL trang truyen / muc luc truoc.' };
+            return { error: 'Nhập URL trang truyện / mục lục trước.' };
         }
         if (!chapterUrl) {
-            return { error: 'Nhap URL chuong mau truoc.' };
+            return { error: 'Nhập URL chương mẫu trước.' };
         }
 
         const storyBase = normalizeCompareUrl(storyUrl);
@@ -542,7 +542,7 @@
 
         pattern = replaceChapterNumberToken(pattern);
         if (pattern.indexOf('{chapter_number}') === -1) {
-            return { error: 'Khong nhan ra vi tri so chuong trong URL chuong mau.' };
+            return { error: 'Không nhận ra vị trí số chương trong URL chương mẫu.' };
         }
 
         return { pattern: pattern };
@@ -565,14 +565,14 @@
 
         const builtUrl = buildChapterUrlFromPattern(pattern, storyUrl, chapterUrl);
         if (normalizeCompareUrl(builtUrl) === normalizeCompareUrl(chapterUrl)) {
-            $check.addClass('is-success').text('Mau URL chuong khop voi URL chuong mau.');
+            $check.addClass('is-success').text('Mẫu URL chương khớp với URL chương mẫu.');
             return;
         }
 
         $check.addClass('is-error').html(
-            'Mau URL chuong tao ra URL khac URL chuong mau.<br>' +
-            'URL tao ra: <code>' + escapeHtml(builtUrl) + '</code><br>' +
-            'URL chuong mau: <code>' + escapeHtml(chapterUrl) + '</code>'
+            'Mẫu URL chương tạo ra URL khác URL chương mẫu.<br>' +
+            'URL tạo ra: <code>' + escapeHtml(builtUrl) + '</code><br>' +
+            'URL chương mẫu: <code>' + escapeHtml(chapterUrl) + '</code>'
         );
     }
 
@@ -588,27 +588,27 @@
             return '';
         }
 
-        return 'Mau URL chuong co ve chua khop voi URL chuong mau.\n\n' +
-            'URL tao ra:\n' + builtUrl + '\n\n' +
-            'URL chuong mau:\n' + chapterUrl + '\n\n' +
-            'Bam OK de van luu, hoac Cancel de quay lai sua Mau URL chuong.';
+        return 'Mẫu URL chương có vẻ chưa khớp với URL chương mẫu.\n\n' +
+            'URL tạo ra:\n' + builtUrl + '\n\n' +
+            'URL chương mẫu:\n' + chapterUrl + '\n\n' +
+            'Bấm OK để vẫn lưu, hoặc Cancel để quay lại sửa Mẫu URL chương.';
     }
 
     async function runStructuredSelectorTest() {
         const storyUrl = sampleUrl();
         const chapterUrl = chapterSampleUrl();
         if (!storyUrl) {
-            $testResult.addClass('is-error').text('Nhap URL trang truyen / muc luc truoc.');
+            $testResult.addClass('is-error').text('Nhập URL trang truyện / mục lục trước.');
             return;
         }
         if (!chapterUrl) {
-            $testResult.addClass('is-error').text('Nhap URL chuong mau truoc.');
+            $testResult.addClass('is-error').text('Nhập URL chương mẫu trước.');
             return;
         }
 
         const originalText = $testBtn.text();
-        $testBtn.prop('disabled', true).text((cfg.i18n && cfg.i18n.test_loading) || 'Dang test selector...');
-        $testResult.removeClass('is-error').text((cfg.i18n && cfg.i18n.test_loading) || 'Dang test selector...');
+        $testBtn.prop('disabled', true).text((cfg.i18n && cfg.i18n.test_loading) || 'Đang test selector...');
+        $testResult.removeClass('is-error').text((cfg.i18n && cfg.i18n.test_loading) || 'Đang test selector...');
 
         try {
             const payload = Object.assign({ target_url: storyUrl, story_url: storyUrl, chapter_url: chapterUrl }, collectSelectors());
@@ -667,7 +667,7 @@
 
         $('#es-template-chapter-url-pattern').val(inferred.pattern).trigger('change');
         updateChapterPatternCheck();
-        setSaveStatus('Da tao Mau URL chuong tu URL chuong mau. Hay kiem tra lai truoc khi luu.', 'success');
+        setSaveStatus('Đã tạo Mẫu URL chương từ URL chương mẫu. Hãy kiểm tra lại trước khi lưu.', 'success');
     });
 
     $newBtn.on('click', function () {
@@ -705,7 +705,7 @@
             const mismatchMessage = chapterPatternMismatchMessage(payload.chapter_url_pattern);
             if (mismatchMessage && !window.confirm(mismatchMessage)) {
                 $('#es-template-chapter-url-pattern').trigger('focus');
-                setSaveStatus('Da dung luu de ban chinh Mau URL chuong.', 'error');
+                setSaveStatus('Đã dừng lưu để bạn chỉnh Mẫu URL chương.', 'error');
                 return;
             }
 
@@ -779,15 +779,15 @@
     $chapterPreviewBtn.on('click', async function () {
         const url = chapterSampleUrl();
         if (!url) {
-            setStatus($previewStatus, 'Nhap URL chuong mau truoc.', 'error');
+            setStatus($previewStatus, 'Nhập URL chương mẫu trước.', 'error');
             return;
         }
 
         const originalText = $chapterPreviewBtn.text();
         const requestId = ++previewRequestId;
-        $chapterPreviewBtn.prop('disabled', true).text('Dang tai...');
+        $chapterPreviewBtn.prop('disabled', true).text('Đang tải...');
         setStatus($previewStatus, '', '');
-        clearPreview('Dang tai...');
+        clearPreview('Đang tải...');
 
         try {
             const response = await ajax(cfg.preview_proxy_action, { target_url: url, cache_buster: Date.now() });
@@ -797,7 +797,7 @@
 
             writePreview((response.data && response.data.html) || '');
             const previewUrl = (response.data && response.data.target_url) || url;
-            setStatus($previewStatus, 'Da tai xem truoc. ' + previewUrl, 'success');
+            setStatus($previewStatus, 'Đã tải xem trước. ' + previewUrl, 'success');
         } catch (xhr) {
             if (requestId !== previewRequestId) {
                 return;

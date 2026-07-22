@@ -14,7 +14,6 @@ class Scraper
 {
     public const DEFAULT_TIMEOUT = 30;
     public const DEFAULT_CONNECT_TIMEOUT = 10;
-    public const DEFAULT_MIN_CONTENT_LENGTH = 300;
 
     public static function get_user_agent(): string
     {
@@ -24,7 +23,7 @@ class Scraper
         );
     }
 
-    public static function scrape(string $source_url, array $replace_rules = [], bool $allow_short_content = false)
+    public static function scrape(string $source_url, array $replace_rules = [])
     {
         $clean_url = CrawlerLinkTable::clean_url_for_hash($source_url);
         if ($clean_url === '' || !wp_http_validate_url($clean_url)) {
@@ -51,17 +50,6 @@ class Scraper
 
         $content_length = self::content_length($parsed['content_html']);
         $warnings = array_merge($rule_warnings, $parsed['warnings']);
-        $min_length = (int) apply_filters('es_crawler_min_content_length', self::DEFAULT_MIN_CONTENT_LENGTH, $clean_url, $domain);
-
-        if ($content_length < $min_length) {
-            $warnings[] = sprintf(__('Nội dung quá ngắn: %d ký tự.', 'extend-site'), $content_length);
-            if (!$allow_short_content) {
-                return new WP_Error('content_too_short', __('Nội dung phân tích được ngắn hơn giới hạn tối thiểu.', 'extend-site'), [
-                    'content_length' => $content_length,
-                    'warnings' => $warnings,
-                ]);
-            }
-        }
 
         return [
             'source_url' => $source_url,
@@ -78,17 +66,17 @@ class Scraper
         ];
     }
 
-    public static function scrape_with_template(string $source_url, array $template, array $replace_rules = [], bool $allow_short_content = false)
+    public static function scrape_with_template(string $source_url, array $template, array $replace_rules = [])
     {
         $scope_selector = trim((string) ($template['chapter_content_scope_selector'] ?? ''));
         $content_selector = trim((string) ($template['chapter_content_selector'] ?? ''));
         if ($scope_selector === '') {
-            return new WP_Error('content_scope_selector_required', __('Template chua cau hinh selector khoi boc noi dung chuong.', 'extend-site'));
+            return new WP_Error('content_scope_selector_required', __('Template chưa cấu hình selector khối bọc nội dung chương.', 'extend-site'));
         }
 
         $clean_url = CrawlerLinkTable::clean_url_for_hash($source_url);
         if ($clean_url === '' || !wp_http_validate_url($clean_url)) {
-            return new WP_Error('invalid_url', __('URL nguá»“n khÃ´ng há»£p lá»‡.', 'extend-site'));
+            return new WP_Error('invalid_url', __('URL nguồn không hợp lệ.', 'extend-site'));
         }
 
         $domain = self::normalize_domain((string) wp_parse_url($clean_url, PHP_URL_HOST));
@@ -105,7 +93,7 @@ class Scraper
         libxml_use_internal_errors($previous);
 
         if (!$loaded) {
-            return new WP_Error('html_parse_failed', __('KhÃ´ng thá»ƒ phÃ¢n tÃ­ch HTML nguá»“n.', 'extend-site'));
+            return new WP_Error('html_parse_failed', __('Không thể phân tích HTML nguồn.', 'extend-site'));
         }
 
         $xpath = new DOMXPath($dom);
@@ -118,7 +106,7 @@ class Scraper
 
         $scope_node = self::first_selector_node($xpath, $scope_selector);
         if (!$scope_node) {
-            return new WP_Error('content_scope_selector_missing', __('Selector khoi boc noi dung chuong khong khop.', 'extend-site'));
+            return new WP_Error('content_scope_selector_missing', __('Selector khối bọc nội dung chương không khớp.', 'extend-site'));
         }
 
         $title = self::first_selector_text($xpath, (string) ($template['chapter_title_selector'] ?? ''), $scope_node);
@@ -130,7 +118,7 @@ class Scraper
             ? $scope_node
             : self::first_selector_node($xpath, $content_selector, $scope_node);
         if (!$content_node) {
-            return new WP_Error('content_selector_missing', __('Selector noi dung chuong khong khop trong khoi boc.', 'extend-site'));
+            return new WP_Error('content_selector_missing', __('Selector nội dung chương không khớp trong khối bọc.', 'extend-site'));
         }
 
         $content_html = self::inner_html($content_node);
@@ -140,17 +128,6 @@ class Scraper
         $content_html = self::cleanup_fragment_html($content_html);
         $content_length = self::content_length($content_html);
         $warnings = [];
-        $min_length = (int) apply_filters('es_crawler_min_content_length', self::DEFAULT_MIN_CONTENT_LENGTH, $clean_url, $domain);
-
-        if ($content_length < $min_length) {
-            $warnings[] = sprintf(__('Ná»™i dung quÃ¡ ngáº¯n: %d kÃ½ tá»±.', 'extend-site'), $content_length);
-            if (!$allow_short_content) {
-                return new WP_Error('content_too_short', __('Ná»™i dung phÃ¢n tÃ­ch Ä‘Æ°á»£c ngáº¯n hÆ¡n giá»›i háº¡n tá»‘i thiá»ƒu.', 'extend-site'), [
-                    'content_length' => $content_length,
-                    'warnings' => $warnings,
-                ]);
-            }
-        }
 
         return [
             'source_url' => $source_url,
