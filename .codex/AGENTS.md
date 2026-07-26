@@ -166,6 +166,21 @@
 - `CrawlerAjax` owns crawler AJAX actions.
 - Theme must not call crawler internals directly; use plugin admin/AJAX/service entry points.
 
+### Extend Site Crawler Templates
+
+- Owned by `plugins/extend-site/includes/Crawler`.
+- Main classes:
+  - `CrawlerTemplateAdmin.php`
+  - `CrawlerTemplateTable.php`
+  - `CrawlerAjax.php`
+- Crawler templates are stored in the custom table `{$wpdb->prefix}es_crawler_templates`.
+- `CrawlerTemplateAdmin` owns the template admin list, search, pagination, trash view, and create/edit form routes.
+- `CrawlerTemplateTable` owns crawler template querying, counting, persistence, soft delete, restore, and permanent delete behavior.
+- Template deletion uses soft delete via `deleted_at`; default template queries/selects must exclude trashed templates.
+- Trashed templates may be restored or permanently deleted only through explicit admin actions with nonce and capability checks.
+- Template selects should use AJAX search instead of rendering all templates when the list can grow.
+- Crawler execution must only use active/non-trashed templates.
+
 ### Extend Site Search
 
 - Owned by `plugins/extend-site/includes/Search`.
