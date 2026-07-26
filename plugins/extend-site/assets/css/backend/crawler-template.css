@@ -83,10 +83,6 @@
     margin-bottom: 10px;
 }
 
-.es-template-field {
-    margin-bottom: 16px;
-}
-
 .es-template-preview-url-grid {
     display: grid;
     gap: 12px;
@@ -113,6 +109,10 @@
     color: var(--es-template-text);
     font-size: 14px;
     margin: 0 0 10px;
+}
+
+.es-template-subsection .es-template-two-cols {
+    margin-bottom: 16px;
 }
 
 .es-template-field label {
@@ -170,10 +170,11 @@
 }
 
 .es-template-manage-row {
-    align-items: end;
+    align-items: flex-end;
     display: grid;
-    gap: 12px;
-    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    grid-template-columns: minmax(280px, 520px) auto;
+    justify-content: space-between;
 }
 
 .es-template-manage-actions {
@@ -181,7 +182,24 @@
     flex-wrap: wrap;
     gap: 8px;
     justify-content: flex-end;
-    padding-bottom: 16px;
+    padding-bottom: 0;
+}
+
+.es-template-manage-actions .button {
+    min-height: 36px;
+}
+
+.es-template-manage .select2-container .select2-selection--single {
+    border-color: #8c8f94;
+    min-height: 34px;
+}
+
+.es-template-manage .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 32px;
+}
+
+.es-template-manage .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 32px;
 }
 
 .es-template-list-panel {
@@ -614,7 +632,6 @@
 
     .es-template-manage-actions {
         justify-content: flex-start;
-        padding-bottom: 0;
     }
 
     .es-template-manage {

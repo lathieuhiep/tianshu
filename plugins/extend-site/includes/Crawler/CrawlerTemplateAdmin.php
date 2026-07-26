@@ -25,6 +25,24 @@ class CrawlerTemplateAdmin
             self::PAGE_SLUG,
             [self::class, 'render_page']
         );
+
+        add_submenu_page(
+            self::PARENT_SLUG,
+            esc_html__('Thêm mẫu crawler', 'extend-site'),
+            esc_html__('Thêm mẫu crawler', 'extend-site'),
+            'manage_options',
+            self::PAGE_SLUG . '-new',
+            [self::class, 'render_new_page']
+        );
+    }
+
+    public static function render_new_page(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Bạn không có quyền truy cập trang này.', 'extend-site'));
+        }
+
+        self::render_form_page('new');
     }
 
     public static function render_page(): void

@@ -44,7 +44,10 @@ class Enqueue
     {
         $screen = get_current_screen();
         $is_crawler_page = $screen && $screen->id === 'extend-site_page_' . CrawlerAdmin::PAGE_SLUG;
-        $is_crawler_template_page = $screen && $screen->id === 'extend-site_page_' . CrawlerTemplateAdmin::PAGE_SLUG;
+        $is_crawler_template_page = $screen && in_array($screen->id, [
+            'extend-site_page_' . CrawlerTemplateAdmin::PAGE_SLUG,
+            'extend-site_page_' . CrawlerTemplateAdmin::PAGE_SLUG . '-new',
+        ], true);
         $is_tools_page = $screen && $screen->id === 'extend-site_page_extend-site-tools';
 
         if ($is_tools_page) {
