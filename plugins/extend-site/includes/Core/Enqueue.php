@@ -143,6 +143,7 @@ class Enqueue
                 'story_search_nonce' => wp_create_nonce('es_admin_common'),
                 'story_search_action' => 'es_search_story',
                 'process_action' => CrawlerAjax::ACTION_PROCESS,
+                'template_search_action' => CrawlerAjax::ACTION_TEMPLATE_SEARCH,
                 'template_prepare_action' => CrawlerAjax::ACTION_TEMPLATE_PREPARE_BATCH,
                 'template_ensure_story_action' => CrawlerAjax::ACTION_TEMPLATE_ENSURE_STORY,
                 'preview_action' => CrawlerAjax::ACTION_PREVIEW,
@@ -184,6 +185,7 @@ class Enqueue
                 'save_action' => CrawlerAjax::ACTION_TEMPLATE_SAVE,
                 'load_action' => CrawlerAjax::ACTION_TEMPLATE_LOAD,
                 'delete_action' => CrawlerAjax::ACTION_TEMPLATE_DELETE,
+                'search_action' => CrawlerAjax::ACTION_TEMPLATE_SEARCH,
                 'i18n' => [
                     'loading' => esc_html__('Đang tải...', 'extend-site'),
                     'preview_loaded' => esc_html__('Đã tải xem trước.', 'extend-site'),

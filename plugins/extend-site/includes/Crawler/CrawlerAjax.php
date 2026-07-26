@@ -28,6 +28,7 @@ class CrawlerAjax
     public const ACTION_TEMPLATE_SAVE = 'es_crawler_template_save';
     public const ACTION_TEMPLATE_LOAD = 'es_crawler_template_load';
     public const ACTION_TEMPLATE_DELETE = 'es_crawler_template_delete';
+    public const ACTION_TEMPLATE_SEARCH = 'es_crawler_template_search';
     public const ACTION_TEMPLATE_PREPARE_BATCH = 'es_crawler_prepare_template_batch';
     public const ACTION_TEMPLATE_ENSURE_STORY = 'es_crawler_template_ensure_story';
     public const ACTION_PROCESS = 'es_crawler_process_url';
@@ -50,6 +51,7 @@ class CrawlerAjax
         add_action('wp_ajax_' . self::ACTION_TEMPLATE_SAVE, [self::class, 'save_template']);
         add_action('wp_ajax_' . self::ACTION_TEMPLATE_LOAD, [self::class, 'load_template']);
         add_action('wp_ajax_' . self::ACTION_TEMPLATE_DELETE, [self::class, 'delete_template']);
+        add_action('wp_ajax_' . self::ACTION_TEMPLATE_SEARCH, [self::class, 'search_templates']);
         add_action('wp_ajax_' . self::ACTION_TEMPLATE_PREPARE_BATCH, [self::class, 'prepare_template_batch']);
         add_action('wp_ajax_' . self::ACTION_TEMPLATE_ENSURE_STORY, [self::class, 'ensure_template_story']);
         add_action('wp_ajax_' . self::ACTION_PROCESS, [self::class, 'process_url']);
@@ -203,11 +205,6 @@ class CrawlerAjax
 
         $base_url = self::get_base_url($target_url);
         $html = self::sanitize_preview_html($body, $base_url);
-
-        $warnings = [];
-        if ($detected_total <= 0) {
-            $warnings[] = __('Không phát hiện được tổng link chương từ template. Hãy kiểm tra và nhập đúng số chương kết thúc ở ô "Đến".', 'extend-site');
-        }
 
         wp_send_json_success([
             'html' => $html,
@@ -431,7 +428,6 @@ class CrawlerAjax
         wp_send_json_success([
             'message' => __('Đã lưu template crawler.', 'extend-site'),
             'template' => $template,
-            'templates' => CrawlerTemplateTable::all(),
         ]);
     }
 
@@ -450,6 +446,32 @@ class CrawlerAjax
         ]);
     }
 
+    public static function search_templates(): void
+    {
+        self::verify_request();
+
+        $search = sanitize_text_field((string) wp_unslash($_POST['q'] ?? ''));
+        $templates = CrawlerTemplateTable::query([
+            'search' => $search,
+            'status' => 'active',
+            'paged' => 1,
+            'per_page' => 20,
+        ]);
+
+        $results = array_map(static function (array $template): array {
+            return [
+                'id' => (string) $template['id'],
+                'text' => trim((string) $template['name'] . ' - ' . (string) $template['domain']),
+                'domain' => (string) $template['domain'],
+                'chapter_url_pattern' => (string) ($template['chapter_url_pattern'] ?? ''),
+            ];
+        }, $templates);
+
+        wp_send_json([
+            'results' => $results,
+        ]);
+    }
+
     public static function delete_template(): void
     {
         self::verify_request();
@@ -461,7 +483,6 @@ class CrawlerAjax
 
         wp_send_json_success([
             'message' => __('Đã xóa template crawler.', 'extend-site'),
-            'templates' => CrawlerTemplateTable::all(),
         ]);
     }
 

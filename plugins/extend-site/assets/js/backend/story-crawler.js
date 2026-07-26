@@ -61,6 +61,8 @@
     const $templatePrepareBtn = $('#es-crawler-template-prepare-btn');
     const $templatePrepareStatus = $('#es-crawler-template-prepare-status');
     const $templateSummary = $('#es-crawler-template-summary');
+    let templateAutoSelectTimer = null;
+    let templateAutoSelectRequestId = 0;
 
     function ajax(action, data) {
         return $.ajax({
@@ -418,10 +420,41 @@
         if ($match.length) {
             $templateId.val($match.val());
             syncTemplatePatternView();
+            return;
         }
+
+        clearTimeout(templateAutoSelectTimer);
+        const requestId = ++templateAutoSelectRequestId;
+        templateAutoSelectTimer = setTimeout(function () {
+            ajax(cfg.template_search_action, { q: host }).then(function (response) {
+                if (requestId !== templateAutoSelectRequestId || $templateId.val()) {
+                    return;
+                }
+
+                const results = Array.isArray(response && response.results) ? response.results : [];
+                const match = results.find(function (item) {
+                    return String(item.domain || '').replace(/^www\./, '').toLowerCase() === host;
+                });
+                if (!match) {
+                    return;
+                }
+
+                const option = new Option(match.text || ('#' + match.id), match.id, true, true);
+                $(option).attr('data-domain', match.domain || '');
+                $(option).attr('data-chapter-url-pattern', match.chapter_url_pattern || '');
+                $(option).data('chapter-url-pattern', match.chapter_url_pattern || '');
+                $templateId.append(option).trigger('change');
+                syncTemplatePatternView();
+            });
+        }, 300);
     }
 
     function selectedTemplatePattern() {
+        const selectedData = $.fn.select2 && $templateId.length ? ($templateId.select2('data')[0] || null) : null;
+        if (selectedData && selectedData.chapter_url_pattern) {
+            return String(selectedData.chapter_url_pattern).trim();
+        }
+
         const $selected = $templateId.find('option:selected');
         return String($selected.data('chapter-url-pattern') || '').trim();
     }
@@ -935,6 +968,46 @@
         });
     }
 
+    function initTemplateSelect2() {
+        if (!$templateId.length || !$.fn.select2) {
+            return;
+        }
+
+        $templateId.select2({
+            width: '100%',
+            placeholder: $templateId.data('placeholder') || 'Tìm template...',
+            allowClear: true,
+            minimumInputLength: 1,
+            language: {
+                inputTooShort: function () {
+                    return 'Nhập ít nhất 1 ký tự để tìm template.';
+                },
+                searching: function () {
+                    return 'Đang tìm...';
+                },
+                noResults: function () {
+                    return 'Không tìm thấy template phù hợp.';
+                }
+            },
+            ajax: {
+                url: cfg.ajax_url,
+                method: 'POST',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) {
+                    return {
+                        action: cfg.template_search_action,
+                        nonce: cfg.nonce,
+                        q: params.term || ''
+                    };
+                },
+                processResults: function (data) {
+                    return data || { results: [] };
+                }
+            }
+        });
+    }
+
     $templateSummary.on('click', '.es-crawler-template-story-edit', function () {
         $('.es-crawler-template-story-editor').removeClass('is-hidden');
         $('#es-crawler-template-story-title').trigger('focus').trigger('select');
@@ -1013,6 +1086,14 @@
         if (crawlerMode() === 'template') {
             clearCrawlerContext('Template đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
         }
+    });
+    $templateId.on('select2:select', function (event) {
+        const item = event.params && event.params.data ? event.params.data : {};
+        const pattern = item.chapter_url_pattern || '';
+        const $selected = $templateId.find('option:selected');
+        $selected.data('chapter-url-pattern', pattern);
+        $selected.attr('data-chapter-url-pattern', pattern);
+        syncTemplatePatternView();
     });
     $templateFrom.add($templateTo).add($templatePadding).on('input change', function () {
         syncTemplatePatternView();
@@ -1315,6 +1396,7 @@
 
     $(function () {
         initSelect2();
+        initTemplateSelect2();
         toggleCrawlerMode();
         toggleTitleTemplate();
         syncTemplatePatternView();

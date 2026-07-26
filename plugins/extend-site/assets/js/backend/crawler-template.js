@@ -128,6 +128,29 @@
                 '</option>';
         });
         $templateExisting.html(html);
+        if ($.fn.select2) {
+            $templateExisting.trigger('change.select2');
+        }
+    }
+
+    function setTemplateSelectOption(template) {
+        if (!template || !template.id) {
+            $templateExisting.html('<option value="">Chọn mẫu để sửa</option>').val('');
+            if ($.fn.select2) {
+                $templateExisting.trigger('change.select2');
+            }
+            return;
+        }
+
+        const id = String(template.id);
+        const text = (template.name || '') + ' - ' + (template.domain || '');
+        const option = new Option(text, id, true, true);
+        $(option).attr('data-domain', template.domain || '');
+        $templateExisting.find('option[value="' + id.replace(/"/g, '\\"') + '"]').remove();
+        $templateExisting.append(option).val(id);
+        if ($.fn.select2) {
+            $templateExisting.trigger('change.select2');
+        }
     }
 
     function setTemplateId(id) {
@@ -135,6 +158,9 @@
         $templateId.val(value);
         $deleteBtn.prop('disabled', value <= 0);
         $templateExisting.val(value > 0 ? String(value) : '');
+        if ($.fn.select2) {
+            $templateExisting.trigger('change.select2');
+        }
     }
 
     function clearForm() {
@@ -213,7 +239,7 @@
         }
 
         const response = await ajax(cfg.delete_action, { template_id: id });
-        renderTemplateOptions((response.data && response.data.templates) || [], 0);
+        setTemplateSelectOption(null);
         clearForm();
         setSaveStatus((response.data && response.data.message) || 'Đã xóa mẫu.', 'success');
     }
@@ -621,6 +647,46 @@
         }
     }
 
+    function initTemplateSelect2() {
+        if (!$templateExisting.length || !$.fn.select2) {
+            return;
+        }
+
+        $templateExisting.select2({
+            width: '100%',
+            placeholder: 'Tìm mẫu crawler...',
+            allowClear: true,
+            minimumInputLength: 1,
+            language: {
+                inputTooShort: function () {
+                    return 'Nhập ít nhất 1 ký tự để tìm mẫu.';
+                },
+                searching: function () {
+                    return 'Đang tìm...';
+                },
+                noResults: function () {
+                    return 'Không tìm thấy mẫu phù hợp.';
+                }
+            },
+            ajax: {
+                url: cfg.ajax_url,
+                method: 'POST',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) {
+                    return {
+                        action: cfg.search_action,
+                        nonce: cfg.nonce,
+                        q: params.term || ''
+                    };
+                },
+                processResults: function (data) {
+                    return data || { results: [] };
+                }
+            }
+        });
+    }
+
     $form.on('focus', '.es-template-selector-input', function () {
         const $field = $(this);
         if (!$field.data('original-set')) {
@@ -711,7 +777,7 @@
 
             const response = await ajax(cfg.save_action, payload);
             const data = response.data || {};
-            renderTemplateOptions(data.templates || [], data.template && data.template.id);
+            setTemplateSelectOption(data.template || null);
             fillTemplate(data.template || {});
             setSaveStatus(data.message || 'Đã lưu mẫu.', 'success');
         } catch (xhr) {
@@ -836,5 +902,11 @@
             $testBtn.prop('disabled', false).text(originalText);
         }
     });
+
+    initTemplateSelect2();
+
+    if ($templateExisting.val()) {
+        $templateExisting.trigger('change');
+    }
 
 })(jQuery);

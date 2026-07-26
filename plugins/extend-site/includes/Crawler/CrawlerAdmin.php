@@ -31,7 +31,6 @@ class CrawlerAdmin
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Bạn không có quyền truy cập trang này.', 'extend-site'));
         }
-        $templates = CrawlerTemplateTable::all();
         ?>
         <div class="wrap es-crawler-page">
             <h1><?php esc_html_e('Crawler truyện', 'extend-site'); ?></h1>
@@ -58,20 +57,11 @@ class CrawlerAdmin
                             <div class="es-crawler-two-cols">
                                 <div class="es-crawler-field">
                                     <label for="es-crawler-template-id"><?php esc_html_e('Template', 'extend-site'); ?></label>
-                                    <select id="es-crawler-template-id">
+                                    <select id="es-crawler-template-id" data-placeholder="<?php echo esc_attr__('Tìm template...', 'extend-site'); ?>">
                                         <option value=""><?php esc_html_e('Chọn template', 'extend-site'); ?></option>
-                                        <?php foreach ($templates as $template) : ?>
-                                            <option
-                                                value="<?php echo esc_attr((string) $template['id']); ?>"
-                                                data-domain="<?php echo esc_attr($template['domain']); ?>"
-                                                data-chapter-url-pattern="<?php echo esc_attr((string) ($template['chapter_url_pattern'] ?? '')); ?>"
-                                            >
-                                                <?php echo esc_html($template['name'] . ' - ' . $template['domain']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
                                     </select>
                                     <p>
-                                        <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=' . CrawlerTemplateAdmin::PAGE_SLUG)); ?>">
+                                        <a class="button button-small" href="<?php echo esc_url(add_query_arg(['page' => CrawlerTemplateAdmin::PAGE_SLUG, 'action' => 'new'], admin_url('admin.php'))); ?>">
                                             <?php esc_html_e('Tạo template', 'extend-site'); ?>
                                         </a>
                                     </p>

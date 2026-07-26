@@ -36,7 +36,7 @@ defined('ABSPATH') || exit;
 
 class Plugin
 {
-    private const DB_VERSION = '20260717_system_jobs_table';
+    private const DB_VERSION = '20260726_crawler_template_soft_delete';
 
     /**
      * Boot the plugin by initializing all components.

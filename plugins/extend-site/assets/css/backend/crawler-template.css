@@ -130,6 +130,11 @@
     width: 100%;
 }
 
+.es-template-field .select2-container {
+    max-width: 100%;
+    width: 100% !important;
+}
+
 .es-template-field .description {
     color: var(--es-template-muted);
     font-size: 12px;
@@ -197,9 +202,174 @@
     margin-top: 12px;
 }
 
+.es-template-list-heading {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin: 12px 0 10px;
+}
+
+.es-template-list-heading h1 {
+    margin: 0;
+    padding: 0;
+}
+
+.es-template-list-heading p {
+    color: var(--es-template-muted);
+    margin: 6px 0 0;
+}
+
+.es-template-list-card {
+    background: #fff;
+    border: 1px solid var(--es-template-border);
+    margin-top: 16px;
+    padding: 16px;
+}
+
+.es-template-list-toolbar {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.es-template-list-count {
+    color: var(--es-template-text);
+    display: none;
+    font-weight: 600;
+}
+
+.es-template-list-views {
+    float: none;
+    margin: 0;
+}
+
+.es-template-list-views li {
+    color: var(--es-template-muted);
+}
+
+.es-template-list-views .current {
+    color: var(--es-template-text);
+    font-weight: 600;
+}
+
+.es-template-search-form {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.es-template-search-form input[type="search"] {
+    min-width: 260px;
+}
+
+.es-template-list-card .tablenav {
+    clear: none;
+    height: auto;
+    margin: 14px 0;
+}
+
+.es-template-list-card .tablenav.top {
+    margin-bottom: 10px;
+}
+
+.es-template-list-card .tablenav.bottom {
+    margin-top: 12px;
+}
+
+.es-template-list-card .tablenav-pages {
+    align-items: center;
+    display: flex;
+    float: none;
+    gap: 6px;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+}
+
+.es-template-list-card .displaying-num {
+    color: var(--es-template-muted);
+    font-size: 13px;
+    margin-right: 8px;
+}
+
+.es-template-list-card .page-numbers {
+    background: #fff;
+    border: 1px solid var(--es-template-border);
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: #2271b1;
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 30px;
+    min-height: 32px;
+    min-width: 32px;
+    padding: 0 10px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.es-template-list-card .page-numbers:hover,
+.es-template-list-card .page-numbers:focus {
+    background: #f0f6fc;
+    border-color: #8cbadc;
+    color: #135e96;
+}
+
+.es-template-list-card .page-numbers.current {
+    background: var(--es-template-accent);
+    border-color: var(--es-template-accent);
+    color: #fff;
+}
+
+.es-template-list-table {
+    border-color: var(--es-template-border);
+}
+
+.es-template-list-table th,
+.es-template-list-table td {
+    vertical-align: middle;
+}
+
+.es-template-list-table td code {
+    background: #f6f7f7;
+    border-radius: 3px;
+    display: inline-block;
+    max-width: 320px;
+    overflow: hidden;
+    padding: 3px 6px;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.es-template-type-badge {
+    background: #f0f6fc;
+    border: 1px solid #c5d9ed;
+    border-radius: 999px;
+    color: #0a4b78;
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 3px 8px;
+}
+
+.es-template-row-actions.is-trash .edit {
+    display: none;
+}
+
+.es-template-row-actions.is-trash .restore a::before {
+    content: none;
+}
+
 .es-template-list-table td:last-child,
 .es-template-list-table th:last-child {
-    text-align: right;
     white-space: nowrap;
 }
 
@@ -458,5 +628,32 @@
     .es-template-url-pattern-control {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .es-template-list-heading,
+    .es-template-list-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .es-template-search-form {
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .es-template-search-form input[type="search"] {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .es-template-list-card .tablenav-pages {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .es-template-list-card .displaying-num {
+        flex-basis: 100%;
+        margin: 0 0 4px;
     }
 }

@@ -47,6 +47,7 @@ class CrawlerTemplateTable
             chapter_content_selector TEXT DEFAULT NULL,
             find_replace_rules LONGTEXT DEFAULT NULL,
             delay_between INT UNSIGNED NOT NULL DEFAULT 1,
+            deleted_at DATETIME DEFAULT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -73,6 +74,11 @@ class CrawlerTemplateTable
         if (!$sample_chapter_url) {
             $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN sample_chapter_url TEXT DEFAULT NULL AFTER sample_story_url');
         }
+
+        $deleted_at = $wpdb->get_var($wpdb->prepare('SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'deleted_at'));
+        if (!$deleted_at) {
+            $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN deleted_at DATETIME DEFAULT NULL AFTER delay_between');
+        }
     }
 
     public static function all(): array
@@ -80,7 +86,7 @@ class CrawlerTemplateTable
         global $wpdb;
 
         $rows = $wpdb->get_results(
-            'SELECT * FROM ' . self::get_table_name() . ' ORDER BY name ASC, domain ASC',
+            'SELECT * FROM ' . self::get_table_name() . ' WHERE deleted_at IS NULL ORDER BY name ASC, domain ASC',
             ARRAY_A
         );
 
@@ -91,7 +97,51 @@ class CrawlerTemplateTable
         return array_map([self::class, 'normalize_row'], $rows);
     }
 
-    public static function find(int $id): ?array
+    public static function query(array $args = []): array
+    {
+        global $wpdb;
+
+        $per_page = isset($args['per_page']) ? absint($args['per_page']) : 20;
+        $per_page = max(1, min(100, $per_page));
+        $paged = isset($args['paged']) ? absint($args['paged']) : 1;
+        $paged = max(1, $paged);
+        $offset = ($paged - 1) * $per_page;
+        $search = isset($args['search']) ? sanitize_text_field((string) $args['search']) : '';
+        $status = isset($args['status']) ? sanitize_key((string) $args['status']) : 'active';
+        $where = self::list_where_sql($search, $status);
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT * FROM ' . self::get_table_name() . $where['sql'] . ' ORDER BY updated_at DESC, id DESC LIMIT %d OFFSET %d',
+                array_merge($where['params'], [$per_page, $offset])
+            ),
+            ARRAY_A
+        );
+
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        return array_map([self::class, 'normalize_row'], $rows);
+    }
+
+    public static function count(array $args = []): int
+    {
+        global $wpdb;
+
+        $search = isset($args['search']) ? sanitize_text_field((string) $args['search']) : '';
+        $status = isset($args['status']) ? sanitize_key((string) $args['status']) : 'active';
+        $where = self::list_where_sql($search, $status);
+
+        $sql = 'SELECT COUNT(*) FROM ' . self::get_table_name() . $where['sql'];
+        if ($where['params']) {
+            $sql = $wpdb->prepare($sql, $where['params']);
+        }
+
+        return (int) $wpdb->get_var($sql);
+    }
+
+    public static function find(int $id, bool $include_trashed = false): ?array
     {
         global $wpdb;
 
@@ -99,10 +149,8 @@ class CrawlerTemplateTable
             return null;
         }
 
-        $row = $wpdb->get_row(
-            $wpdb->prepare('SELECT * FROM ' . self::get_table_name() . ' WHERE id = %d LIMIT 1', $id),
-            ARRAY_A
-        );
+        $where = $include_trashed ? 'WHERE id = %d' : 'WHERE id = %d AND deleted_at IS NULL';
+        $row = $wpdb->get_row($wpdb->prepare('SELECT * FROM ' . self::get_table_name() . ' ' . $where . ' LIMIT 1', $id), ARRAY_A);
 
         return is_array($row) ? self::normalize_row($row) : null;
     }
@@ -118,7 +166,7 @@ class CrawlerTemplateTable
 
         $row = $wpdb->get_row(
             $wpdb->prepare(
-                'SELECT * FROM ' . self::get_table_name() . ' WHERE domain = %s ORDER BY id DESC LIMIT 1',
+                'SELECT * FROM ' . self::get_table_name() . ' WHERE domain = %s AND deleted_at IS NULL ORDER BY id DESC LIMIT 1',
                 $domain
             ),
             ARRAY_A
@@ -184,6 +232,51 @@ class CrawlerTemplateTable
 
     public static function delete(int $id): bool
     {
+        return self::trash($id);
+    }
+
+    public static function trash(int $id): bool
+    {
+        global $wpdb;
+
+        if ($id <= 0) {
+            return false;
+        }
+
+        return $wpdb->update(
+            self::get_table_name(),
+            [
+                'deleted_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql'),
+            ],
+            ['id' => $id],
+            ['%s', '%s'],
+            ['%d']
+        ) !== false;
+    }
+
+    public static function restore(int $id): bool
+    {
+        global $wpdb;
+
+        if ($id <= 0) {
+            return false;
+        }
+
+        return $wpdb->update(
+            self::get_table_name(),
+            [
+                'deleted_at' => null,
+                'updated_at' => current_time('mysql'),
+            ],
+            ['id' => $id],
+            ['%s', '%s'],
+            ['%d']
+        ) !== false;
+    }
+
+    public static function force_delete(int $id): bool
+    {
         global $wpdb;
 
         if ($id <= 0) {
@@ -203,6 +296,33 @@ class CrawlerTemplateTable
         return sanitize_text_field($domain);
     }
 
+    private static function list_where_sql(string $search, string $status): array
+    {
+        global $wpdb;
+
+        $clauses = [];
+        $params = [];
+
+        if ($status === 'trash') {
+            $clauses[] = 'deleted_at IS NOT NULL';
+        } else {
+            $clauses[] = 'deleted_at IS NULL';
+        }
+
+        $search = trim($search);
+        if ($search !== '') {
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $clauses[] = '(name LIKE %s OR domain LIKE %s)';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        return [
+            'sql' => ' WHERE ' . implode(' AND ', $clauses),
+            'params' => $params,
+        ];
+    }
+
     private static function normalize_row(array $row): array
     {
         $row['id'] = isset($row['id']) ? (int) $row['id'] : 0;
@@ -213,6 +333,7 @@ class CrawlerTemplateTable
         $row['sample_chapter_url'] = isset($row['sample_chapter_url']) ? esc_url_raw((string) $row['sample_chapter_url']) : '';
         $row['chapter_content_scope_selector'] = isset($row['chapter_content_scope_selector']) ? sanitize_text_field((string) $row['chapter_content_scope_selector']) : '';
         $row['delay_between'] = isset($row['delay_between']) ? max(1, absint($row['delay_between'])) : 1;
+        $row['deleted_at'] = isset($row['deleted_at']) ? sanitize_text_field((string) $row['deleted_at']) : '';
 
         $extract_rules = [];
         if (!empty($row['story_extract_rules'])) {
