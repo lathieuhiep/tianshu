@@ -14,8 +14,6 @@
     const $templateId = $('#es-template-id');
     const $templateExisting = $('#es-template-existing');
     const $saveBtn = $('#es-template-save');
-    const $newBtn = $('#es-template-new');
-    const $deleteBtn = $('#es-template-delete');
     const $saveStatus = $('#es-template-save-status');
     let previewRequestId = 0;
 
@@ -156,26 +154,12 @@
     function setTemplateId(id) {
         const value = parseInt(id, 10) || 0;
         $templateId.val(value);
-        $deleteBtn.prop('disabled', value <= 0);
         $templateExisting.val(value > 0 ? String(value) : '');
         if ($.fn.select2) {
             $templateExisting.trigger('change.select2');
         }
     }
 
-    function clearForm() {
-        const targetUrl = $targetUrl.val();
-        const chapterUrl = $chapterUrl.val();
-        $form.get(0).reset();
-        $targetUrl.val(targetUrl);
-        $chapterUrl.val(chapterUrl);
-        $('#es-template-chapter-url-pattern').val(defaultChapterUrlPattern());
-        setTemplateId(0);
-        $('#es-template-find-replace-rules').val('[]');
-        updateChapterPatternCheck();
-        setSaveStatus('', '');
-        $testResult.empty().removeClass('is-error');
-    }
 
     function fillReplacementRules(rules) {
         rules = Array.isArray(rules) ? rules : [];
@@ -232,17 +216,6 @@
         fillTemplate((response.data && response.data.template) || {});
     }
 
-    async function deleteTemplate(id) {
-        id = parseInt(id, 10) || 0;
-        if (!id || !window.confirm('Xóa mẫu crawler này?')) {
-            return;
-        }
-
-        const response = await ajax(cfg.delete_action, { template_id: id });
-        setTemplateSelectOption(null);
-        clearForm();
-        setSaveStatus((response.data && response.data.message) || 'Đã xóa mẫu.', 'success');
-    }
 
     function writePreview(html) {
         const iframe = $previewFrame.get(0);
@@ -736,10 +709,6 @@
         setSaveStatus('Đã tạo Mẫu URL chương từ URL chương mẫu. Hãy kiểm tra lại trước khi lưu.', 'success');
     });
 
-    $newBtn.on('click', function () {
-        clearForm();
-    });
-
     $templateExisting.on('change', async function () {
         const id = parseInt($(this).val(), 10) || 0;
         if (!id) {
@@ -787,24 +756,6 @@
         }
     });
 
-    $deleteBtn.on('click', async function () {
-        const id = parseInt($templateId.val(), 10) || 0;
-        if (!id) {
-            return;
-        }
-
-        const originalText = $deleteBtn.text();
-        $deleteBtn.prop('disabled', true).text('Đang xóa...');
-
-        try {
-            await deleteTemplate(id);
-        } catch (xhr) {
-            setSaveStatus(errorMessage(xhr), 'error');
-            $deleteBtn.prop('disabled', false);
-        } finally {
-            $deleteBtn.text(originalText);
-        }
-    });
 
     $previewBtn.on('click', async function () {
         const url = sampleUrl();

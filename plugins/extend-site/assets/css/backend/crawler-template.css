@@ -73,6 +73,10 @@
     min-width: 24px;
 }
 
+.es-template-step-chapter .es-template-field + .es-template-field {
+    margin-top: 16px;
+}
+
 .es-template-manage {
     position: sticky;
     top: 32px;

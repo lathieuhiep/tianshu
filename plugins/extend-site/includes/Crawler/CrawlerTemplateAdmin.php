@@ -239,7 +239,6 @@ class CrawlerTemplateAdmin
                         <tr>
                             <th scope="col"><?php esc_html_e('Tên mẫu', 'extend-site'); ?></th>
                             <th scope="col"><?php esc_html_e('Domain', 'extend-site'); ?></th>
-                            <th scope="col"><?php esc_html_e('Kiểu mục lục', 'extend-site'); ?></th>
                             <th scope="col"><?php esc_html_e('Cập nhật', 'extend-site'); ?></th>
                         </tr>
                     </thead>
@@ -284,13 +283,12 @@ class CrawlerTemplateAdmin
                                         </div>
                                     </td>
                                     <td><code><?php echo esc_html((string) $template['domain']); ?></code></td>
-                                    <td><span class="es-template-type-badge"><?php echo esc_html(self::toc_type_label((string) $template['toc_type'])); ?></span></td>
                                     <td><?php echo esc_html(self::format_datetime((string) ($template['updated_at'] ?? ''))); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else : ?>
                             <tr>
-                                <td colspan="4">
+                                <td colspan="3">
                                     <?php echo $search !== '' ? esc_html__('Không tìm thấy mẫu crawler phù hợp.', 'extend-site') : esc_html($status === 'trash' ? __('Thùng rác đang trống.', 'extend-site') : __('Chưa có mẫu crawler nào.', 'extend-site')); ?>
                                 </td>
                             </tr>
@@ -327,13 +325,6 @@ class CrawlerTemplateAdmin
             </div>
         </div>
         <?php
-    }
-
-    private static function toc_type_label(string $toc_type): string
-    {
-        return $toc_type === 'pattern'
-            ? __('Mẫu URL', 'extend-site')
-            : __('Selector', 'extend-site');
     }
 
     private static function format_datetime(string $datetime): string
@@ -387,9 +378,7 @@ class CrawlerTemplateAdmin
                                 </div>
 
                                 <div class="es-template-manage-actions">
-                                    <button type="button" class="button" id="es-template-new"><?php esc_html_e('Tạo mới', 'extend-site'); ?></button>
                                     <button type="button" class="button button-primary" id="es-template-save"><?php esc_html_e('Lưu mẫu', 'extend-site'); ?></button>
-                                    <button type="button" class="button button-link-delete" id="es-template-delete" disabled><?php esc_html_e('Xóa mẫu', 'extend-site'); ?></button>
                                 </div>
                             </div>
 
@@ -426,16 +415,6 @@ class CrawlerTemplateAdmin
                                 <h4><?php esc_html_e('Danh sách chương trên trang truyện', 'extend-site'); ?></h4>
                                 <p class="es-template-step-note"><?php esc_html_e('Các selector này chạy trên URL trang truyện mẫu để tạo queue link chương.', 'extend-site'); ?></p>
 
-                                <div class="es-template-two-cols">
-                                    <div class="es-template-field">
-                                        <label for="es-template-toc-type"><?php esc_html_e('Kiểu mục lục', 'extend-site'); ?></label>
-                                        <select id="es-template-toc-type" name="toc_type">
-                                            <option value="selector"><?php esc_html_e('Selector', 'extend-site'); ?></option>
-                                            <option value="pattern"><?php esc_html_e('Mẫu URL', 'extend-site'); ?></option>
-                                        </select>
-                                        <p class="description"><?php esc_html_e('Nên dùng Selector nếu trang truyện có danh sách chương.', 'extend-site'); ?></p>
-                                    </div>
-                                </div>
 
                                 <div class="es-template-two-cols">
                                     <?php self::render_selector_field(
@@ -465,19 +444,22 @@ class CrawlerTemplateAdmin
                                 'es-template-chapter-content-scope-selector',
                                 'chapter_content_scope_selector',
                                 __('Vùng chi tiết chương *', 'extend-site'),
-                                __('Khối lớn chứa tiêu đề và nội dung chương. Crawler chỉ tìm các selector chương bên trong vùng này.', 'extend-site')
+                                __('Khối lớn chứa tiêu đề và nội dung chương. Crawler chỉ tìm các selector chương bên trong vùng này.', 'extend-site'),
+                                '.chapter-detail'
                             ); ?>
                             <?php self::render_selector_field(
                                 'es-template-chapter-title-selector',
                                 'chapter_title_selector',
                                 __('Tên chương', 'extend-site'),
-                                __('Tùy chọn. Lấy tiêu đề chương bên trong vùng chi tiết chương.', 'extend-site')
+                                __('Tùy chọn. Lấy tiêu đề chương bên trong vùng chi tiết chương.', 'extend-site'),
+                                'h1'
                             ); ?>
                             <?php self::render_selector_field(
                                 'es-template-chapter-content-selector',
                                 'chapter_content_selector',
                                 __('Nội dung truyện', 'extend-site'),
-                                __('Tùy chọn. Nếu bỏ trống, crawler sẽ lấy nội dung từ toàn bộ Vùng chi tiết chương.', 'extend-site')
+                                __('Tùy chọn. Nếu bỏ trống, crawler sẽ lấy nội dung từ toàn bộ Vùng chi tiết chương.', 'extend-site'),
+                                'div:nth-of-type(2)'
                             ); ?>
 
                             <div class="es-template-field es-template-cleanup-field">
@@ -565,13 +547,13 @@ class CrawlerTemplateAdmin
         <?php
     }
 
-    private static function render_selector_field(string $id, string $name, string $label, string $description = ''): void
+    private static function render_selector_field(string $id, string $name, string $label, string $description = '', string $placeholder = '.selector'): void
     {
         ?>
         <div class="es-template-field es-template-selector-field">
             <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html($label); ?></label>
             <div class="es-template-selector-control">
-                <input type="text" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="regular-text es-template-selector-input" placeholder=".selector" />
+                <input type="text" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="regular-text es-template-selector-input" placeholder="<?php echo esc_attr($placeholder); ?>" />
                 <button type="button" class="button es-template-reset-field" data-target="#<?php echo esc_attr($id); ?>" aria-label="<?php echo esc_attr__('Đặt lại trường', 'extend-site'); ?>">
                     <?php esc_html_e('Đặt lại', 'extend-site'); ?>
                 </button>

@@ -372,7 +372,7 @@ class Scraper
 
     private static function first_selector_node(DOMXPath $xpath, string $selector, ?DOMNode $context = null): ?DOMNode
     {
-        $expression = self::css_selector_to_xpath($selector);
+        $expression = CssSelector::to_xpath($selector);
         if ($expression === '') {
             return null;
         }
@@ -384,70 +384,6 @@ class Scraper
         return self::first_node($xpath, $expression, $context);
     }
 
-    private static function css_selector_to_xpath(string $selector): string
-    {
-        $selector = trim($selector);
-        if ($selector === '' || strpos($selector, ',') !== false) {
-            return '';
-        }
-
-        $parts = preg_split('/\s+/', $selector);
-        if (!$parts) {
-            return '';
-        }
-
-        $xpath = '';
-        foreach ($parts as $part) {
-            $segment = self::css_selector_part_to_xpath($part);
-            if ($segment === '') {
-                return '';
-            }
-
-            $xpath .= '//' . $segment;
-        }
-
-        return $xpath;
-    }
-
-    private static function css_selector_part_to_xpath(string $part): string
-    {
-        if (!preg_match('/^([a-zA-Z][a-zA-Z0-9_-]*)?((?:[#.][a-zA-Z0-9_-]+)*)$/', $part, $matches)) {
-            return '';
-        }
-
-        $tag = $matches[1] !== '' ? strtolower($matches[1]) : '*';
-        $suffix = $matches[2] ?? '';
-        $predicates = [];
-
-        if ($suffix !== '') {
-            preg_match_all('/([#.])([a-zA-Z0-9_-]+)/', $suffix, $tokens, PREG_SET_ORDER);
-            foreach ($tokens as $token) {
-                if ($token[1] === '#') {
-                    $predicates[] = '@id = ' . self::xpath_literal($token[2]);
-                    continue;
-                }
-
-                $predicates[] = 'contains(concat(" ", normalize-space(@class), " "), ' . self::xpath_literal(' ' . $token[2] . ' ') . ')';
-            }
-        }
-
-        return $tag . ($predicates ? '[' . implode(' and ', $predicates) . ']' : '');
-    }
-
-    private static function xpath_literal(string $value): string
-    {
-        if (strpos($value, "'") === false) {
-            return "'" . $value . "'";
-        }
-
-        if (strpos($value, '"') === false) {
-            return '"' . $value . '"';
-        }
-
-        $parts = explode("'", $value);
-
-        return "concat('" . implode("', \"'\", '", $parts) . "')";
-    }
 
     private static function best_content_node(DOMXPath $xpath, string $expression): ?DOMNode
     {
