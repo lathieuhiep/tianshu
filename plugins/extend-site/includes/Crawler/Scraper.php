@@ -97,16 +97,30 @@ class Scraper
         }
 
         $xpath = new DOMXPath($dom);
+        $debug_before_cleanup = self::template_selector_debug($xpath, $source_url, $scope_selector, $content_selector);
         self::remove_unwanted_nodes($xpath, [
             './/script',
             './/style',
             './/noscript',
             './/iframe',
-        ]);
+        ], false);
+        $debug_after_cleanup = self::template_selector_debug($xpath, $source_url, $scope_selector, $content_selector);
 
         $scope_node = self::first_selector_node($xpath, $scope_selector);
         if (!$scope_node) {
-            return new WP_Error('content_scope_selector_missing', __('Selector khối bọc nội dung chương không khớp.', 'extend-site'));
+            return new WP_Error('content_scope_selector_missing', __('Selector khối bọc nội dung chương không khớp.', 'extend-site'), [
+                'debug' => [
+                    'template_selectors' => [
+                        'source_url' => $source_url,
+                        'clean_url' => $clean_url,
+                        'scope_selector' => $scope_selector,
+                        'content_selector' => $content_selector,
+                        'body_length' => strlen($body),
+                        'before_cleanup' => $debug_before_cleanup,
+                        'after_cleanup' => $debug_after_cleanup,
+                    ],
+                ],
+            ]);
         }
 
         $title = self::first_selector_text($xpath, (string) ($template['chapter_title_selector'] ?? ''), $scope_node);
@@ -118,7 +132,19 @@ class Scraper
             ? $scope_node
             : self::first_selector_node($xpath, $content_selector, $scope_node);
         if (!$content_node) {
-            return new WP_Error('content_selector_missing', __('Selector nội dung chương không khớp trong khối bọc.', 'extend-site'));
+            return new WP_Error('content_selector_missing', __('Selector nội dung chương không khớp trong khối bọc.', 'extend-site'), [
+                'debug' => [
+                    'template_selectors' => [
+                        'source_url' => $source_url,
+                        'clean_url' => $clean_url,
+                        'scope_selector' => $scope_selector,
+                        'content_selector' => $content_selector,
+                        'body_length' => strlen($body),
+                        'before_cleanup' => $debug_before_cleanup,
+                        'after_cleanup' => $debug_after_cleanup,
+                    ],
+                ],
+            ]);
         }
 
         $content_html = self::inner_html($content_node);
@@ -321,7 +347,7 @@ class Scraper
         return false;
     }
 
-    private static function remove_unwanted_nodes(DOMXPath $xpath, array $expressions): void
+    private static function remove_unwanted_nodes(DOMXPath $xpath, array $expressions, bool $include_defaults = true): void
     {
         $defaults = [
             './/script',
@@ -333,7 +359,8 @@ class Scraper
             './/footer',
             ".//*[contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ads') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'advert') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'popup') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'modal') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'overlay') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'menu') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'navbar') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sidebar') or contains(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'widget') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ads') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'advert') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'popup') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'modal') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'overlay') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'mask') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'menu') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'navbar') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sidebar') or contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'widget')]",
         ];
-        foreach (array_merge($defaults, $expressions) as $expression) {
+        $cleanup_expressions = $include_defaults ? array_merge($defaults, $expressions) : $expressions;
+        foreach ($cleanup_expressions as $expression) {
             foreach ($xpath->query($expression) ?: [] as $node) {
                 if ($node->parentNode) {
                     $node->parentNode->removeChild($node);
@@ -368,6 +395,39 @@ class Scraper
         $node = self::first_selector_node($xpath, $selector, $context);
 
         return $node ? trim(preg_replace('/\s+/', ' ', $node->textContent) ?: '') : '';
+    }
+
+    private static function template_selector_debug(DOMXPath $xpath, string $source_url, string $scope_selector, string $content_selector): array
+    {
+        $scope_nodes = self::selector_nodes($xpath, $scope_selector);
+        $content_nodes = self::selector_nodes($xpath, $content_selector);
+        $scope_node = $scope_nodes && $scope_nodes->length > 0 ? $scope_nodes->item(0) : null;
+        $content_in_scope = $scope_node && $content_selector !== ''
+            ? self::selector_nodes($xpath, $content_selector, $scope_node)
+            : null;
+        $title = self::first_text($xpath, '//title');
+
+        return [
+            'url' => $source_url,
+            'html_title' => $title,
+            'scope_match_count' => $scope_nodes ? $scope_nodes->length : 0,
+            'content_match_count' => $content_nodes ? $content_nodes->length : 0,
+            'content_in_scope_match_count' => $content_in_scope ? $content_in_scope->length : 0,
+        ];
+    }
+
+    private static function selector_nodes(DOMXPath $xpath, string $selector, ?DOMNode $context = null)
+    {
+        $expression = CssSelector::to_xpath($selector);
+        if ($expression === '') {
+            return null;
+        }
+
+        if ($context && strpos($expression, '//') === 0) {
+            $expression = '.' . $expression;
+        }
+
+        return $context ? $xpath->query($expression, $context) : $xpath->query($expression);
     }
 
     private static function first_selector_node(DOMXPath $xpath, string $selector, ?DOMNode $context = null): ?DOMNode

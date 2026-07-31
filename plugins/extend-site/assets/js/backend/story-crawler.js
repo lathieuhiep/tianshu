@@ -339,7 +339,12 @@
         const storyExists = !!data.story_exists || parseInt(data.story_id, 10) > 0;
         const storyStatus = storyExists ? 'Đã có' : 'Chưa có, sẽ tạo khi bấm Bắt đầu';
         const storyTitle = data.story_title || (state.preparedStory && state.preparedStory.title) || '';
-        const queueSource = 'Mẫu URL chương (khoảng nhập tay)';
+        const queueSourceLabels = {
+            detected_links: 'Link chương quét từ mục lục',
+            pattern_fallback: 'Mẫu URL chương fallback',
+            pattern_manual_range: 'Mẫu URL chương fallback'
+        };
+        const queueSource = queueSourceLabels[data.queue_source] || data.queue_source || 'Không rõ';
         const detectedTotal = parseInt(data.detected_total_chapters, 10) || 0;
         const detectedTotalLabel = detectedTotal > 0 ? detectedTotal + ' chương (ước lượng)' : 'Không phát hiện được';
         const warnings = Array.isArray(data.warnings) ? data.warnings.filter(Boolean) : [];
@@ -377,7 +382,7 @@
                 '</dd>' +
                 '<dt>Nguồn queue</dt><dd>' + escapeHtml(queueSource) + '</dd>' +
                 '<dt>Tổng phát hiện</dt><dd>' + escapeHtml(detectedTotalLabel) + '</dd>' +
-                '<dt>Số chương</dt><dd>' + escapeHtml(data.total_chapters || queue.length || 0) + '</dd>' +
+                '<dt>Số chương kéo về</dt><dd>' + escapeHtml(data.total_chapters || queue.length || 0) + '</dd>' +
                 '<dt>URL đầu</dt><dd><code>' + escapeHtml(first) + '</code></dd>' +
                 '<dt>URL cuối</dt><dd><code>' + escapeHtml(last) + '</code></dd>' +
                 '</dl>'
@@ -515,56 +520,63 @@
         };
     }
 
-    function buildTemplateQueue() {
-        const range = templateRangePayload();
-        const pattern = selectedTemplatePattern();
-        const max = parseInt(cfg.max_batch_size, 10) || 200;
-        const count = range.range_to - range.range_from + 1;
-
-        if (!pattern) {
-            throw new Error('Template chưa có Mẫu URL chương.');
+    async function prepareTemplateQueue(options) {
+        options = options || {};
+        const templateId = parseInt($templateId.val(), 10) || 0;
+        const storyUrl = $storySourceUrl.val().trim();
+        if (!templateId) {
+            throw new Error('Hãy chọn template.');
         }
-        if (!$storySourceUrl.val().trim()) {
+        if (!storyUrl) {
             throw new Error('Hãy nhập URL trang truyện.');
         }
-        if (count > max) {
-            throw new Error('Số URL vượt quá giới hạn batch: ' + max + '.');
-        }
 
-        const queue = [];
-        for (let chapter = range.range_from; chapter <= range.range_to; chapter += 1) {
-            const url = resolveTemplatePattern(pattern, chapter);
-            if (!isHttpUrl(url)) {
-                throw new Error('Mẫu URL chương tạo ra URL không hợp lệ.');
-            }
+        const response = await ajax(cfg.template_prepare_action, Object.assign({
+            template_id: templateId,
+            story_url: storyUrl
+        }, templateRangePayload()));
+        const data = response.data || {};
 
-            queue.push({
-                chapterNumber: chapter,
-                url: url,
-                retries: 0,
-                completed: false
-            });
-        }
-
-        return queue;
-    }
-
-    function refreshTemplateQueueFromRange() {
-        state.queue = buildTemplateQueue();
+        state.queue = Array.isArray(data.queue) ? data.queue : [];
         state.index = 0;
         state.processed = 0;
         state.consecutiveFailures = 0;
+        state.storyId = parseInt(data.story_id, 10) || 0;
+        state.preparedStory = data.prepared_story || null;
+        state.templatePrepared = state.queue.length > 0;
 
+        if (state.storyId) {
+            const option = new Option(data.story_title || ('#' + state.storyId), state.storyId, true, true);
+            $story.append(option).trigger('change');
+        } else {
+            $story.val(null).trigger('change');
+        }
+        if (options.applyTemplateDefaults !== false && data.delay_between) {
+            $delay.val(data.delay_between);
+        }
+        if (data.chapter_url_pattern) {
+            $templatePattern.val(resolveTemplatePattern(data.chapter_url_pattern, state.queue.length ? state.queue[0].chapterNumber : 1));
+            if (data.chapter_url_pattern.indexOf('{story_url}') === -1 && data.chapter_url_pattern.indexOf('{story_slug}') === -1) {
+                $pattern.val(data.chapter_url_pattern.replace('{chapter_number}', '{n}'));
+            }
+        }
         if (state.queue.length) {
             $from.val(state.queue[0].chapterNumber || 1);
             $to.val(state.queue[state.queue.length - 1].chapterNumber || state.queue.length);
+            $templateFrom.val(state.queue[0].chapterNumber || 1);
+            $templateTo.val(state.queue[state.queue.length - 1].chapterNumber || state.queue.length);
             $previewNumber.val(state.queue[0].chapterNumber || 1);
             $previewUrl.val(state.queue[0].url || '');
         }
 
+        if (options.applyTemplateDefaults !== false) {
+            fillReplacementRules(data.find_replace_rules || []);
+        }
         updateGeneratedPanel(state.queue);
         updateProgress();
         setButtons();
+
+        return data;
     }
 
     async function ensureStoryBeforeStart() {
@@ -577,7 +589,7 @@
         }
 
         if (!state.preparedStory) {
-            throw new Error('Thiếu thông tin truyện: vui lòng chuẩn bị batch từ Template trước.');
+            throw new Error('Thiếu thông tin truyện: vui lòng kiểm tra queue hoặc bấm Bắt đầu để crawler quét lại từ Template.');
         }
 
         const storyTitle = templateStoryTitle();
@@ -649,7 +661,10 @@
     }
 
     function setButtons() {
-        const canStart = state.queue.length > 0 && (crawlerMode() !== 'template' || state.templatePrepared);
+        const isTemplate = crawlerMode() === 'template';
+        const canStart = isTemplate
+            ? (parseInt($templateId.val(), 10) > 0 && $storySourceUrl.val().trim() !== '')
+            : state.queue.length > 0;
         $('#es-crawler-start-btn').prop('disabled', state.isRunning || !canStart);
         $('#es-crawler-pause-btn').prop('disabled', !state.isRunning).text(state.isPaused ? 'Tiếp tục' : 'Tạm dừng');
         $('#es-crawler-stop-btn').prop('disabled', !state.isRunning && !state.batchId);
@@ -756,6 +771,49 @@
             return response.data.message;
         }
         return fallback || 'Request thất bại.';
+    }
+
+    function responseData(response) {
+        if (response && response.responseJSON && response.responseJSON.data) {
+            return response.responseJSON.data;
+        }
+        if (response && response.data) {
+            return response.data;
+        }
+
+        return {};
+    }
+
+    function previewDebugHtml(response) {
+        const data = responseData(response);
+        const debug = data.debug && data.debug.template_selectors ? data.debug.template_selectors : null;
+        if (!debug) {
+            return '';
+        }
+
+        const before = debug.before_cleanup || {};
+        const after = debug.after_cleanup || {};
+        const row = function (label, value) {
+            return '<dt>' + escapeHtml(label) + '</dt><dd>' + escapeHtml(value == null || value === '' ? '-' : value) + '</dd>';
+        };
+
+        return '<details class="es-crawler-preview-debug" open>' +
+            '<summary>Debug selector</summary>' +
+            '<dl class="es-crawler-preview-meta">' +
+            row('URL fetch', debug.source_url || before.url || '') +
+            row('URL clean', debug.clean_url || '') +
+            row('Title HTML', after.html_title || before.html_title || '') +
+            row('Kích thước HTML', debug.body_length ? debug.body_length + ' bytes' : '') +
+            row('Scope selector', debug.scope_selector || '') +
+            row('Content selector', debug.content_selector || '') +
+            row('Scope trước cleanup', before.scope_match_count) +
+            row('Scope sau cleanup', after.scope_match_count) +
+            row('Content toàn trang trước cleanup', before.content_match_count) +
+            row('Content toàn trang sau cleanup', after.content_match_count) +
+            row('Content trong scope trước cleanup', before.content_in_scope_match_count) +
+            row('Content trong scope sau cleanup', after.content_in_scope_match_count) +
+            '</dl>' +
+            '</details>';
     }
 
     function batchSummary() {
@@ -1054,7 +1112,7 @@
     $('#es-crawler-generate-btn').on('click', function () {
         try {
             if (crawlerMode() === 'template') {
-                throw new Error('Chế độ Template tự tạo danh sách URL khi bấm Chuẩn bị batch từ Template.');
+                throw new Error('Chế độ Template tự tạo danh sách URL khi bấm Kiểm tra queue hoặc Bắt đầu.');
             }
             clearRunOutput();
             state.queue = buildQueue();
@@ -1072,19 +1130,19 @@
 
     $mode.on('change', function () {
         toggleCrawlerMode();
-        clearCrawlerContext('Chế độ cào đã thay đổi. Vui lòng chuẩn bị lại batch trước khi bắt đầu.');
+        clearCrawlerContext('Chế độ cào đã thay đổi. Vui lòng kiểm tra lại queue trước khi bắt đầu nếu cần.');
     });
     $storySourceUrl.on('input change', function () {
         autoSelectTemplateByUrl();
         syncTemplatePatternView();
         if (crawlerMode() === 'template') {
-            clearCrawlerContext('URL trang truyện đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
+            clearCrawlerContext('URL trang truyện đã thay đổi. Vui lòng kiểm tra lại queue nếu cần.');
         }
     });
     $templateId.on('change', function () {
         syncTemplatePatternView();
         if (crawlerMode() === 'template') {
-            clearCrawlerContext('Template đã thay đổi. Vui lòng chuẩn bị lại batch từ Template.');
+            clearCrawlerContext('Template đã thay đổi. Vui lòng kiểm tra lại queue nếu cần.');
         }
     });
     $templateId.on('select2:select', function (event) {
@@ -1100,16 +1158,14 @@
         if (crawlerMode() === 'template') {
             clearPreviewOutput();
             if (state.templatePrepared) {
-                try {
-                    refreshTemplateQueueFromRange();
-                    setNotice('Đã cập nhật danh sách URL theo khoảng chương mới.', 'success');
-                } catch (err) {
-                    state.queue = [];
-                    updateGeneratedPanel(state.queue);
-                    updateProgress();
-                    setButtons();
-                    setNotice(err.message || 'Khoảng chương Template không hợp lệ.', 'error');
-                }
+                state.queue = [];
+                state.index = 0;
+                state.processed = 0;
+                state.templatePrepared = false;
+                updateGeneratedPanel(state.queue);
+                updateProgress();
+                setButtons();
+                setNotice('Khoảng chương Template đã thay đổi. Bấm Kiểm tra queue để xem lại hoặc Bắt đầu để quét queue mới nhất.', 'warning');
             }
         }
     });
@@ -1126,69 +1182,22 @@
             return;
         }
 
-        let rangePayload;
         try {
-            rangePayload = templateRangePayload();
+            templateRangePayload();
         } catch (err) {
             setTemplateStatus(err.message || 'Khoảng chương Template không hợp lệ.', 'error');
             return;
         }
-        const shouldPrefillDetectedRange = rangePayload.range_from === 1 && rangePayload.range_to === 1;
 
         const originalText = $templatePrepareBtn.text();
-        $templatePrepareBtn.prop('disabled', true).text('Đang chuẩn bị...');
+        $templatePrepareBtn.prop('disabled', true).text('Đang kiểm tra...');
         clearRunOutput({ keepTemplateStatus: true });
         setTemplateStatus('', '');
 
         try {
-            const response = await ajax(cfg.template_prepare_action, Object.assign({
-                template_id: templateId,
-                story_url: storyUrl
-            }, rangePayload));
-            const data = response.data || {};
-            state.queue = Array.isArray(data.queue) ? data.queue : [];
-            state.index = 0;
-            state.processed = 0;
-            state.consecutiveFailures = 0;
-            state.storyId = parseInt(data.story_id, 10) || 0;
-            state.preparedStory = data.prepared_story || null;
-            state.templatePrepared = state.queue.length > 0;
-
-            if (state.storyId) {
-                const option = new Option(data.story_title || ('#' + state.storyId), state.storyId, true, true);
-                $story.append(option).trigger('change');
-            } else {
-                $story.val(null).trigger('change');
-            }
-            if (data.delay_between) {
-                $delay.val(data.delay_between);
-            }
-            if (data.chapter_url_pattern) {
-                $templatePattern.val(resolveTemplatePattern(data.chapter_url_pattern, state.queue.length ? state.queue[0].chapterNumber : 1));
-                if (data.chapter_url_pattern.indexOf('{story_url}') === -1 && data.chapter_url_pattern.indexOf('{story_slug}') === -1) {
-                    $pattern.val(data.chapter_url_pattern.replace('{chapter_number}', '{n}'));
-                }
-            }
-            if (state.queue.length) {
-                $from.val(state.queue[0].chapterNumber || 1);
-                $to.val(state.queue[state.queue.length - 1].chapterNumber || state.queue.length);
-                $templateFrom.val(state.queue[0].chapterNumber || 1);
-                $templateTo.val(state.queue[state.queue.length - 1].chapterNumber || state.queue.length);
-                $previewNumber.val(state.queue[0].chapterNumber || 1);
-                $previewUrl.val(state.queue[0].url || '');
-            }
+            const data = await prepareTemplateQueue({ applyTemplateDefaults: true });
             const detectedTotal = parseInt(data.detected_total_chapters, 10) || 0;
-            if (shouldPrefillDetectedRange && detectedTotal > 1) {
-                const max = parseInt(cfg.max_batch_size, 10) || 200;
-                $templateFrom.val(1);
-                $templateTo.val(Math.min(detectedTotal, max));
-                refreshTemplateQueueFromRange();
-            }
-            fillReplacementRules(data.find_replace_rules || []);
-            updateGeneratedPanel(state.queue);
-            updateProgress();
-            setButtons();
-            setTemplateStatus(data.message || 'Đã chuẩn bị batch từ Template.', 'success');
+            setTemplateStatus(data.message || 'Đã kiểm tra queue từ Template.', 'success');
             renderTemplateSummary(data);
             if (detectedTotal <= 0) {
                 $templateTo.trigger('focus').trigger('select');
@@ -1196,7 +1205,7 @@
             setNotice('', 'success');
         } catch (xhr) {
             state.templatePrepared = false;
-            setTemplateStatus(errorMessage(xhr, 'Chuẩn bị batch thất bại.'), 'error');
+            setTemplateStatus(errorMessage(xhr, 'Kiểm tra queue thất bại.'), 'error');
         } finally {
             $templatePrepareBtn.prop('disabled', false).text(originalText);
         }
@@ -1217,13 +1226,13 @@
                 throw new Error('Hãy chọn template trước khi xem thử.');
             }
             if (isTemplateMode && !state.templatePrepared && !$previewUrl.val().trim()) {
-                throw new Error('Hãy chuẩn bị batch từ Template trước khi xem thử.');
+                throw new Error('Hãy kiểm tra queue từ Template trước khi xem thử, hoặc nhập URL xem thử thủ công.');
             }
             const previewStoryTitle = isTemplateMode
                 ? templateStoryTitle()
                 : '';
             if (!storyId && !previewStoryTitle) {
-                throw new Error('Thiếu tên truyện: hãy chuẩn bị batch từ Template hoặc nhập tên truyện sẽ tạo.');
+                throw new Error('Thiếu tên truyện: hãy kiểm tra queue từ Template hoặc nhập tên truyện sẽ tạo.');
             }
             if (!isHttpUrl(url)) {
                 throw new Error('URL xem thử không hợp lệ: vui lòng nhập URL bắt đầu bằng http:// hoặc https://.');
@@ -1265,19 +1274,20 @@
                 '<div class="es-crawler-preview-html">' + (data.content_preview_html || '') + '</div>'
             );
         } catch (xhr) {
-            $previewResult.html('<div class="notice notice-error inline"><p>' + escapeHtml(errorMessage(xhr, 'Xem thử thất bại.')) + '</p></div>');
+            $previewResult.html(
+                '<div class="notice notice-error inline"><p>' + escapeHtml(errorMessage(xhr, 'Xem thử thất bại.')) + '</p></div>' +
+                previewDebugHtml(xhr)
+            );
             scrollToPreview();
         }
     });
 
     $('#es-crawler-start-btn').on('click', async function () {
         try {
-            if (crawlerMode() === 'template' && !state.templatePrepared) {
-                throw new Error('Hãy chuẩn bị batch từ Template trước.');
-            }
-
             if (crawlerMode() === 'template') {
-                refreshTemplateQueueFromRange();
+                const data = await prepareTemplateQueue({ applyTemplateDefaults: false });
+                setTemplateStatus(data.message || 'Đã tạo queue mới nhất từ Template.', 'success');
+                renderTemplateSummary(data);
             } else if (!state.queue.length) {
                 state.queue = buildQueue();
                 updateGeneratedPanel(state.queue);
@@ -1291,7 +1301,7 @@
             setNotice('', 'success');
             state.storyId = await ensureStoryBeforeStart();
             if (!state.storyId) {
-                throw new Error('Thiếu truyện: hãy chuẩn bị batch từ Template hoặc chọn truyện cần thêm chương.');
+                throw new Error('Thiếu truyện: hãy kiểm tra queue từ Template hoặc chọn truyện cần thêm chương.');
             }
 
             const response = await ajax(cfg.start_batch_action, {

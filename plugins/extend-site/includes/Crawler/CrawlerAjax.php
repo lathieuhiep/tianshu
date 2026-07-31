@@ -313,6 +313,21 @@ class CrawlerAjax
                 $selector_labels['chapter_content_scope_selector']
             );
         }
+        $chapter_content_length = mb_strlen($chapter_content);
+        $chapter_parse = Scraper::scrape_with_template($chapter_url, [
+            'name' => sanitize_text_field((string) wp_unslash($_POST['name'] ?? 'Template preview')),
+            'chapter_content_scope_selector' => $selectors['chapter_content_scope_selector'],
+            'chapter_title_selector' => $selectors['chapter_title_selector'],
+            'chapter_content_selector' => $selectors['chapter_content_selector'],
+        ], self::get_template_find_replace_rules());
+        if (is_wp_error($chapter_parse)) {
+            $warnings[] = $chapter_parse->get_error_message();
+            $chapter_content_length = 0;
+        } else {
+            $chapter_title = (string) ($chapter_parse['title'] ?? '');
+            $chapter_content_length = (int) ($chapter_parse['content_length'] ?? 0);
+            $warnings = array_merge($warnings, (array) ($chapter_parse['warnings'] ?? []));
+        }
         $chapter_links = self::chapter_link_summary(
             $story_xpath,
             $selectors['chapter_link_selector'],
@@ -347,7 +362,7 @@ class CrawlerAjax
                 'story_thumb' => $story_thumb,
                 'story_cats' => $story_cats,
                 'chapter_title' => $chapter_title,
-                'chapter_content_length' => mb_strlen($chapter_content),
+                'chapter_content_length' => $chapter_content_length,
                 'chapter_link_count' => $chapter_links['count'],
                 'toc_page_count' => $chapter_links['toc_page_count'],
             ]
@@ -361,7 +376,7 @@ class CrawlerAjax
             'story_thumb' => $story_thumb,
             'story_cats' => $story_cats,
             'chapter_title' => $chapter_title,
-            'chapter_content_length' => mb_strlen($chapter_content),
+            'chapter_content_length' => $chapter_content_length,
             'chapter_link_count' => $chapter_links['count'],
             'chapter_link_estimated' => $chapter_links['chapter_link_estimated'],
             'toc_page_count' => $chapter_links['toc_page_count'],
@@ -412,11 +427,11 @@ class CrawlerAjax
             wp_send_json_error(['message' => __('Thiếu selector khối bọc nội dung chương.', 'extend-site')], 400);
         }
 
-        if ($data['chapter_url_pattern'] === '') {
-            wp_send_json_error(['message' => __('Mẫu URL chương là bắt buộc vì crawler dùng mẫu này để tạo URL từng chương.', 'extend-site')], 400);
+        if ($data['chapter_link_selector'] === '' && $data['chapter_url_pattern'] === '') {
+            wp_send_json_error(['message' => __('Hãy cấu hình selector danh sách chương hoặc URL fallback từ mẫu.', 'extend-site')], 400);
         }
 
-        if (strpos($data['chapter_url_pattern'], '{chapter_number}') === false) {
+        if ($data['chapter_url_pattern'] !== '' && strpos($data['chapter_url_pattern'], '{chapter_number}') === false) {
             wp_send_json_error(['message' => __('Mẫu URL chương phải có biến số chương {chapter_number} hoặc {n}, ví dụ: {story_url}/chuong-{chapter_number}/', 'extend-site')], 400);
         }
 
@@ -526,17 +541,21 @@ class CrawlerAjax
 
         $existing_story_id = self::find_story_by_title($story_title);
 
-        $links = self::template_chapter_links($xpath, $template, $story_url);
-        $detected_total = count($links);
-        $warnings = [];
-        $queue = self::chapter_queue_from_template_pattern($template, $story_url);
-        if (is_wp_error($queue)) {
+        $from = absint($_POST['range_from'] ?? 0);
+        $to = absint($_POST['range_to'] ?? 0);
+        $padding = absint($_POST['padding'] ?? 0);
+        $queue_result = TemplateQueueBuilder::build($xpath, $template, $story_url, $from, $to, $padding);
+        if (is_wp_error($queue_result)) {
             wp_send_json_error([
-                'message' => $queue->get_error_message(),
+                'message' => $queue_result->get_error_message(),
             ], 400);
         }
-        $queue_source = 'pattern_manual_range';
-        $range_to = absint($_POST['range_to'] ?? 0);
+
+        $queue = $queue_result['queue'];
+        $detected_total = (int) $queue_result['detected_total'];
+        $queue_source = (string) $queue_result['source'];
+        $warnings = (array) ($queue_result['warnings'] ?? []);
+        $range_to = $to;
         if ($detected_total > 0) {
             $warnings[] = sprintf(
                 __('Tổng chương phát hiện chỉ là ước lượng: %d chương.', 'extend-site'),
@@ -549,16 +568,11 @@ class CrawlerAjax
                 );
             }
         } else {
-            $warnings[] = __('Không phát hiện được tổng link chương từ template. Crawler sẽ chạy theo khoảng Từ/Đến đã nhập.', 'extend-site');
-        }
-
-        $max = (int) apply_filters('es_crawler_max_batch_size', self::MAX_BATCH_SIZE);
-        if (count($queue) > $max) {
-            $queue = array_slice($queue, 0, $max);
+            $warnings[] = __('Không phát hiện được link chương thật từ template. Crawler sẽ dùng URL fallback từ mẫu theo khoảng Từ/Đến đã nhập.', 'extend-site');
         }
 
         wp_send_json_success([
-            'message' => sprintf(__('Đã chuẩn bị %d URL chương từ template.', 'extend-site'), count($queue)),
+            'message' => sprintf(__('Đã kiểm tra queue: %d URL chương.', 'extend-site'), count($queue)),
             'story_id' => $existing_story_id,
             'story_title' => $existing_story_id > 0 ? get_the_title($existing_story_id) : $story_title,
             'story_created' => false,
@@ -1314,126 +1328,6 @@ class CrawlerAjax
         $slug = $slug !== '' ? $slug : 'truyen-moi';
 
         return ucwords(str_replace(['-', '_'], ' ', $slug));
-    }
-
-    private static function template_chapter_links(DOMXPath $xpath, array $template, string $story_url): array
-    {
-        $chapter_selector = (string) ($template['chapter_link_selector'] ?? '');
-        $links = self::selector_links($xpath, $chapter_selector, $story_url);
-        $toc_selector = (string) ($template['toc_page_link_selector'] ?? '');
-        $toc_pages = $toc_selector !== '' ? self::selector_links($xpath, $toc_selector, $story_url) : [];
-
-        $page_urls = array_keys($toc_pages);
-        $page_urls = array_slice(array_values(array_unique($page_urls)), 0, 50);
-        foreach ($page_urls as $page_url) {
-            $body = self::fetch_html($page_url, 20);
-            if (is_wp_error($body)) {
-                continue;
-            }
-
-            $dom = self::load_dom($body);
-            if (is_wp_error($dom)) {
-                continue;
-            }
-
-            $page_xpath = new DOMXPath($dom);
-            $links = array_replace($links, self::selector_links($page_xpath, $chapter_selector, $page_url));
-        }
-
-        return $links;
-    }
-
-    private static function chapter_queue_from_template_pattern(array $template, string $story_url)
-    {
-        $pattern = trim((string) ($template['chapter_url_pattern'] ?? ''));
-        if ($pattern === '') {
-            return new WP_Error(
-                'missing_chapter_url_pattern',
-                __('Template chưa có Mẫu URL chương để tạo queue. Hãy cấu hình Mẫu URL chương trong template.', 'extend-site')
-            );
-        }
-
-        $from = absint($_POST['range_from'] ?? 0);
-        $to = absint($_POST['range_to'] ?? 0);
-        $padding = absint($_POST['padding'] ?? 0);
-        if ($from < 1 || $to < 1 || $to < $from) {
-            return new WP_Error(
-                'invalid_template_range',
-                __('Hãy nhập khoảng chương Từ/Đến hợp lệ để tạo queue từ Mẫu URL chương.', 'extend-site')
-            );
-        }
-
-        $max = (int) apply_filters('es_crawler_max_batch_size', self::MAX_BATCH_SIZE);
-        if (($to - $from + 1) > $max) {
-            return new WP_Error(
-                'template_range_too_large',
-                sprintf(__('Khoảng chương vượt giới hạn an toàn: %d URL.', 'extend-site'), $max)
-            );
-        }
-
-        $story_url_base = untrailingslashit($story_url);
-        $story_slug = trim(basename(untrailingslashit((string) wp_parse_url($story_url, PHP_URL_PATH))), '/');
-        $queue = [];
-        for ($chapter = $from; $chapter <= $to; $chapter++) {
-            $chapter_number = $padding > 0 ? str_pad((string) $chapter, $padding, '0', STR_PAD_LEFT) : (string) $chapter;
-            $url = str_replace(
-                ['{story_url}', '{story_slug}', '{chapter_number}', '{n}'],
-                [$story_url_base, $story_slug, $chapter_number, $chapter_number],
-                $pattern
-            );
-            $url = esc_url_raw($url);
-            if ($url === '' || !wp_http_validate_url($url)) {
-                return new WP_Error(
-                    'invalid_template_pattern_url',
-                    __('Mẫu URL chương tạo ra URL không hợp lệ. Hãy kiểm tra {story_url}, {story_slug} và {chapter_number}.', 'extend-site')
-                );
-            }
-
-            $queue[] = [
-                'chapterNumber' => $chapter,
-                'url' => $url,
-                'retries' => 0,
-                'completed' => false,
-            ];
-        }
-
-        return $queue;
-    }
-
-    private static function chapter_queue_from_links(array $links): array
-    {
-        $items = [];
-        $fallback_number = 1;
-        foreach ($links as $url => $text) {
-            $number = self::extract_chapter_number_from_url((string) $url) ?: self::extract_chapter_number_from_text((string) $text);
-            if (!$number) {
-                $number = $fallback_number;
-            }
-
-            $items[] = [
-                'chapterNumber' => (int) $number,
-                'url' => (string) $url,
-                'retries' => 0,
-                'completed' => false,
-            ];
-            $fallback_number++;
-        }
-
-        usort($items, static function (array $a, array $b): int {
-            return ((int) $a['chapterNumber']) <=> ((int) $b['chapterNumber']);
-        });
-
-        return $items;
-    }
-
-    private static function extract_chapter_number_from_text(string $text): ?int
-    {
-        if (preg_match('/(?:chuong|chapter|chap|tap)?\s*0*([0-9]+)/iu', remove_accents($text), $matches)) {
-            $number = (int) $matches[1];
-            return $number > 0 ? $number : null;
-        }
-
-        return null;
     }
 
     private static function normalize_value_mode(string $mode): string
