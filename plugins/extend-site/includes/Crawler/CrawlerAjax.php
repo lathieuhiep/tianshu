@@ -368,7 +368,7 @@ class CrawlerAjax
             ]
         );
 
-        wp_send_json_success([
+        $result = [
             'story_title' => $story_title,
             'story_author' => $story_author,
             'story_desc' => $story_desc,
@@ -389,7 +389,10 @@ class CrawlerAjax
             'match_samples' => $match_samples,
             'field_results' => $field_results,
             'warnings' => array_values(array_unique($warnings)),
-        ]);
+        ];
+        $result['html'] = self::render_ajax_view('template-test-result', $result);
+
+        wp_send_json_success($result);
     }
 
     public static function save_template(): void
@@ -2420,6 +2423,19 @@ class CrawlerAjax
             'source_max_chapter_number' => 0,
             'warnings' => [],
         ], $data);
+    }
+
+    private static function render_ajax_view(string $view, array $data = []): string
+    {
+        $file = __DIR__ . '/views/ajax/' . sanitize_file_name($view) . '.php';
+        if (!is_readable($file)) {
+            return '';
+        }
+
+        ob_start();
+        include $file;
+
+        return (string) ob_get_clean();
     }
 
     private static function error_payload(WP_Error $error, array $data = []): array

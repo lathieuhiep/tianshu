@@ -529,12 +529,8 @@
     width: 100%;
 }
 
-.es-template-result-summary {
-    background: var(--es-template-bg);
-    border: 1px solid var(--es-template-border);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    padding: 12px;
+.es-template-summary-table {
+    margin-top: 0;
 }
 
 .es-template-result-table {
