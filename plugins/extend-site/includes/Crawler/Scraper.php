@@ -481,12 +481,36 @@ class Scraper
 
     private static function detect_source_chapter_number(DOMXPath $xpath): ?int
     {
+        $number = self::detect_chapter_number_from_canonical_urls($xpath);
+        if ($number !== null) {
+            return $number;
+        }
+
         $number = self::detect_chapter_number_from_inputs($xpath);
         if ($number !== null) {
             return $number;
         }
 
         return self::detect_chapter_number_from_current_label($xpath);
+    }
+
+    private static function detect_chapter_number_from_canonical_urls(DOMXPath $xpath): ?int
+    {
+        $expression = "//link[contains(concat(' ', normalize-space(translate(@rel, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')), ' '), ' canonical ')][@href] | //meta[(translate(@property, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = 'og:url' or translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = 'twitter:url') and @content]";
+
+        foreach ($xpath->query($expression) ?: [] as $node) {
+            if (!$node instanceof DOMElement) {
+                continue;
+            }
+
+            $value = $node->hasAttribute('href') ? $node->getAttribute('href') : $node->getAttribute('content');
+            $number = self::extract_chapter_number_from_string($value);
+            if ($number !== null) {
+                return $number;
+            }
+        }
+
+        return null;
     }
 
     private static function detect_chapter_number_from_inputs(DOMXPath $xpath): ?int
@@ -501,9 +525,14 @@ class Scraper
                 continue;
             }
 
+            if (self::is_internal_chapter_id_field($field)) {
+                continue;
+            }
+
             $value = trim($node->getAttribute('value'));
-            if (preg_match('/^\d+$/', $value) && (int) $value > 0) {
-                return (int) $value;
+            $number = self::extract_chapter_number_from_string($value);
+            if ($number !== null) {
+                return $number;
             }
         }
 
@@ -520,6 +549,15 @@ class Scraper
         foreach ($expressions as $expression) {
             foreach ($xpath->query($expression) ?: [] as $node) {
                 $text = self::normalized_node_text($node);
+                if (mb_strlen($text) > 180) {
+                    continue;
+                }
+
+                $number = self::extract_chapter_number_from_string($text);
+                if ($number !== null) {
+                    return $number;
+                }
+
                 if (preg_match('/(?:chương|chuong|chapter|chap|tập|tap)\s*([0-9]+)/iu', $text, $matches)) {
                     $number = (int) $matches[1];
                     if ($number > 0) {
@@ -527,6 +565,32 @@ class Scraper
                     }
                 }
             }
+        }
+
+        return null;
+    }
+
+    private static function is_internal_chapter_id_field(string $field): bool
+    {
+        $field = str_replace(['-', ' '], '_', strtolower($field));
+
+        return (bool) preg_match('/(?:^|_)chap(?:ter)?_?id(?:_|$)|wp_manga_chapter_id/', $field);
+    }
+
+    private static function extract_chapter_number_from_string(string $value): ?int
+    {
+        $value = html_entity_decode(trim($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        if ($value === '') {
+            return null;
+        }
+
+        $value = function_exists('remove_accents') ? remove_accents($value) : $value;
+        $value = strtolower($value);
+
+        if (preg_match('/(?:chuong|chapter|chap|tap)[\s\-_\/=]+0*([0-9]+)(?:\D|$)/i', $value, $matches)) {
+            $number = (int) $matches[1];
+
+            return $number > 0 ? $number : null;
         }
 
         return null;
