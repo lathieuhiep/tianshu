@@ -188,6 +188,7 @@
 - `CrawlerTemplateAdmin` owns the template admin list, search, pagination, trash view, and create/edit form routes.
 - `CrawlerTemplateImportExportAdmin` owns template import/export admin routes and download/upload request handling.
 - `CrawlerTemplateSerializer` owns the portable JSON payload schema for single-template and collection import/export. When adding/removing crawler template fields, update this serializer so create/edit/import/export stay aligned.
+- Import/export design notes and duplicate-handling direction are documented in `.codex/CRAWLER_TEMPLATE_IMPORT_EXPORT_MEMORY.md`; read that note before changing crawler template import behavior.
 - `CrawlerTemplateTable` owns crawler template querying, counting, persistence, soft delete, restore, and permanent delete behavior.
 - Template deletion uses soft delete via `deleted_at`; default template queries/selects must exclude trashed templates.
 - Trashed templates may be restored or permanently deleted only through explicit admin actions with nonce and capability checks.
