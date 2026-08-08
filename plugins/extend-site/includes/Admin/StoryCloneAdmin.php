@@ -67,40 +67,64 @@ class StoryCloneAdmin
 
     public static function show_admin_notice(): void
     {
-        if (empty($_GET['es_clone_notice'])) {
+        $notice = self::current_notice();
+        if (!$notice) {
             return;
         }
 
-        $type = sanitize_key((string) $_GET['es_clone_notice']);
+        self::load_view('story-clone-notice', ['notice' => $notice]);
+    }
+
+    private static function current_notice(): array
+    {
+        if (empty($_GET['es_clone_notice'])) {
+            return [];
+        }
+
+        $type = sanitize_key((string) wp_unslash($_GET['es_clone_notice']));
         if ($type === 'success') {
             $chapter_total = absint($_GET['es_clone_chapters'] ?? 0);
-            $job_id = sanitize_text_field((string) ($_GET['es_clone_job'] ?? ''));
-            $tools_url = admin_url('admin.php?page=extend-site-tools');
+            $job_id = sanitize_text_field((string) wp_unslash($_GET['es_clone_job'] ?? ''));
 
             if ($chapter_total > 0 && $job_id !== '') {
-                printf(
-                    '<div class="notice notice-success is-dismissible"><p><strong>%s</strong></p><p>%s</p><p><a class="button button-primary" href="%s" target="_blank" rel="noopener noreferrer">%s</a></p></div>',
-                    esc_html__('Đã nhân bản truyện thành bản nháp.', 'extend-site'),
-                    esc_html(sprintf(
+                return [
+                    'type' => 'success',
+                    'title' => __('Đã nhân bản truyện thành bản nháp.', 'extend-site'),
+                    'message' => sprintf(
                         __('Tổng %d chương của truyện đang được clone ngầm. Nếu chưa thấy đủ chương trong truyện mới, hãy đợi job chạy tiếp hoặc mở trang theo dõi tiến trình.', 'extend-site'),
                         $chapter_total
-                    )),
-                    esc_url($tools_url),
-                    esc_html__('Mở trang theo dõi tiến trình', 'extend-site')
-                );
-                return;
+                    ),
+                    'action_url' => admin_url('admin.php?page=extend-site-tools'),
+                    'action_label' => __('Mở trang theo dõi tiến trình', 'extend-site'),
+                ];
             }
 
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Đã nhân bản truyện thành bản nháp. Truyện gốc không có chương để clone.', 'extend-site') . '</p></div>';
-            return;
+            return [
+                'type' => 'success',
+                'message' => __('Đã nhân bản truyện thành bản nháp. Truyện gốc không có chương để clone.', 'extend-site'),
+            ];
         }
 
         if ($type === 'error') {
-            $message = sanitize_text_field((string) ($_GET['es_clone_message'] ?? __('Nhân bản thất bại.', 'extend-site')));
-            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($message) . '</p></div>';
+            return [
+                'type' => 'error',
+                'message' => sanitize_text_field((string) wp_unslash($_GET['es_clone_message'] ?? __('Nhân bản thất bại.', 'extend-site'))),
+            ];
         }
+
+        return [];
     }
 
+    private static function load_view(string $view, array $data = []): void
+    {
+        $file = plugin_dir_path(__FILE__) . 'views/' . $view . '.php';
+        if (!is_file($file)) {
+            return;
+        }
+
+        extract($data);
+        include $file;
+    }
     private static function redirect_with_notice(string $type, string $message): void
     {
         wp_safe_redirect(add_query_arg([

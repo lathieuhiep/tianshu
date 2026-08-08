@@ -55,6 +55,10 @@
   - `includes/Widgets`
 - Plugin templates:
   - `plugins/extend-site/templates`
+- Admin render views:
+  - `plugins/extend-site/includes/Admin/views`
+- Crawler admin render views:
+  - `plugins/extend-site/includes/Crawler/views`
 - Plugin built assets:
   - `plugins/extend-site/assets`
 
@@ -157,12 +161,17 @@
   - `CrawlerLinkTable.php`
   - `CrawlerLock.php`
   - `CrawlerTemplateAdmin.php`
+  - `CrawlerTemplateImportExportAdmin.php`
+  - `CrawlerTemplateSerializer.php`
   - `CrawlerTemplateTable.php`
+  - `CssSelector.php`
   - `Scraper.php`
+  - `TemplateQueueBuilder.php`
 - `Scraper` fetches source URLs, validates HTML responses, parses chapter title/content, applies replacement rules, and returns normalized scrape data or `WP_Error`.
 - `CrawlerLinkTable` owns crawled-source URL normalization/hash/link persistence concerns.
 - `CrawlerTemplateTable` owns crawler template storage.
-- `CrawlerAdmin` and `CrawlerTemplateAdmin` own admin UI flows.
+- `CrawlerAdmin`, `CrawlerTemplateAdmin`, and `CrawlerTemplateImportExportAdmin` own crawler admin UI flows.
+- Crawler admin pages render through `plugins/extend-site/includes/Crawler/views`; controller classes should prepare data, URLs, callbacks, capability checks, nonce handling, and request handling before loading views.
 - `CrawlerAjax` owns crawler AJAX actions.
 - Theme must not call crawler internals directly; use plugin admin/AJAX/service entry points.
 
@@ -171,10 +180,14 @@
 - Owned by `plugins/extend-site/includes/Crawler`.
 - Main classes:
   - `CrawlerTemplateAdmin.php`
+  - `CrawlerTemplateImportExportAdmin.php`
+  - `CrawlerTemplateSerializer.php`
   - `CrawlerTemplateTable.php`
   - `CrawlerAjax.php`
 - Crawler templates are stored in the custom table `{$wpdb->prefix}es_crawler_templates`.
 - `CrawlerTemplateAdmin` owns the template admin list, search, pagination, trash view, and create/edit form routes.
+- `CrawlerTemplateImportExportAdmin` owns template import/export admin routes and download/upload request handling.
+- `CrawlerTemplateSerializer` owns the portable JSON payload schema for single-template and collection import/export. When adding/removing crawler template fields, update this serializer so create/edit/import/export stay aligned.
 - `CrawlerTemplateTable` owns crawler template querying, counting, persistence, soft delete, restore, and permanent delete behavior.
 - Template deletion uses soft delete via `deleted_at`; default template queries/selects must exclude trashed templates.
 - Trashed templates may be restored or permanently deleted only through explicit admin actions with nonce and capability checks.
@@ -263,9 +276,11 @@
   - `StoryCloneAdmin`
   - `StoryChapterLink`
   - `SystemJobAjax`
+- Admin render views and small admin partials live in `plugins/extend-site/includes/Admin/views`.
 - Widgets live in `plugins/extend-site/includes/Widgets`.
 - Elementor addon code lives in `plugins/extend-site/includes/ElementorAddon`.
 - Admin modules must keep nonce and capability checks close to the request handling code.
+- Admin page controllers should prepare view data and handle POST/AJAX intent; views should only render escaped output from passed data.
 - The system tools page is rendered by `includes/Admin/views/tools.php` and may enqueue page-specific admin JS from `assets/js/backend/system-jobs.js`.
 
 ### Extend Referrals Boot Flow
@@ -356,6 +371,9 @@
 - Keep changes narrow and scoped to the relevant theme/plugin.
 - Prefer classes and services for plugin business logic.
 - Keep bootstrap files thin: define constants, load autoloader, boot the plugin.
+- For admin pages, prefer controller/view separation: controller classes handle request data, capabilities, nonces, redirects, queries, URLs, and service calls; view files render markup only.
+- Do not put persistence, request handling, DB queries, or long-running workflow logic inside admin view files.
+- Included PHP view files do not declare the caller class namespace. Avoid unqualified namespaced class references inside views; pass URLs, data, labels, and callbacks through view data instead.
 - Use each plugin's namespace consistently:
   - `ExtendSite\`
   - `ExtendReferrals\`

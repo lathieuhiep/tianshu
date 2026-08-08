@@ -41,8 +41,8 @@ class SystemJobAjax
             wp_send_json_error(['message' => __('Bạn không có quyền tạo job đồng bộ.', 'extend-site')], 403);
         }
 
-        $story_id = absint($_POST['story_id'] ?? 0);
-        $status_mode = sanitize_key((string) ($_POST['status_mode'] ?? 'story'));
+        $story_id = absint(wp_unslash($_POST['story_id'] ?? 0));
+        $status_mode = sanitize_key((string) wp_unslash($_POST['status_mode'] ?? 'story'));
         $result = StoryChapterStatusSyncJob::create($story_id, $status_mode);
 
         if (is_wp_error($result)) {

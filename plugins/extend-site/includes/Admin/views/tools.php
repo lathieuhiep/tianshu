@@ -1,12 +1,9 @@
 <?php
-use ExtendSite\Services\SystemJobQueue;
-
 /**
- * @var array $tools
+ * @var array $tool_rows
  * @var string|null $message
+ * @var array $formatted_jobs
  */
-
-$formatted_jobs = SystemJobQueue::get_formatted_jobs();
 ?>
 <div class="wrap">
     <h1><?php esc_html_e('Công cụ hệ thống', 'extend-site'); ?></h1>
@@ -80,12 +77,12 @@ $formatted_jobs = SystemJobQueue::get_formatted_jobs();
             </tr>
             </thead>
             <tbody>
-            <?php foreach ($tools as $key => $tool_class): ?>
+            <?php foreach ($tool_rows as $tool): ?>
                 <tr>
-                    <td><strong><?php echo esc_html($tool_class::get_title()); ?></strong></td>
-                    <td><?php echo esc_html($tool_class::get_description()); ?></td>
+                    <td><strong><?php echo esc_html((string) ($tool['title'] ?? '')); ?></strong></td>
+                    <td><?php echo esc_html((string) ($tool['description'] ?? '')); ?></td>
                     <td>
-                        <button type="submit" name="run_tool" value="<?php echo esc_attr($key); ?>" class="button button-primary">
+                        <button type="submit" name="run_tool" value="<?php echo esc_attr((string) ($tool['key'] ?? '')); ?>" class="button button-primary">
                             <?php esc_html_e('Chạy ngay', 'extend-site'); ?>
                         </button>
                     </td>

@@ -54,20 +54,15 @@ class StoryChapterLink {
             return;
         }
 
-        $add_url  = admin_url("post-new.php?post_type=chapter&story_id={$post_id}");
-        $list_url = admin_url("edit.php?post_type=chapter&story_id={$post_id}");
-        ?>
-        <div class="story-chapter-actions">
-            <a href="<?= esc_url($add_url); ?>" class="button button-small button-primary">
-                <?= esc_html__('Thêm', 'extend-site'); ?>
-            </a>
-            <a href="<?= esc_url($list_url); ?>" class="button button-small">
-                <?= esc_html__('Danh sách', 'extend-site'); ?>
-            </a>
-        </div>
-        <?php
+        self::load_view('story-chapter-actions', [
+            'add_url' => admin_url("post-new.php?post_type=chapter&story_id={$post_id}"),
+            'list_url' => admin_url("edit.php?post_type=chapter&story_id={$post_id}"),
+            'wrapper_class' => 'story-chapter-actions',
+            'add_label' => __('Thêm', 'extend-site'),
+            'list_label' => __('Danh sách', 'extend-site'),
+            'button_size_class' => 'button-small',
+        ]);
     }
-
     /**
      * Hiển thị 2 nút hành động trong sidebar khi chỉnh sửa truyện
      * (Thêm chương mới / Danh sách chương)
@@ -75,32 +70,25 @@ class StoryChapterLink {
     public static function show_story_actions_in_sidebar(): void {
         global $post;
 
-        // Chỉ áp dụng cho CPT story
         if ( !isset($post)
             || $post->post_type !== 'story'
             || empty($post->ID)
             || $post->post_status === 'auto-draft'
         ) {
-            // Chưa có ID hoặc đang ở trạng thái bản nháp tự động
             return;
         }
 
         $story_id = $post->ID;
 
-        $add_url  = admin_url("post-new.php?post_type=chapter&story_id={$story_id}");
-        $list_url = admin_url("edit.php?post_type=chapter&story_id={$story_id}");
-        ?>
-        <div class="misc-pub-section story-chapter-actions">
-            <a href="<?= esc_url($add_url); ?>" class="button button-primary">
-                <?= esc_html__('Thêm chương', 'extend-site'); ?>
-            </a>
-            <a href="<?= esc_url($list_url); ?>" class="button">
-                <?= esc_html__('Danh sách chương', 'extend-site'); ?>
-            </a>
-        </div>
-        <?php
+        self::load_view('story-chapter-actions', [
+            'add_url' => admin_url("post-new.php?post_type=chapter&story_id={$story_id}"),
+            'list_url' => admin_url("edit.php?post_type=chapter&story_id={$story_id}"),
+            'wrapper_class' => 'misc-pub-section story-chapter-actions',
+            'add_label' => __('Thêm chương', 'extend-site'),
+            'list_label' => __('Danh sách chương', 'extend-site'),
+            'button_size_class' => '',
+        ]);
     }
-
     /** -------------------------
      *  Danh sách chương (admin)
      * ------------------------- */
@@ -134,60 +122,25 @@ class StoryChapterLink {
     public static function show_story_filter_notice(): void {
         global $pagenow, $typenow;
 
-        // Chỉ hiển thị trong trang danh sách chương, có story_id trên URL
         if ($pagenow !== 'edit.php' || $typenow !== 'chapter' || empty($_GET['story_id'])) {
             return;
         }
 
-        $story_id = (int) $_GET['story_id'];
-        $story    = get_post($story_id);
+        $story_id = absint(wp_unslash($_GET['story_id']));
+        $story = get_post($story_id);
 
         if (!$story) {
             return;
         }
 
-        $story_title = esc_html(get_the_title($story));
-        $story_edit_url = get_edit_post_link($story_id);
-        $add_url     = admin_url("post-new.php?post_type=chapter&story_id={$story_id}");
-        $all_url     = admin_url('edit.php?post_type=chapter');
-        ?>
-        <div class="wrap">
-            <div class="story-filter-notice">
-                <div class="notice notice-info inline">
-                    <div class="notice-info__data">
-                        <p>
-                            <span class="dashicons dashicons-book-alt"></span>
-                            <?= sprintf(
-                                __('Danh sách chương của truyện: <a href="%s"><strong>%s</strong></a>', 'extend-site'),
-                                esc_url($story_edit_url),
-                                $story_title
-                            ); ?>
-                        </p>
-
-                        <p>
-                            <a href="<?= esc_url($add_url); ?>" class="button button-primary">
-                                <?= esc_html__('Thêm chương mới', 'extend-site'); ?>
-                            </a>
-                            <a href="<?= esc_url($all_url); ?>" class="button">
-                                <?= esc_html__('Xem tất cả chương', 'extend-site'); ?>
-                            </a>
-                        </p>
-                    </div>
-
-                    <?php
-                    if (!empty($_GET['s'])) {
-                        printf(
-                            '<p class="notice-search">%s</p>',
-                            sprintf(__('Kết quả tìm kiếm trong truyện: “%s”', 'extend-site'), $story_title)
-                        );
-                    }
-                    ?>
-                </div>
-            </div>
-        </div>
-        <?php
+        self::load_view('story-filter-notice', [
+            'story_title' => get_the_title($story),
+            'story_edit_url' => get_edit_post_link($story_id),
+            'add_url' => admin_url("post-new.php?post_type=chapter&story_id={$story_id}"),
+            'all_url' => admin_url('edit.php?post_type=chapter'),
+            'has_search' => !empty($_GET['s']),
+        ]);
     }
-
     /** -------------------------
      *  Tạo chương mới từ truyện
      * ------------------------- */
@@ -200,7 +153,7 @@ class StoryChapterLink {
             return;
         }
 
-        $story_id = (int) $_GET['story_id'];
+        $story_id = absint(wp_unslash($_GET['story_id']));
         if ($story_id > 0) {
             set_transient('es_chapter_new_story_id', $story_id, 30);
         }
@@ -252,40 +205,14 @@ class StoryChapterLink {
             return;
         }
 
-        $story_title = esc_html(get_the_title($story));
-        $story_url   = get_edit_post_link($story_id);
-
-        // URL hành động
-        $add_url  = admin_url("post-new.php?post_type=chapter&story_id={$story_id}");
-        $list_url = admin_url("edit.php?post_type=chapter&story_id={$story_id}");
-
-        // Kiểm tra trạng thái
-        $is_draft = in_array($post->post_status, ['auto-draft', 'draft'], true);
-        ?>
-        <div class="misc-pub-section">
-            <p>
-                <span class="dashicons dashicons-book-alt"></span>
-                <?= sprintf(
-                    __('Thuộc truyện: <a href="%s"><strong>%s</strong></a>', 'extend-site'),
-                    esc_url($story_url),
-                    $story_title
-                ); ?>
-            </p>
-
-            <p class="chapter-story-actions">
-                <?php if (!$is_draft) : ?>
-                    <a href="<?= esc_url($add_url); ?>" class="button button-small button-primary">
-                        <?= esc_html__('Thêm chương mới', 'extend-site'); ?>
-                    </a>
-                <?php endif; ?>
-                <a href="<?= esc_url($list_url); ?>" class="button button-small">
-                    <?= esc_html__('Danh sách chương', 'extend-site'); ?>
-                </a>
-            </p>
-        </div>
-        <?php
+        self::load_view('chapter-story-box', [
+            'story_title' => get_the_title($story),
+            'story_url' => get_edit_post_link($story_id),
+            'add_url' => admin_url("post-new.php?post_type=chapter&story_id={$story_id}"),
+            'list_url' => admin_url("edit.php?post_type=chapter&story_id={$story_id}"),
+            'is_draft' => in_array($post->post_status, ['auto-draft', 'draft'], true),
+        ]);
     }
-
     /**
      * Giữ lại story_id trong form tìm kiếm để không bị mất khi search.
      */
@@ -294,12 +221,12 @@ class StoryChapterLink {
             return;
         }
 
-        $story_id = (int) $_GET['story_id'];
+        $story_id = absint(wp_unslash($_GET['story_id']));
         echo '<input type="hidden" name="story_id" value="' . esc_attr($story_id) . '">';
     }
 
     /**
-     * Ẩn nút "Thêm mới" ở trang chỉnh sửa chương cụ thể.
+     * Ẩn nút "Thêm mới" ở các màn chương có flow tạo chương qua truyện.
      */
     public static function hide_add_new_button_everywhere(): void {
         $screen = get_current_screen();
@@ -307,23 +234,19 @@ class StoryChapterLink {
             return;
         }
 
-        // 1️⃣ Ẩn ở trang chỉnh sửa chương cụ thể
-        if ($screen->base === 'post') {
-            echo '<style>
-            .page-title-action,
-            #wp-admin-bar-new-chapter { display: none !important; }
-        </style>';
+        if ($screen->base === 'post' || ($screen->base === 'edit' && !empty($_GET['story_id']))) {
+            self::load_view('hide-chapter-add-new-style');
+        }
+    }
+
+    private static function load_view(string $view, array $data = []): void
+    {
+        $file = plugin_dir_path(__FILE__) . 'views/' . $view . '.php';
+        if (!is_file($file)) {
             return;
         }
 
-        // 2️⃣ Ẩn ở danh sách chương có story_id (ví dụ: edit.php?post_type=chapter&story_id=123)
-        if ($screen->base === 'edit' && !empty($_GET['story_id'])) {
-            echo '<style>
-            .page-title-action,
-            #wp-admin-bar-new-chapter { display: none !important; }
-        </style>';
-        }
-
-        // 3️⃣ Ngược lại: ở danh sách chung (edit.php?post_type=chapter) thì giữ nguyên (hiện bình thường)
+        extract($data);
+        include $file;
     }
 }

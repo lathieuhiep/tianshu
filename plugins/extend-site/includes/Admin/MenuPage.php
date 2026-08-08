@@ -2,6 +2,7 @@
 namespace ExtendSite\Admin;
 
 use ExtendSite\Services\StoryChapterStatusSyncJob;
+use ExtendSite\Services\SystemJobQueue;
 use ExtendSite\Services\Tools\ChapterSyncTool;
 use ExtendSite\Services\Tools\SystemJobCleanupTool;
 use ExtendSite\Services\Tools\SystemJobRunnerTool;
@@ -53,72 +54,106 @@ class MenuPage
     /** Trang dashboard */
     public static function render_dashboard(): void
     {
-        // Kiểm tra submit
-        if (isset($_POST['extend_site_last_chapter_facebook_url'])) {
-
-            check_admin_referer('extend_site_save_options', 'extend_site_nonce');
-
-            // Lấy giá trị (dù trống vẫn cho lưu)
-            $value = sanitize_text_field($_POST['extend_site_last_chapter_facebook_url']);
-
-            update_option('extend_site_last_chapter_facebook_url', $value);
-
-            echo '<div class="updated"><p>Lưu thành công.</p></div>';
-        }
-
-        // Lấy option để hiển thị trong view
+        $message = self::handle_dashboard_submission();
         $fb_url = get_option('extend_site_last_chapter_facebook_url', '');
 
         self::load_view('dashboard', [
             'title'  => esc_html__('Hệ thống Truyện', 'extend-site'),
             'fb_url' => $fb_url,
+            'message' => $message,
         ]);
     }
 
     /** Trang công cụ */
     public static function render_tools(): void
     {
-        $message = null;
-        $tools = [
+        $tools = self::tools();
+        $message = self::handle_tools_submission($tools);
+
+        self::load_view('tools', [
+            'tool_rows' => self::tool_rows($tools),
+            'message' => $message,
+            'formatted_jobs' => SystemJobQueue::get_formatted_jobs(),
+        ]);
+    }
+
+    private static function handle_dashboard_submission(): ?string
+    {
+        if (!isset($_POST['extend_site_last_chapter_facebook_url'])) {
+            return null;
+        }
+
+        check_admin_referer('extend_site_save_options', 'extend_site_nonce');
+
+        $value = sanitize_text_field((string) wp_unslash($_POST['extend_site_last_chapter_facebook_url']));
+        update_option('extend_site_last_chapter_facebook_url', $value);
+
+        return __('Lưu thành công.', 'extend-site');
+    }
+
+    private static function tools(): array
+    {
+        return [
             'chapter_sync' => ChapterSyncTool::class,
             'system_job_runner' => SystemJobRunnerTool::class,
             'system_job_cleanup' => SystemJobCleanupTool::class,
-            // thêm tool khác sau này ở đây
         ];
+    }
 
+    private static function tool_rows(array $tools): array
+    {
+        $rows = [];
+        foreach ($tools as $key => $tool_class) {
+            if (!class_exists($tool_class)) {
+                continue;
+            }
+
+            $rows[] = [
+                'key' => (string) $key,
+                'title' => (string) $tool_class::get_title(),
+                'description' => (string) $tool_class::get_description(),
+            ];
+        }
+
+        return $rows;
+    }
+
+    private static function handle_tools_submission(array $tools): ?string
+    {
         if (!empty($_POST['create_status_sync_job'])) {
             check_admin_referer('create_status_sync_job_action', 'create_status_sync_job_nonce');
 
             $story_id = absint($_POST['sync_story_id'] ?? 0);
-            $status_mode = sanitize_key((string) ($_POST['sync_status_mode'] ?? 'story'));
+            $status_mode = sanitize_key((string) wp_unslash($_POST['sync_status_mode'] ?? 'story'));
             $result = StoryChapterStatusSyncJob::create($story_id, $status_mode);
 
             if (is_wp_error($result)) {
-                $message = $result->get_error_message();
-            } else {
-                $message = sprintf(
-                    __('Đã tạo job đồng bộ trạng thái chương: %s', 'extend-site'),
-                    $result
-                );
+                return $result->get_error_message();
             }
+
+            return sprintf(
+                __('Đã tạo job đồng bộ trạng thái chương: %s', 'extend-site'),
+                $result
+            );
         }
 
-        if (!empty($_POST['run_tool'])) {
-            check_admin_referer('run_tool_action', 'run_tool_nonce');
-
-            $key = sanitize_text_field($_POST['run_tool']);
-            $tool_class = $tools[$key] ?? null;
-
-            if ($tool_class && class_exists($tool_class)) {
-                $result = ToolManager::run_tool($tool_class);
-                $message = $result['message'] ?? esc_html__('Tool executed.', 'extend-site');
-            } else {
-                $message = esc_html__('Tool not found.', 'extend-site');
-                error_log("[TOOLS PAGE] Invalid tool key: $key");
-            }
+        if (empty($_POST['run_tool'])) {
+            return null;
         }
 
-        self::load_view('tools', compact('tools', 'message'));
+        check_admin_referer('run_tool_action', 'run_tool_nonce');
+
+        $key = sanitize_text_field((string) wp_unslash($_POST['run_tool']));
+        $tool_class = $tools[$key] ?? null;
+
+        if ($tool_class && class_exists($tool_class)) {
+            $result = ToolManager::run_tool($tool_class);
+            return $result['message'] ?? esc_html__('Tool executed.', 'extend-site');
+        }
+
+        error_log("[TOOLS PAGE] Invalid tool key: $key");
+
+        return esc_html__('Tool not found.', 'extend-site');
     }
 
     /** Logic đồng bộ */

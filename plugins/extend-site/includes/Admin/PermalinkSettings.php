@@ -34,31 +34,16 @@ class PermalinkSettings
 
     public static function render_section_description(): void
     {
-        ?>
-        <p>
-            <?php esc_html_e('Cấu hình đường dẫn cho các nội dung thuộc hệ thống truyện của Extend Site.', 'extend-site'); ?>
-        </p>
-        <?php
+        self::load_view('permalink-section-description');
     }
 
     public static function render_chapter_permalink_field(): void
     {
-        $value = self::get_chapter_permalink_suffix(ChapterPostType::get_permalink_structure());
-        ?>
-        <code>/%story%/</code>
-        <input
-            name="<?php echo esc_attr(ChapterPostType::OPTION_PERMALINK_STRUCTURE); ?>"
-            id="<?php echo esc_attr(ChapterPostType::OPTION_PERMALINK_STRUCTURE); ?>"
-            type="text"
-            class="regular-text code"
-            value="<?php echo esc_attr($value); ?>"
-        />
-        <p class="description">
-            <?php esc_html_e('Nhập phần URL sau slug truyện. Ví dụ: chuong/%postname%/ sẽ tạo URL /slug-truyen/chuong/slug-chuong/. Thẻ hỗ trợ: %postname%, %post_id%.', 'extend-site'); ?>
-        </p>
-        <?php
+        self::load_view('chapter-permalink-field', [
+            'option_name' => ChapterPostType::OPTION_PERMALINK_STRUCTURE,
+            'value' => self::get_chapter_permalink_suffix(ChapterPostType::get_permalink_structure()),
+        ]);
     }
-
     public static function save_fields(): void
     {
         global $pagenow;
@@ -114,5 +99,16 @@ class PermalinkSettings
         }
 
         return '/%story%/' . $suffix . '/';
+    }
+
+    private static function load_view(string $view, array $data = []): void
+    {
+        $file = plugin_dir_path(__FILE__) . 'views/' . $view . '.php';
+        if (!is_file($file)) {
+            return;
+        }
+
+        extract($data);
+        include $file;
     }
 }

@@ -1,6 +1,7 @@
 <?php
 /**
  * @var string $fb_url url facebook
+ * @var string|null $message
  */
 ?>
 
@@ -17,6 +18,9 @@
         <strong><?php esc_html_e('Tip: Bạn có thể vào mục "Công cụ" để đồng bộ tổng chương.', 'extend-site'); ?></strong>
     </p>
 
+    <?php if (!empty($message)) : ?>
+        <div class="updated"><p><?php echo esc_html($message); ?></p></div>
+    <?php endif; ?>
     <form method="post">
         <?php wp_nonce_field('extend_site_save_options', 'extend_site_nonce'); ?>
 

@@ -16,6 +16,7 @@ use ExtendSite\Crawler\CrawlerAdmin;
 use ExtendSite\Crawler\CrawlerAjax;
 use ExtendSite\Crawler\CrawlerLinkTable;
 use ExtendSite\Crawler\CrawlerTemplateAdmin;
+use ExtendSite\Crawler\CrawlerTemplateImportExportAdmin;
 use ExtendSite\Crawler\CrawlerTemplateTable;
 use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\DB\SystemJobTable;
@@ -147,6 +148,7 @@ class Plugin
     {
         CrawlerAdmin::init();
         CrawlerTemplateAdmin::init();
+        CrawlerTemplateImportExportAdmin::init();
         CrawlerAjax::init();
     }
 
