@@ -173,6 +173,9 @@
 - `CrawlerAdmin`, `CrawlerTemplateAdmin`, and `CrawlerTemplateImportExportAdmin` own crawler admin UI flows.
 - Crawler admin pages render through `plugins/extend-site/includes/Crawler/views`; controller classes should prepare data, URLs, callbacks, capability checks, nonce handling, and request handling before loading views.
 - `CrawlerAjax` owns crawler AJAX actions.
+- Template mode queue building is owned by backend crawler code. Use real chapter links from `chapter_link_selector` first, scan TOC pagination through `toc_page_link_selector` when available, and use `chapter_url_pattern` only as a fallback when no real chapter links are found.
+- Frontend crawler JS must not rebuild template queues from patterns. "Check queue" and "Start" flows should ask the backend to build the current queue and then use the returned queue as-is.
+- Template chapter parsing should select the intended scope/content nodes before broad cleanup. Template parsing may remove only low-risk nodes such as `script`, `style`, `noscript`, and `iframe` before selector matching.
 - Theme must not call crawler internals directly; use plugin admin/AJAX/service entry points.
 
 ### Extend Site Crawler Templates
@@ -188,11 +191,17 @@
 - `CrawlerTemplateAdmin` owns the template admin list, search, pagination, trash view, and create/edit form routes.
 - `CrawlerTemplateImportExportAdmin` owns template import/export admin routes and download/upload request handling.
 - `CrawlerTemplateSerializer` owns the portable JSON payload schema for single-template and collection import/export. When adding/removing crawler template fields, update this serializer so create/edit/import/export stay aligned.
-- Import/export design notes and duplicate-handling direction are documented in `.codex/CRAWLER_TEMPLATE_IMPORT_EXPORT_MEMORY.md`; read that note before changing crawler template import behavior.
+- Crawler templates use stable portable identity via `template_key` in the `esct_` key family. Exported JSON must include `template_key`, and import must use it to avoid staging/live duplicates.
+- Crawler template import supports explicit modes: update existing templates with the same key, skip existing templates, or import as new copies with new keys. Do not silently overwrite or duplicate without using the selected mode.
+- Legacy template imports without `template_key` may fallback to an exact active `name + domain` match only when the import mode allows update/skip behavior. Do not use `domain` alone as an automatic update key.
 - `CrawlerTemplateTable` owns crawler template querying, counting, persistence, soft delete, restore, and permanent delete behavior.
+- `CrawlerTemplateTable` also owns `template_key` generation, legacy key backfill, duplicate key repair, the unique `template_key` index check, and `cleanup_selectors` normalization.
 - Template deletion uses soft delete via `deleted_at`; default template queries/selects must exclude trashed templates.
 - Trashed templates may be restored or permanently deleted only through explicit admin actions with nonce and capability checks.
-- Template selects should use AJAX search instead of rendering all templates when the list can grow.
+- Template selects should use AJAX search/Select2 instead of rendering all templates when the list can grow. The import/export page should use multi-select AJAX search for selected-template export and keep all-template export as a separate action.
+- Template field `cleanup_selectors` stores selector lines for HTML blocks to remove from chapter content before text find/replace and sanitization. It is for deletion only, not replacement HTML.
+- When adding/removing crawler template fields such as `cleanup_selectors`, update DB creation/migration, `CrawlerTemplateSerializer`, admin save/load/test AJAX, template form JS, and scraper execution together.
+- Template test result rendering may include selector debug details while crawler-template behavior is still being stabilized across sources. Do not remove or hide that debug output unless the task explicitly targets debug cleanup.
 - Crawler execution must only use active/non-trashed templates.
 
 ### Extend Site Search
