@@ -190,6 +190,7 @@
         $('#es-template-chapter-content-scope-selector').val(template.chapter_content_scope_selector || '');
         $('#es-template-chapter-title-selector').val(template.chapter_title_selector || '');
         $('#es-template-chapter-content-selector').val(template.chapter_content_selector || '');
+        $('#es-template-cleanup-selectors').val(Array.isArray(template.cleanup_selectors) ? template.cleanup_selectors.join('\n') : '');
 
         const rules = template.story_extract_rules || {};
         Object.keys(rules).forEach(function (field) {
@@ -494,6 +495,58 @@
         });
     }
 
+    function initTemplateExportSelect2() {
+        const $exportSelect = $('#es-crawler-template-export-select');
+        if (!$exportSelect.length || !$.fn.select2) {
+            return;
+        }
+
+        if ($exportSelect.hasClass('select2-hidden-accessible')) {
+            return;
+        }
+
+        $exportSelect.select2({
+            width: '100%',
+            placeholder: $exportSelect.data('placeholder') || (cfg.i18n && cfg.i18n.template_search_placeholder) || 'Search crawler templates...',
+            minimumInputLength: 1,
+            closeOnSelect: false,
+            language: {
+                inputTooShort: function () {
+                    return (cfg.i18n && cfg.i18n.template_search_input_short) || 'Type at least 1 character.';
+                },
+                searching: function () {
+                    return (cfg.i18n && cfg.i18n.searching) || 'Searching...';
+                },
+                noResults: function () {
+                    return (cfg.i18n && cfg.i18n.template_search_no_results) || 'No matching templates found.';
+                }
+            },
+            ajax: {
+                url: cfg.ajax_url,
+                method: 'POST',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) {
+                    return {
+                        action: cfg.search_action,
+                        nonce: cfg.nonce,
+                        q: params.term || ''
+                    };
+                },
+                processResults: function (data) {
+                    return data || { results: [] };
+                }
+            }
+        });
+
+        $exportSelect.on('select2:select select2:unselect', function () {
+            const select2 = $exportSelect.data('select2');
+            if (select2 && select2.$container) {
+                select2.$container.find('.select2-search__field').val('');
+            }
+        });
+    }
+
     $form.on('focus', '.es-template-selector-input', function () {
         const $field = $(this);
         if (!$field.data('original-set')) {
@@ -668,6 +721,7 @@
     });
 
     initTemplateSelect2();
+    initTemplateExportSelect2();
 
     if ($templateExisting.val()) {
         $templateExisting.trigger('change');

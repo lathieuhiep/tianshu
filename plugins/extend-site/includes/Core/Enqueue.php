@@ -5,6 +5,7 @@ use ExtendSite\Admin\SystemJobAjax;
 use ExtendSite\Crawler\CrawlerAdmin;
 use ExtendSite\Crawler\CrawlerAjax;
 use ExtendSite\Crawler\CrawlerTemplateAdmin;
+use ExtendSite\Crawler\CrawlerTemplateImportExportAdmin;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\ChapterPostType;
 use ExtendSite\PostType\StoryPostType;
@@ -47,6 +48,7 @@ class Enqueue
         $is_crawler_template_page = $screen && in_array($screen->id, [
             'extend-site_page_' . CrawlerTemplateAdmin::PAGE_SLUG,
             'extend-site_page_' . CrawlerTemplateAdmin::PAGE_SLUG . '-new',
+            'extend-site_page_' . CrawlerTemplateImportExportAdmin::PAGE_SLUG,
         ], true);
         $is_tools_page = $screen && $screen->id === 'extend-site_page_extend-site-tools';
 
@@ -175,7 +177,7 @@ class Enqueue
             wp_enqueue_script(
                 'es-crawler-template',
                 EXTEND_SITE_URL . 'assets/js/backend/crawler-template.js',
-                ['jquery'],
+                ['jquery', 'select2'],
                 EXTEND_SITE_VERSION,
                 true
             );
@@ -195,6 +197,10 @@ class Enqueue
                     'test_loading' => esc_html__('Đang test selector...', 'extend-site'),
                     'missing_url' => esc_html__('Nhập URL truyện mẫu trước.', 'extend-site'),
                     'request_failed' => esc_html__('Request lỗi.', 'extend-site'),
+                    'template_search_placeholder' => esc_html__('Tìm mẫu crawler...', 'extend-site'),
+                    'template_search_input_short' => esc_html__('Nhập ít nhất 1 ký tự để tìm mẫu.', 'extend-site'),
+                    'searching' => esc_html__('Đang tìm...', 'extend-site'),
+                    'template_search_no_results' => esc_html__('Không tìm thấy mẫu phù hợp.', 'extend-site'),
                 ],
             ]);
 

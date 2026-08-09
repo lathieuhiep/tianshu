@@ -8,6 +8,9 @@ class CrawlerTemplateImportExportAdmin
 {
     public const PAGE_SLUG = 'extend-site-crawler-template-import-export';
     public const PARENT_SLUG = CrawlerAdmin::PARENT_SLUG;
+    private const IMPORT_MODE_UPDATE = 'update';
+    private const IMPORT_MODE_SKIP = 'skip';
+    private const IMPORT_MODE_COPY = 'copy';
 
     public static function init(): void
     {
@@ -45,12 +48,11 @@ class CrawlerTemplateImportExportAdmin
         }
 
         self::render_view('template-import-export', [
-            'templates' => CrawlerTemplateTable::all(),
             'page_url' => self::page_url(),
             'page_slug' => self::PAGE_SLUG,
             'notice' => self::current_notice(),
-            'export_url_callback' => [self::class, 'export_url'],
-            'format_datetime_callback' => [self::class, 'format_datetime'],
+            'import_modes' => self::import_modes(),
+            'default_import_mode' => self::IMPORT_MODE_UPDATE,
         ]);
     }
 
@@ -168,14 +170,87 @@ class CrawlerTemplateImportExportAdmin
             self::redirect_with_notice('import_error');
         }
 
-        $imported = 0;
+        $mode = self::current_import_mode();
+        $result = [
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'failed' => 0,
+        ];
+
         foreach ($items as $item) {
-            if (CrawlerTemplateTable::save($item)) {
-                $imported++;
+            $status = self::import_item($item, $mode);
+            if (isset($result[$status])) {
+                $result[$status]++;
             }
         }
 
-        self::redirect_with_notice($imported > 0 ? 'imported' : 'import_error', ['imported' => $imported]);
+        $processed = $result['created'] + $result['updated'] + $result['skipped'];
+        self::redirect_with_notice($processed > 0 ? 'imported' : 'import_error', $result);
+    }
+
+    private static function current_import_mode(): string
+    {
+        $mode = isset($_POST['import_mode']) ? sanitize_key((string) wp_unslash($_POST['import_mode'])) : self::IMPORT_MODE_UPDATE;
+
+        return array_key_exists($mode, self::import_modes()) ? $mode : self::IMPORT_MODE_UPDATE;
+    }
+
+    private static function import_item(array $item, string $mode): string
+    {
+        $item['id'] = 0;
+        $template_key = CrawlerTemplateTable::sanitize_template_key((string) ($item['template_key'] ?? ''));
+
+        if ($mode === self::IMPORT_MODE_COPY) {
+            $item['template_key'] = CrawlerTemplateTable::generate_template_key();
+
+            return CrawlerTemplateTable::save($item) ? 'created' : 'failed';
+        }
+
+        $existing = null;
+        if ($template_key !== '') {
+            $existing = CrawlerTemplateTable::find_by_template_key($template_key);
+            if (!$existing && CrawlerTemplateTable::find_by_template_key($template_key, true)) {
+                if ($mode === self::IMPORT_MODE_SKIP) {
+                    return 'skipped';
+                }
+
+                $item['template_key'] = CrawlerTemplateTable::generate_template_key();
+
+                return CrawlerTemplateTable::save($item) ? 'created' : 'failed';
+            }
+        } elseif (in_array($mode, [self::IMPORT_MODE_UPDATE, self::IMPORT_MODE_SKIP], true)) {
+            $existing = CrawlerTemplateTable::find_by_name_domain(
+                (string) ($item['name'] ?? ''),
+                (string) ($item['domain'] ?? '')
+            );
+        }
+
+        if ($existing) {
+            if ($mode === self::IMPORT_MODE_SKIP) {
+                return 'skipped';
+            }
+
+            $item['id'] = (int) $existing['id'];
+            $item['template_key'] = (string) ($existing['template_key'] ?? $template_key);
+
+            return CrawlerTemplateTable::save($item) ? 'updated' : 'failed';
+        }
+
+        if ($template_key === '') {
+            $item['template_key'] = CrawlerTemplateTable::generate_template_key();
+        }
+
+        return CrawlerTemplateTable::save($item) ? 'created' : 'failed';
+    }
+
+    private static function import_modes(): array
+    {
+        return [
+            self::IMPORT_MODE_UPDATE => __('Cập nhật mẫu đã tồn tại cùng key', 'extend-site'),
+            self::IMPORT_MODE_SKIP => __('Bỏ qua mẫu đã tồn tại', 'extend-site'),
+            self::IMPORT_MODE_COPY => __('Import thành bản sao mới', 'extend-site'),
+        ];
     }
 
     /**
@@ -247,11 +322,18 @@ class CrawlerTemplateImportExportAdmin
     private static function current_notice(): array
     {
         $notice = isset($_GET['crawler_template_notice']) ? sanitize_key((string) wp_unslash($_GET['crawler_template_notice'])) : '';
-        $imported = absint($_GET['imported'] ?? 0);
+        $created = absint($_GET['created'] ?? 0);
+        $updated = absint($_GET['updated'] ?? 0);
+        $skipped = absint($_GET['skipped'] ?? 0);
+        $failed = absint($_GET['failed'] ?? 0);
         $messages = [
-            'imported' => $imported > 0
-                ? sprintf(__('Đã import %s mẫu crawler.', 'extend-site'), number_format_i18n($imported))
-                : __('Đã import mẫu crawler.', 'extend-site'),
+            'imported' => sprintf(
+                __('Import hoàn tất: tạo mới %1$s, cập nhật %2$s, bỏ qua %3$s, lỗi %4$s.', 'extend-site'),
+                number_format_i18n($created),
+                number_format_i18n($updated),
+                number_format_i18n($skipped),
+                number_format_i18n($failed)
+            ),
             'import_error' => __('Không thể import mẫu crawler.', 'extend-site'),
             'export_empty' => __('Chưa chọn mẫu crawler nào để export.', 'extend-site'),
         ];
@@ -275,15 +357,6 @@ class CrawlerTemplateImportExportAdmin
         ]);
 
         return sanitize_file_name(implode('-', $parts)) . '.json';
-    }
-
-    private static function format_datetime(string $datetime): string
-    {
-        if ($datetime === '') {
-            return '';
-        }
-
-        return mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $datetime);
     }
 
     public static function page_url(array $args = []): string

@@ -148,6 +148,7 @@ class Scraper
         }
 
         $content_html = self::inner_html($content_node);
+        $content_html = self::remove_cleanup_selector_nodes($content_html, (array) ($template['cleanup_selectors'] ?? []));
         $content_html = self::apply_replacements($content_html, $replace_rules);
         $content_html = wp_kses_post($content_html);
         $content_html = self::apply_text_node_replacements($content_html, $replace_rules);
@@ -864,6 +865,58 @@ class Scraper
         }
 
         return $content;
+    }
+
+    private static function remove_cleanup_selector_nodes(string $html, array $selectors): string
+    {
+        $selectors = CrawlerTemplateTable::normalize_cleanup_selectors($selectors);
+        if (!$selectors || trim($html) === '') {
+            return $html;
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML('<?xml encoding="UTF-8"><div id="es-crawler-fragment">' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOWARNING | LIBXML_NOERROR);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded) {
+            return $html;
+        }
+
+        $wrapper = $dom->getElementById('es-crawler-fragment');
+        if (!$wrapper) {
+            return $html;
+        }
+
+        $xpath = new DOMXPath($dom);
+        $nodes_to_remove = [];
+        foreach ($selectors as $selector) {
+            $expression = CssSelector::to_xpath($selector);
+            if ($expression === '') {
+                continue;
+            }
+
+            if (strpos($expression, '//') === 0) {
+                $expression = '.' . $expression;
+            }
+
+            foreach ($xpath->query($expression, $wrapper) ?: [] as $node) {
+                if ($node instanceof DOMElement && $node->parentNode) {
+                    $nodes_to_remove[spl_object_hash($node)] = $node;
+                }
+            }
+        }
+
+        foreach ($nodes_to_remove as $node) {
+            if ($node->parentNode) {
+                $node->parentNode->removeChild($node);
+            }
+        }
+
+        return self::inner_html($wrapper);
     }
 
     private static function apply_text_node_replacements(string $html, array $replace_rules): string

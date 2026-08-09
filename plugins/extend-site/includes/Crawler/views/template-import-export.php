@@ -2,16 +2,15 @@
 
 defined('ABSPATH') || exit;
 
-$templates = isset($view_data['templates']) && is_array($view_data['templates']) ? $view_data['templates'] : [];
 $page_url = isset($view_data['page_url']) ? (string)$view_data['page_url'] : '';
 $page_slug = isset($view_data['page_slug']) ? (string)$view_data['page_slug'] : '';
 $notice = isset($view_data['notice']) && is_array($view_data['notice']) ? $view_data['notice'] : [];
-$export_url_callback = $view_data['export_url_callback'] ?? null;
-$format_datetime_callback = $view_data['format_datetime_callback'] ?? null;
+$import_modes = isset($view_data['import_modes']) && is_array($view_data['import_modes']) ? $view_data['import_modes'] : [];
+$default_import_mode = isset($view_data['default_import_mode']) ? (string)$view_data['default_import_mode'] : 'update';
 ?>
 <div class="wrap es-crawler-template-page">
     <h1><?php esc_html_e('Import/Export mẫu crawler', 'extend-site'); ?></h1>
-    <p><?php esc_html_e('Xuất file JSON để sao lưu hoặc chuyển mẫu crawler sang website khác. Import sẽ tạo mẫu mới và không ghi đè mẫu hiện có.', 'extend-site'); ?></p>
+    <p><?php esc_html_e('Xuất file JSON để sao lưu hoặc chuyển mẫu crawler sang website khác. Import dùng template key để cập nhật đúng mẫu giữa các môi trường và tránh tạo trùng ngoài ý muốn.', 'extend-site'); ?></p>
     <hr class="wp-header-end">
 
     <?php if (!empty($notice['message'])) : ?>
@@ -27,6 +26,16 @@ $format_datetime_callback = $view_data['format_datetime_callback'] ?? null;
             <?php wp_nonce_field('es_crawler_template_export_bulk', 'es_crawler_template_export_nonce'); ?>
 
             <p>
+                <label for="es-crawler-template-export-select"><?php esc_html_e('Chọn mẫu crawler để export', 'extend-site'); ?></label>
+                <select id="es-crawler-template-export-select"
+                        class="regular-text"
+                        name="template_ids[]"
+                        multiple="multiple"
+                        data-placeholder="<?php echo esc_attr__('Gõ để tìm mẫu crawler...', 'extend-site'); ?>"></select>
+            </p>
+            <p class="description"><?php esc_html_e('Gõ tên hoặc domain để chọn nhiều mẫu. Nếu muốn xuất toàn bộ mẫu đang hoạt động, dùng nút export tất cả.', 'extend-site'); ?></p>
+
+            <p>
                 <button type="submit" class="button button-primary" name="es_crawler_template_export_selected"
                         value="1">
                     <?php esc_html_e('Export mẫu đã chọn', 'extend-site'); ?>
@@ -35,52 +44,6 @@ $format_datetime_callback = $view_data['format_datetime_callback'] ?? null;
                     <?php esc_html_e('Export tất cả mẫu đang hoạt động', 'extend-site'); ?>
                 </button>
             </p>
-
-            <table class="widefat striped">
-                <thead>
-                <tr>
-                    <td class="check-column">
-                        <input type="checkbox" id="es-crawler-template-check-all"
-                               onclick="document.querySelectorAll('.es-crawler-template-export-checkbox').forEach(function(item){ item.checked = this.checked; }, this);"/>
-                    </td>
-                    <th scope="col"><?php esc_html_e('Tên mẫu', 'extend-site'); ?></th>
-                    <th scope="col"><?php esc_html_e('Domain', 'extend-site'); ?></th>
-                    <th scope="col"><?php esc_html_e('Cập nhật', 'extend-site'); ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php if ($templates) : ?>
-                    <?php foreach ($templates as $template) : ?>
-                        <?php
-                        $template_id = isset($template['id']) ? (int)$template['id'] : 0;
-                        $export_url = is_callable($export_url_callback) ? (string)call_user_func($export_url_callback, $template_id) : '#';
-                        $updated_at = isset($template['updated_at']) ? (string)$template['updated_at'] : '';
-                        $formatted_date = is_callable($format_datetime_callback) ? (string)call_user_func($format_datetime_callback, $updated_at) : $updated_at;
-                        ?>
-                        <tr>
-                            <th scope="row" class="check-column">
-                                <input class="es-crawler-template-export-checkbox" type="checkbox" name="template_ids[]"
-                                       value="<?php echo esc_attr((string)$template_id); ?>"/>
-                            </th>
-                            <td>
-                                <strong><?php echo esc_html((string)($template['name'] ?? '')); ?></strong>
-                                <div class="row-actions">
-                                        <span class="export">
-                                            <a href="<?php echo esc_url($export_url); ?>"><?php esc_html_e('Export JSON', 'extend-site'); ?></a>
-                                        </span>
-                                </div>
-                            </td>
-                            <td><code><?php echo esc_html((string)($template['domain'] ?? '')); ?></code></td>
-                            <td><?php echo esc_html($formatted_date); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else : ?>
-                    <tr>
-                        <td colspan="4"><?php esc_html_e('Chưa có mẫu crawler nào để export.', 'extend-site'); ?></td>
-                    </tr>
-                <?php endif; ?>
-                </tbody>
-            </table>
         </form>
     </div>
 
@@ -94,7 +57,18 @@ $format_datetime_callback = $view_data['format_datetime_callback'] ?? null;
                 <input type="file" id="es-crawler-template-import-file" name="es_crawler_template_import_file"
                        accept="application/json,.json"/>
             </p>
-            <p class="description"><?php esc_html_e('Hỗ trợ file export một mẫu hoặc file export nhiều mẫu. Mỗi lần import sẽ tạo bản ghi mới.', 'extend-site'); ?></p>
+            <?php if ($import_modes) : ?>
+                <fieldset>
+                    <legend><?php esc_html_e('Chế độ import', 'extend-site'); ?></legend>
+                    <?php foreach ($import_modes as $mode => $label) : ?>
+                        <label>
+                            <input type="radio" name="import_mode" value="<?php echo esc_attr((string)$mode); ?>" <?php checked($default_import_mode, (string)$mode); ?>/>
+                            <?php echo esc_html((string)$label); ?>
+                        </label><br>
+                    <?php endforeach; ?>
+                </fieldset>
+            <?php endif; ?>
+            <p class="description"><?php esc_html_e('Hỗ trợ file export một mẫu hoặc file export nhiều mẫu. Mặc định sẽ cập nhật mẫu đang hoạt động có cùng template key; file cũ chưa có key sẽ thử khớp chính xác theo tên và domain.', 'extend-site'); ?></p>
             <p>
                 <button type="submit" class="button button-primary" name="es_crawler_template_import" value="1">
                     <?php esc_html_e('Import JSON', 'extend-site'); ?>

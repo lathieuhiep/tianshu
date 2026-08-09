@@ -37,7 +37,7 @@ defined('ABSPATH') || exit;
 
 class Plugin
 {
-    private const DB_VERSION = '20260726_crawler_template_soft_delete';
+    private const DB_VERSION = '20260809_crawler_template_cleanup_selectors';
 
     /**
      * Boot the plugin by initializing all components.
@@ -101,7 +101,11 @@ class Plugin
         CrawlerLinkTable::create();
         CrawlerTemplateTable::create();
         SystemJobTable::create();
-        if (CrawlerLinkTable::has_story_hash_index()) {
+        if (
+            CrawlerLinkTable::has_story_hash_index()
+            && CrawlerTemplateTable::has_template_key_index()
+            && CrawlerTemplateTable::has_cleanup_selectors_column()
+        ) {
             update_option('extend_site_db_version', self::DB_VERSION, false);
         }
     }

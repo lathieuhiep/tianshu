@@ -33,6 +33,7 @@ class CrawlerTemplateTable
 
         return "CREATE TABLE IF NOT EXISTS {$table} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            template_key VARCHAR(64) NOT NULL DEFAULT '',
             name VARCHAR(191) NOT NULL,
             domain VARCHAR(191) NOT NULL,
             toc_type VARCHAR(50) NOT NULL DEFAULT 'selector',
@@ -45,6 +46,7 @@ class CrawlerTemplateTable
             chapter_content_scope_selector TEXT DEFAULT NULL,
             chapter_title_selector TEXT DEFAULT NULL,
             chapter_content_selector TEXT DEFAULT NULL,
+            cleanup_selectors LONGTEXT DEFAULT NULL,
             find_replace_rules LONGTEXT DEFAULT NULL,
             delay_between INT UNSIGNED NOT NULL DEFAULT 1,
             deleted_at DATETIME DEFAULT NULL,
@@ -60,6 +62,11 @@ class CrawlerTemplateTable
         global $wpdb;
 
         $table = self::get_table_name();
+        $template_key = $wpdb->get_var($wpdb->prepare('SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'template_key'));
+        if (!$template_key) {
+            $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN template_key VARCHAR(64) NOT NULL DEFAULT \'\' AFTER id');
+        }
+
         $column = $wpdb->get_var($wpdb->prepare('SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'chapter_content_scope_selector'));
         if (!$column) {
             $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN chapter_content_scope_selector TEXT DEFAULT NULL AFTER story_extract_rules');
@@ -79,6 +86,14 @@ class CrawlerTemplateTable
         if (!$deleted_at) {
             $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN deleted_at DATETIME DEFAULT NULL AFTER delay_between');
         }
+
+        if (!self::has_cleanup_selectors_column()) {
+            $wpdb->query('ALTER TABLE ' . $table . ' ADD COLUMN cleanup_selectors LONGTEXT DEFAULT NULL AFTER chapter_content_selector');
+        }
+
+        self::backfill_template_keys();
+        self::repair_duplicate_template_keys();
+        self::ensure_template_key_index();
     }
 
     public static function all(): array
@@ -175,13 +190,61 @@ class CrawlerTemplateTable
         return is_array($row) ? self::normalize_row($row) : null;
     }
 
+    public static function find_by_template_key(string $template_key, bool $include_trashed = false): ?array
+    {
+        global $wpdb;
+
+        $template_key = self::sanitize_template_key($template_key);
+        if ($template_key === '') {
+            return null;
+        }
+
+        $where = $include_trashed ? 'WHERE template_key = %s' : 'WHERE template_key = %s AND deleted_at IS NULL';
+        $row = $wpdb->get_row(
+            $wpdb->prepare('SELECT * FROM ' . self::get_table_name() . ' ' . $where . ' ORDER BY id DESC LIMIT 1', $template_key),
+            ARRAY_A
+        );
+
+        return is_array($row) ? self::normalize_row($row) : null;
+    }
+
+    public static function find_by_name_domain(string $name, string $domain): ?array
+    {
+        global $wpdb;
+
+        $name = sanitize_text_field($name);
+        $domain = self::normalize_domain($domain);
+        if ($name === '' || $domain === '') {
+            return null;
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT * FROM ' . self::get_table_name() . ' WHERE name = %s AND domain = %s AND deleted_at IS NULL ORDER BY id DESC LIMIT 2',
+                $name,
+                $domain
+            ),
+            ARRAY_A
+        );
+
+        return is_array($rows) && count($rows) === 1 ? self::normalize_row($rows[0]) : null;
+    }
+
     public static function save(array $data): ?array
     {
         global $wpdb;
 
         $id = isset($data['id']) ? absint($data['id']) : 0;
         $now = current_time('mysql');
+        $existing = $id > 0 ? self::find($id, true) : null;
+        $template_key = is_array($existing) ? self::sanitize_template_key((string) ($existing['template_key'] ?? '')) : '';
+        $template_key = $template_key !== '' ? $template_key : self::sanitize_template_key((string) ($data['template_key'] ?? ''));
+        if ($template_key === '') {
+            $template_key = self::generate_template_key();
+        }
+
         $row = [
+            'template_key' => $template_key,
             'name' => sanitize_text_field((string) ($data['name'] ?? '')),
             'domain' => self::normalize_domain((string) ($data['domain'] ?? '')),
             'toc_type' => in_array(($data['toc_type'] ?? 'selector'), ['selector', 'pattern'], true) ? (string) $data['toc_type'] : 'selector',
@@ -194,6 +257,7 @@ class CrawlerTemplateTable
             'chapter_content_scope_selector' => sanitize_text_field((string) ($data['chapter_content_scope_selector'] ?? '')),
             'chapter_title_selector' => sanitize_text_field((string) ($data['chapter_title_selector'] ?? '')),
             'chapter_content_selector' => sanitize_text_field((string) ($data['chapter_content_selector'] ?? '')),
+            'cleanup_selectors' => wp_json_encode(self::normalize_cleanup_selectors($data['cleanup_selectors'] ?? [])),
             'find_replace_rules' => wp_json_encode(self::normalize_replace_rules((array) ($data['find_replace_rules'] ?? []))),
             'delay_between' => max(1, absint($data['delay_between'] ?? 1)),
             'updated_at' => $now,
@@ -204,7 +268,7 @@ class CrawlerTemplateTable
         }
 
         $formats = [
-            '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s',
+            '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s',
         ];
 
         if ($id > 0) {
@@ -296,6 +360,47 @@ class CrawlerTemplateTable
         return sanitize_text_field($domain);
     }
 
+    public static function sanitize_template_key(string $template_key): string
+    {
+        $template_key = trim($template_key);
+        if ($template_key === '' || strlen($template_key) > 64) {
+            return '';
+        }
+
+        return preg_match('/^[a-zA-Z0-9_:-]+$/', $template_key) ? $template_key : '';
+    }
+
+    public static function generate_template_key(): string
+    {
+        do {
+            try {
+                $key = 'esct_' . bin2hex(random_bytes(12));
+            } catch (\Throwable $e) {
+                $key = str_replace('.', '', uniqid('esct_', true));
+            }
+        } while (self::find_by_template_key($key, true));
+
+        return $key;
+    }
+
+    public static function has_template_key_index(): bool
+    {
+        global $wpdb;
+
+        return (bool) $wpdb->get_var(
+            $wpdb->prepare('SHOW INDEX FROM ' . self::get_table_name() . ' WHERE Key_name = %s', 'template_key')
+        );
+    }
+
+    public static function has_cleanup_selectors_column(): bool
+    {
+        global $wpdb;
+
+        return (bool) $wpdb->get_var(
+            $wpdb->prepare('SHOW COLUMNS FROM ' . self::get_table_name() . ' LIKE %s', 'cleanup_selectors')
+        );
+    }
+
     private static function list_where_sql(string $search, string $status): array
     {
         global $wpdb;
@@ -326,6 +431,7 @@ class CrawlerTemplateTable
     private static function normalize_row(array $row): array
     {
         $row['id'] = isset($row['id']) ? (int) $row['id'] : 0;
+        $row['template_key'] = isset($row['template_key']) ? self::sanitize_template_key((string) $row['template_key']) : '';
         $row['name'] = isset($row['name']) ? sanitize_text_field((string) $row['name']) : '';
         $row['domain'] = isset($row['domain']) ? self::normalize_domain((string) $row['domain']) : '';
         $row['toc_type'] = isset($row['toc_type']) ? sanitize_key((string) $row['toc_type']) : 'selector';
@@ -349,7 +455,94 @@ class CrawlerTemplateTable
         }
         $row['find_replace_rules'] = self::normalize_replace_rules($rules);
 
+        $cleanup_selectors = [];
+        if (!empty($row['cleanup_selectors'])) {
+            $decoded = json_decode((string) $row['cleanup_selectors'], true);
+            $cleanup_selectors = is_array($decoded) ? $decoded : [];
+        }
+        $row['cleanup_selectors'] = self::normalize_cleanup_selectors($cleanup_selectors);
+
         return $row;
+    }
+
+    private static function backfill_template_keys(): void
+    {
+        global $wpdb;
+
+        $rows = $wpdb->get_results(
+            'SELECT id FROM ' . self::get_table_name() . ' WHERE template_key = \'\' OR template_key IS NULL',
+            ARRAY_A
+        );
+        if (!is_array($rows)) {
+            return;
+        }
+
+        foreach ($rows as $row) {
+            $id = isset($row['id']) ? absint($row['id']) : 0;
+            if ($id <= 0) {
+                continue;
+            }
+
+            $wpdb->update(
+                self::get_table_name(),
+                ['template_key' => self::generate_template_key()],
+                ['id' => $id],
+                ['%s'],
+                ['%d']
+            );
+        }
+    }
+
+    private static function repair_duplicate_template_keys(): void
+    {
+        global $wpdb;
+
+        $keys = $wpdb->get_col(
+            'SELECT template_key FROM ' . self::get_table_name() . ' WHERE template_key <> \'\' GROUP BY template_key HAVING COUNT(*) > 1'
+        );
+        if (!is_array($keys)) {
+            return;
+        }
+
+        foreach ($keys as $key) {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT id FROM ' . self::get_table_name() . ' WHERE template_key = %s ORDER BY id ASC',
+                    (string) $key
+                ),
+                ARRAY_A
+            );
+            if (!is_array($rows) || count($rows) < 2) {
+                continue;
+            }
+
+            array_shift($rows);
+            foreach ($rows as $row) {
+                $id = isset($row['id']) ? absint($row['id']) : 0;
+                if ($id <= 0) {
+                    continue;
+                }
+
+                $wpdb->update(
+                    self::get_table_name(),
+                    ['template_key' => self::generate_template_key()],
+                    ['id' => $id],
+                    ['%s'],
+                    ['%d']
+                );
+            }
+        }
+    }
+
+    private static function ensure_template_key_index(): void
+    {
+        global $wpdb;
+
+        if (self::has_template_key_index()) {
+            return;
+        }
+
+        $wpdb->query('ALTER TABLE ' . self::get_table_name() . ' ADD UNIQUE KEY template_key (template_key)');
     }
 
     private static function normalize_story_extract_rules(array $rules): array
@@ -413,5 +606,28 @@ class CrawlerTemplateTable
         }
 
         return $normalized;
+    }
+
+    public static function normalize_cleanup_selectors($selectors): array
+    {
+        if (is_string($selectors)) {
+            $selectors = preg_split('/\r\n|\r|\n/', $selectors) ?: [];
+        }
+
+        if (!is_array($selectors)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($selectors as $selector) {
+            $selector = trim(sanitize_text_field((string) $selector));
+            if ($selector === '' || CssSelector::to_xpath($selector) === '') {
+                continue;
+            }
+
+            $normalized[] = $selector;
+        }
+
+        return array_values(array_unique($normalized));
     }
 }

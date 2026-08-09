@@ -319,6 +319,7 @@ class CrawlerAjax
             'chapter_content_scope_selector' => $selectors['chapter_content_scope_selector'],
             'chapter_title_selector' => $selectors['chapter_title_selector'],
             'chapter_content_selector' => $selectors['chapter_content_selector'],
+            'cleanup_selectors' => self::get_template_cleanup_selectors(),
         ], self::get_template_find_replace_rules());
         if (is_wp_error($chapter_parse)) {
             $warnings[] = $chapter_parse->get_error_message();
@@ -414,6 +415,7 @@ class CrawlerAjax
             'chapter_content_scope_selector' => $selectors['chapter_content_scope_selector'],
             'chapter_title_selector' => $selectors['chapter_title_selector'],
             'chapter_content_selector' => $selectors['chapter_content_selector'],
+            'cleanup_selectors' => self::get_template_cleanup_selectors(),
             'find_replace_rules' => self::get_template_find_replace_rules(),
             'delay_between' => max(1, absint($_POST['delay_between'] ?? 1)),
         ];
@@ -1192,6 +1194,11 @@ class CrawlerAjax
         }
 
         return $rules;
+    }
+
+    private static function get_template_cleanup_selectors(): array
+    {
+        return CrawlerTemplateTable::normalize_cleanup_selectors((string) wp_unslash($_POST['cleanup_selectors'] ?? ''));
     }
 
     private static function find_or_create_story(string $title, string $desc, string $author, array $cats, string $thumb_url, string $source_url)

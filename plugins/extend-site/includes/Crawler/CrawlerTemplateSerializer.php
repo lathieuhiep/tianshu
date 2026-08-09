@@ -10,11 +10,12 @@ class CrawlerTemplateSerializer
 {
     private const TYPE = 'extend-site-crawler-template';
     private const COLLECTION_TYPE = 'extend-site-crawler-template-collection';
-    private const VERSION = 1;
+    private const VERSION = 3;
 
     public static function fields(): array
     {
         return [
+            'template_key',
             'name',
             'domain',
             'toc_type',
@@ -27,6 +28,7 @@ class CrawlerTemplateSerializer
             'chapter_content_scope_selector',
             'chapter_title_selector',
             'chapter_content_selector',
+            'cleanup_selectors',
             'find_replace_rules',
             'delay_between',
         ];
@@ -115,12 +117,14 @@ class CrawlerTemplateSerializer
         }
 
         $data['domain'] = CrawlerTemplateTable::normalize_domain((string) $data['domain']);
+        $data['template_key'] = CrawlerTemplateTable::sanitize_template_key((string) $data['template_key']);
         $data['toc_type'] = in_array($data['toc_type'], ['selector', 'pattern'], true) ? (string) $data['toc_type'] : 'selector';
         $data['sample_story_url'] = esc_url_raw((string) $data['sample_story_url']);
         $data['sample_chapter_url'] = esc_url_raw((string) $data['sample_chapter_url']);
         $data['chapter_url_pattern'] = str_replace('{n}', '{chapter_number}', (string) $data['chapter_url_pattern']);
         $data['delay_between'] = max(1, absint($data['delay_between']));
         $data['story_extract_rules'] = is_array($data['story_extract_rules']) ? $data['story_extract_rules'] : [];
+        $data['cleanup_selectors'] = CrawlerTemplateTable::normalize_cleanup_selectors($data['cleanup_selectors']);
         $data['find_replace_rules'] = is_array($data['find_replace_rules']) ? $data['find_replace_rules'] : [];
 
         if (trim((string) $data['name']) === '') {
@@ -174,7 +178,7 @@ class CrawlerTemplateSerializer
 
     private static function default_value(string $field)
     {
-        if (in_array($field, ['story_extract_rules', 'find_replace_rules'], true)) {
+        if (in_array($field, ['story_extract_rules', 'cleanup_selectors', 'find_replace_rules'], true)) {
             return [];
         }
 

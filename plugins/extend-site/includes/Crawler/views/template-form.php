@@ -134,6 +134,15 @@ $render_extract_field = is_callable($view_data['render_extract_field_callback'] 
                             'div:nth-of-type(2)'
                     ); ?>
 
+                    <div class="es-template-field">
+                        <label for="es-template-cleanup-selectors"><?php esc_html_e('Selector khối cần xóa', 'extend-site'); ?></label>
+                        <textarea id="es-template-cleanup-selectors"
+                                  name="cleanup_selectors"
+                                  rows="4"
+                                  placeholder="<?php echo esc_attr__('.ads&#10;.chapter-nav&#10;div.notice', 'extend-site'); ?>"></textarea>
+                        <p class="description"><?php esc_html_e('Mỗi dòng là một selector cần xóa khỏi nội dung chương trước khi tìm/thay text. Hỗ trợ #id, .class, tag.class, selector con và dấu >.', 'extend-site'); ?></p>
+                    </div>
+
                     <div class="es-template-field es-template-cleanup-field">
                         <label><?php esc_html_e('Quy tắc tìm/thay thế', 'extend-site'); ?></label>
                         <div class="es-template-two-cols">
