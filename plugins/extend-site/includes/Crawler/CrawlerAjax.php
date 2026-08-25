@@ -532,7 +532,7 @@ class CrawlerAjax
 
         $xpath = new DOMXPath($dom);
         $extract_rules = is_array($template['story_extract_rules'] ?? null) ? $template['story_extract_rules'] : [];
-        $story_title = self::filled_title(
+        $source_story_title = self::filled_title(
             (string) self::extract_rule_value($xpath, $extract_rules['story_title'] ?? [], $story_url),
             self::title_from_url($story_url)
         );
@@ -544,7 +544,23 @@ class CrawlerAjax
             ? $story_cats_value
             : array_filter(array_map('trim', explode(',', (string) $story_cats_value)));
 
-        $existing_story_id = self::find_story_by_title($story_title);
+        $target_story_id = absint($_POST['target_story_id'] ?? 0);
+        $target_story_title = sanitize_text_field((string) wp_unslash($_POST['target_story_title'] ?? ''));
+        $story_title = $source_story_title;
+        $existing_story_id = 0;
+        if ($target_story_id > 0) {
+            if (get_post_type($target_story_id) !== StoryPostType::SLUG || get_post_status($target_story_id) === 'trash') {
+                wp_send_json_error(['message' => __('Truyện đích không hợp lệ.', 'extend-site')], 400);
+            }
+
+            $existing_story_id = $target_story_id;
+            $story_title = get_the_title($target_story_id) ?: $source_story_title;
+        } elseif ($target_story_title !== '') {
+            $story_title = self::filled_title($target_story_title, $source_story_title);
+            $existing_story_id = self::find_story_by_title($story_title);
+        } else {
+            $existing_story_id = self::find_story_by_title($story_title);
+        }
 
         $from = absint($_POST['range_from'] ?? 0);
         $to = absint($_POST['range_to'] ?? 0);
