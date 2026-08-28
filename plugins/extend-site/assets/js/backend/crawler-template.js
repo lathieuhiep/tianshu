@@ -265,8 +265,8 @@
         if (!chapterUrlPattern) {
             return 'Mẫu URL chương là bắt buộc vì crawler dùng mẫu này để tạo URL từng chương.';
         }
-        if (chapterUrlPattern.indexOf('{chapter_number}') === -1 && chapterUrlPattern.indexOf('{n}') === -1) {
-            return 'Mẫu URL chương phải có biến số chương {chapter_number} hoặc {n}. Ví dụ: {story_url}/chuong-{chapter_number}/';
+        if (chapterUrlPattern.indexOf('{chapter_number}') === -1 && chapterUrlPattern.indexOf('{chapter_index}') === -1 && chapterUrlPattern.indexOf('{n}') === -1) {
+            return 'Mẫu URL chương phải có biến số chương {chapter_number}, {chapter_index} hoặc {n}. Ví dụ: {story_url}/chuong-{chapter_number}/';
         }
 
         return '';
@@ -317,22 +317,42 @@
 
     function buildChapterUrlFromPattern(pattern, storyUrl, chapterUrl) {
         const chapterNumber = chapterNumberFromUrl(chapterUrl);
+        const chapterIndex = Math.max(0, chapterNumber - 1);
         const storyBase = normalizeCompareUrl(storyUrl);
         const storySlug = storySlugFromUrl(storyUrl);
         return String(pattern || '')
             .replace(/\{story_url\}/g, storyBase)
             .replace(/\{story_slug\}/g, storySlug)
+            .replace(/\{chapter_index\}/g, String(chapterIndex))
             .replace(/\{chapter_number\}/g, String(chapterNumber))
             .replace(/\{n\}/g, String(chapterNumber));
     }
 
+    function chapterNumberPlaceholder(rawNumber, context) {
+        const number = parseInt(String(rawNumber || '').replace(/^0+/, '') || '0', 10);
+        const hasChapterHint = /chuong|chapter|chap|tap/i.test(String(context || ''));
+        const hasQueryParamHint = /^[?&]/.test(String(context || ''));
+        return number === 0 && (hasChapterHint || hasQueryParamHint) ? '{chapter_index}' : '{chapter_number}';
+    }
+
     function replaceChapterNumberToken(value) {
-        const replaced = String(value || '').replace(/((?:chuong|chapter|chap|tap)(?:[\s/_-]|=)*)0*([0-9]+)/i, '$1{chapter_number}');
+        const replaced = String(value || '').replace(/((?:chuong|chapter|chap|tap)[^0-9]*?)0*([0-9]+)/i, function (match, prefix, number) {
+            return prefix + chapterNumberPlaceholder(number, prefix);
+        });
         if (replaced !== value) {
             return replaced;
         }
 
-        return String(value || '').replace(/([\/_-])0*([0-9]+)(\.html?)?(\/?)$/i, '$1{chapter_number}$3$4');
+        const queryReplaced = String(value || '').replace(/([?&][^=&#?]+=[^0-9&#]*)0*([0-9]+)(?=(&|#|$))/i, function (match, prefix, number) {
+            return prefix + chapterNumberPlaceholder(number, prefix);
+        });
+        if (queryReplaced !== value) {
+            return queryReplaced;
+        }
+
+        return String(value || '').replace(/([\/_-])0*([0-9]+)(\.html?)?(\/?)$/i, function (match, prefix, number, extension, suffix) {
+            return prefix + chapterNumberPlaceholder(number, match) + (extension || '') + (suffix || '');
+        });
     }
 
     function inferChapterUrlPattern() {
@@ -375,7 +395,7 @@
         }
 
         pattern = replaceChapterNumberToken(pattern);
-        if (pattern.indexOf('{chapter_number}') === -1) {
+        if (pattern.indexOf('{chapter_number}') === -1 && pattern.indexOf('{chapter_index}') === -1) {
             return { error: 'Không nhận ra vị trí số chương trong URL chương mẫu.' };
         }
 

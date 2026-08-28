@@ -102,7 +102,7 @@ $render_extract_field = is_callable($view_data['render_extract_field_callback'] 
                                 'chapter_url_pattern',
                                 __('Mẫu URL chương', 'extend-site'),
                                 '{story_url}/chuong-{chapter_number}/',
-                                __('Dung {story_url} de lay URL truyen dang cao, roi thay vi tri so chuong bang {chapter_number}. Vi du: {story_url}/chuong-{chapter_number}/. Neu site dung slug ngay sau domain, co the dung https://domain.com/{story_slug}/chuong-{chapter_number}/. Khong nen nhap cung slug cua truyen mau.', 'extend-site')
+                                __('Dung {story_url} de lay URL truyen dang cao. Dung {chapter_number} cho chuong 1, 2, 3; dung {chapter_index} neu URL mau bat dau tu 0, vi du {story_url}?chuong-id={chapter_index}. Khong nen nhap cung slug cua truyen mau.', 'extend-site')
                         ); ?>
                     </div>
                 </div>

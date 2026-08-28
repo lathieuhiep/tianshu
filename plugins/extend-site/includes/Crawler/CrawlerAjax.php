@@ -436,8 +436,12 @@ class CrawlerAjax
             wp_send_json_error(['message' => __('Hãy cấu hình selector danh sách chương hoặc URL fallback từ mẫu.', 'extend-site')], 400);
         }
 
-        if ($data['chapter_url_pattern'] !== '' && strpos($data['chapter_url_pattern'], '{chapter_number}') === false) {
-            wp_send_json_error(['message' => __('Mẫu URL chương phải có biến số chương {chapter_number} hoặc {n}, ví dụ: {story_url}/chuong-{chapter_number}/', 'extend-site')], 400);
+        if (
+            $data['chapter_url_pattern'] !== ''
+            && strpos($data['chapter_url_pattern'], '{chapter_number}') === false
+            && strpos($data['chapter_url_pattern'], '{chapter_index}') === false
+        ) {
+            wp_send_json_error(['message' => __('Mẫu URL chương phải có biến số chương {chapter_number}, {chapter_index} hoặc {n}, ví dụ: {story_url}/chuong-{chapter_number}/', 'extend-site')], 400);
         }
 
         $template = CrawlerTemplateTable::save($data);

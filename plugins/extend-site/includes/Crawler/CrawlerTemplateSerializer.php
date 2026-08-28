@@ -149,8 +149,9 @@ class CrawlerTemplateSerializer
         if (
             trim((string) $data['chapter_url_pattern']) !== ''
             && strpos((string) $data['chapter_url_pattern'], '{chapter_number}') === false
+            && strpos((string) $data['chapter_url_pattern'], '{chapter_index}') === false
         ) {
-            return new WP_Error('invalid_chapter_pattern', __('Mẫu URL chương trong file import phải có {chapter_number} hoặc {n}.', 'extend-site'));
+            return new WP_Error('invalid_chapter_pattern', __('Mẫu URL chương trong file import phải có {chapter_number}, {chapter_index} hoặc {n}.', 'extend-site'));
         }
 
         return $data;

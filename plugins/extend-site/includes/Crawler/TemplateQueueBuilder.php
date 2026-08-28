@@ -111,9 +111,11 @@ class TemplateQueueBuilder
         $queue = [];
         for ($chapter = $from; $chapter <= $to; $chapter++) {
             $chapter_number = $padding > 0 ? str_pad((string) $chapter, $padding, '0', STR_PAD_LEFT) : (string) $chapter;
+            $chapter_index = max(0, $chapter - 1);
+            $chapter_index = $padding > 0 ? str_pad((string) $chapter_index, $padding, '0', STR_PAD_LEFT) : (string) $chapter_index;
             $url = str_replace(
-                ['{story_url}', '{story_slug}', '{chapter_number}', '{n}'],
-                [$story_url_base, $story_slug, $chapter_number, $chapter_number],
+                ['{story_url}', '{story_slug}', '{chapter_number}', '{chapter_index}', '{n}'],
+                [$story_url_base, $story_slug, $chapter_number, $chapter_index, $chapter_number],
                 $pattern
             );
             $url = esc_url_raw($url);

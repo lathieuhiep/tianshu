@@ -500,10 +500,12 @@
         const storyBase = storyUrl.replace(/\/+$/, '');
         const storySlug = storySlugFromUrl(storyUrl);
         const number = padNumber(chapterNumber || 1, $templatePadding.val());
+        const index = padNumber(Math.max(0, (parseInt(chapterNumber, 10) || 1) - 1), $templatePadding.val());
 
         return String(pattern || '')
             .replace(/\{story_url\}/g, storyBase || '{story_url}')
             .replace(/\{story_slug\}/g, storySlug || '{story_slug}')
+            .replace(/\{chapter_index\}/g, index)
             .replace(/\{chapter_number\}/g, number)
             .replace(/\{n\}/g, number);
     }
