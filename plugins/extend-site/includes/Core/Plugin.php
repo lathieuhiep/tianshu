@@ -37,7 +37,7 @@ defined('ABSPATH') || exit;
 
 class Plugin
 {
-    private const DB_VERSION = '20260809_crawler_template_cleanup_selectors';
+    private const DB_VERSION = '20261102_ranking_cache_table';
 
     /**
      * Boot the plugin by initializing all components.
@@ -75,6 +75,7 @@ class Plugin
         SystemJobAjax::init();
 
         SystemJobQueue::init();
+        \ExtendSite\Services\RankingCache::init();
         StoryCloneService::init();
         StoryChapterStatusSyncJob::init();
     }
@@ -101,10 +102,12 @@ class Plugin
         CrawlerLinkTable::create();
         CrawlerTemplateTable::create();
         SystemJobTable::create();
+        \ExtendSite\DB\DBInstaller::install();
         if (
             CrawlerLinkTable::has_story_hash_index()
             && CrawlerTemplateTable::has_template_key_index()
             && CrawlerTemplateTable::has_cleanup_selectors_column()
+            && \ExtendSite\DB\RankingCacheTable::exists()
         ) {
             update_option('extend_site_db_version', self::DB_VERSION, false);
         }

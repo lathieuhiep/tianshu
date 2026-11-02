@@ -9,6 +9,7 @@ class DBInstaller {
         LatestChapterTable::create();
         ViewsStoryDailyTable::create();
         SystemJobTable::create();
+        RankingCacheTable::create();
         CrawlerLinkTable::create();
         CrawlerTemplateTable::create();
     }

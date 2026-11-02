@@ -333,7 +333,7 @@ class LatestChapterTable {
 
         $chapter_ids = array_values(array_unique(array_map('absint', wp_list_pluck($rows, 'chapter_id'))));
         if ($chapter_ids) {
-            update_post_cache(get_posts([
+            $posts = get_posts([
                 'post_type' => ChapterPostType::SLUG,
                 'post__in' => $chapter_ids,
                 'posts_per_page' => count($chapter_ids),
@@ -342,7 +342,8 @@ class LatestChapterTable {
                 'no_found_rows' => true,
                 'update_post_meta_cache' => true,
                 'update_post_term_cache' => false,
-            ]));
+            ]);
+            update_post_cache($posts);
         }
 
         $chapters = [];

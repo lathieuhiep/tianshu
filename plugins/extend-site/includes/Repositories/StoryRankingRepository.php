@@ -4,6 +4,7 @@ namespace ExtendSite\Repositories;
 use ExtendSite\DB\ViewsStoryDailyTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\StoryPostType;
+use ExtendSite\Services\RankingCache;
 
 defined('ABSPATH') || exit;
 
@@ -21,21 +22,50 @@ class StoryRankingRepository {
      * @return array<int,array{story_id:int,total_views:int}>
      */
     public static function get_top_by_range(string $from_date, ?string $to_date = null, int $limit = 10): array {
+        try {
+            return self::cached_top_by_range($from_date, $to_date, $limit);
+        } catch (\RuntimeException $error) {
+            return [];
+        }
+    }
+
+    private static function cached_top_by_range(string $from_date, ?string $to_date, int $limit): array {
+        $to_date = $to_date ?: es_get_today();
+        $limit = max(1, min(50, $limit));
+        $days = (strtotime($to_date) - strtotime($from_date)) / DAY_IN_SECONDS;
+        $period = $days >= 364 ? 'year' : ($days >= 29 ? 'month' : ($days >= 6 ? 'week' : 'day'));
+        $identity = $to_date === es_get_today()
+            ? "records|rolling|{$days}|{$limit}"
+            : "records|{$from_date}|{$to_date}|{$limit}";
+        return RankingCache::remember(
+            $identity, $period,
+            static fn() => self::query_top_by_range($from_date, $to_date, $limit)
+        );
+    }
+
+    private static function query_top_by_range(string $from_date, string $to_date, int $limit): array {
         global $wpdb;
 
         $table = ViewsStoryDailyTable::get_table_name();
         $to_date = $to_date ?: es_get_today();
 
         $query = $wpdb->prepare("
-            SELECT story_id, SUM(views) AS total_views
-            FROM {$table}
+            SELECT v.story_id, SUM(v.views) AS total_views
+            FROM {$table} v
+            INNER JOIN {$wpdb->posts} p ON p.ID = v.story_id
             WHERE view_date BETWEEN %s AND %s
-            GROUP BY story_id
-            ORDER BY total_views DESC
+              AND p.post_type = 'story' AND p.post_status = 'publish'
+            GROUP BY v.story_id
+            ORDER BY total_views DESC, v.story_id ASC
             LIMIT %d
         ", $from_date, $to_date, $limit);
 
         $results = $wpdb->get_results($query, ARRAY_A);
+
+        if ($wpdb->last_error !== '' || !is_array($results)) {
+            throw new \RuntimeException('es_ranking_database_error');
+        }
+
 
         return array_map(static function ($row) {
             return [
@@ -50,7 +80,7 @@ class StoryRankingRepository {
      */
     public static function top_7_days(int $limit = 10): array {
         $to = es_get_today();
-        $from = date('Y-m-d', strtotime("$to -7 days"));
+        $from = date('Y-m-d', strtotime("$to -6 days"));
         return self::get_top_by_range($from, $to, $limit);
     }
 
@@ -59,7 +89,7 @@ class StoryRankingRepository {
      */
     public static function top_30_days(int $limit = 10): array {
         $to = es_get_today();
-        $from = date('Y-m-d', strtotime("$to -30 days"));
+        $from = date('Y-m-d', strtotime("$to -29 days"));
         return self::get_top_by_range($from, $to, $limit);
     }
 
@@ -68,7 +98,7 @@ class StoryRankingRepository {
      */
     public static function top_365_days(int $limit = 10): array {
         $to = es_get_today();
-        $from = date('Y-m-d', strtotime("$to -365 days"));
+        $from = date('Y-m-d', strtotime("$to -364 days"));
         return self::get_top_by_range($from, $to, $limit);
     }
 
@@ -141,34 +171,58 @@ class StoryRankingRepository {
      */
     public static function get_ranking_items(string $type, string $period, int $limit = 10): array
     {
-        $type = sanitize_key($type);
-        $period = sanitize_key($period);
+        $type = $type === AuthorPostType::SLUG ? $type : StoryPostType::SLUG;
+        $period = in_array($period, ['day', 'week', 'month', 'year'], true) ? $period : 'day';
         $limit = max(1, min(50, $limit));
-        $cache_key = sprintf('es_ranking_items_%s_%s_%d', $type, $period, $limit);
-        $cached = get_transient($cache_key);
-
-        if (is_array($cached)) {
-            return $cached;
+        try {
+            return RankingCache::remember(
+                "items|{$type}|{$period}|{$limit}", $period,
+                static fn() => self::build_ranking_items($type, $period, $limit)
+            );
+        } catch (\RuntimeException $error) {
+            return [];
         }
+    }
 
-        $records = match ($period) {
-            'week'  => self::top_7_days($limit),
-            'month' => self::top_30_days($limit),
-            'year'  => self::top_365_days($limit),
-            default => self::top_today($limit),
-        };
-
-        if ($type === AuthorPostType::SLUG) {
-            $records = self::top_authors_by_stories($records, $limit);
-        }
+    private static function build_ranking_items(string $type, string $period, int $limit): array
+    {
+        $to = es_get_today();
+        $days = ['day' => 0, 'week' => 6, 'month' => 29, 'year' => 364][$period];
+        $from = date('Y-m-d', strtotime("$to -{$days} days"));
+        $records = $type === AuthorPostType::SLUG
+            ? self::author_records($from, $to, $limit, $period)
+            : self::cached_top_by_range($from, $to, $limit);
 
         $items = [];
+
+        // Nap post/meta theo batch truoc vong lap, tranh get_post/get_thumbnail N+1.
+        $id_column = $type === StoryPostType::SLUG ? 'story_id' : 'author_id';
+        $ids = array_map('intval', wp_list_pluck($records, $id_column));
+        $posts_by_id = [];
+        if ($ids) {
+            $posts = get_posts([
+                'post_type' => $type,
+                'post_status' => 'publish',
+                'post__in' => $ids,
+                'posts_per_page' => count($ids),
+                'no_found_rows' => true,
+                'update_post_meta_cache' => true,
+                'update_post_term_cache' => true,
+            ]);
+            foreach ($posts as $post) {
+                $posts_by_id[$post->ID] = $post;
+            }
+            $thumbnail_ids = array_filter(array_map('get_post_thumbnail_id', wp_list_pluck($posts, 'ID')));
+            if ($thumbnail_ids) {
+                _prime_post_caches($thumbnail_ids, false, true);
+            }
+        }
 
         foreach ($records as $row) {
             if ($type === StoryPostType::SLUG) {
                 $story_id = (int) $row['story_id'];
                 $views    = (int) $row['total_views'];
-                $post = get_post($story_id);
+                $post = $posts_by_id[$story_id] ?? null;
 
                 if (!$post instanceof \WP_Post || $post->post_type !== StoryPostType::SLUG || $post->post_status !== 'publish') {
                     continue;
@@ -179,12 +233,12 @@ class StoryRankingRepository {
                     'title'  => get_the_title($story_id),
                     'url'    => get_permalink($story_id),
                     'image'  => get_post_thumbnail_id($story_id),
-                    'views'  => number_format_i18n($views),
+                    'views'  => $views,
                 ];
             } else {
                 $author_id = (int) $row['author_id'];
                 $views     = (int) $row['total_views'];
-                $post = get_post($author_id);
+                $post = $posts_by_id[$author_id] ?? null;
 
                 if (!$post instanceof \WP_Post || $post->post_type !== AuthorPostType::SLUG || $post->post_status !== 'publish') {
                     continue;
@@ -195,23 +249,42 @@ class StoryRankingRepository {
                     'title'  => get_the_title($author_id),
                     'url'    => get_permalink($author_id),
                     'image'  => get_post_thumbnail_id($author_id),
-                    'views'  => number_format_i18n($views),
+                    'views'  => $views,
                 ];
             }
         }
 
-        set_transient($cache_key, $items, self::get_cache_ttl($period));
-
         return $items;
     }
 
-    private static function get_cache_ttl(string $period): int
+    /** Tong hop tren tat ca truyen publish; khong cat top truyen truoc khi cong tac gia. */
+    private static function author_records(string $from, string $to, int $limit, string $period): array
     {
-        return match ($period) {
-            'week' => 10 * MINUTE_IN_SECONDS,
-            'month' => 30 * MINUTE_IN_SECONDS,
-            'year' => HOUR_IN_SECONDS,
-            default => 2 * MINUTE_IN_SECONDS,
-        };
+        return RankingCache::remember("authors|{$period}|{$limit}", $period, static function () use ($from, $to, $limit) {
+            global $wpdb;
+            $table = ViewsStoryDailyTable::get_table_name();
+            // EXISTS tranh nhan doi views neu meta quan he bi trung dong.
+            $rows = $wpdb->get_results($wpdb->prepare(
+                "SELECT a.ID AS author_id, SUM(v.views) AS total_views
+                 FROM {$wpdb->posts} a
+                 INNER JOIN {$table} v ON EXISTS (
+                     SELECT 1 FROM {$wpdb->postmeta} m
+                     WHERE m.post_id = v.story_id AND m.meta_key = %s
+                     AND (m.meta_value LIKE CONCAT('%%;i:', a.ID, ';%%')
+                          OR m.meta_value LIKE CONCAT('%%;s:', CHAR_LENGTH(CAST(a.ID AS CHAR)), ':', CHAR(34), a.ID, CHAR(34), ';%%'))
+                 )
+                 INNER JOIN {$wpdb->posts} s ON s.ID = v.story_id
+                 WHERE a.post_type = %s AND a.post_status = 'publish'
+                   AND s.post_type = %s AND s.post_status = 'publish'
+                   AND v.view_date BETWEEN %s AND %s
+                 GROUP BY a.ID ORDER BY total_views DESC, a.ID ASC LIMIT %d",
+                StoryPostType::META_AUTHOR_IDS, AuthorPostType::SLUG, StoryPostType::SLUG, $from, $to, $limit
+            ), ARRAY_A);
+            if ($wpdb->last_error || !is_array($rows)) {
+                throw new \RuntimeException('es_ranking_author_database_error');
+            }
+            return $rows;
+        });
     }
+
 }

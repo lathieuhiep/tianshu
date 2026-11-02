@@ -97,6 +97,7 @@ class MenuPage
             'chapter_sync' => ChapterSyncTool::class,
             'system_job_runner' => SystemJobRunnerTool::class,
             'system_job_cleanup' => SystemJobCleanupTool::class,
+            'ranking_cache_clear' => \ExtendSite\Services\Tools\RankingCacheClearTool::class,
         ];
     }
 

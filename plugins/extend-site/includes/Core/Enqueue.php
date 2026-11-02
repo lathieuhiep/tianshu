@@ -342,6 +342,7 @@ class Enqueue
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce(EXTEND_SITE_NONCE_ACTION),
                 'ttl_valid' => !class_exists('\ExtendReferrals\Core\TTLManager') || !\ExtendReferrals\Core\TTLManager::is_expired(),
+                'referral_lock_required' => self::is_referral_lock_required(),
                 'chapter_number' => ChapterRepository::get_chapter_number(get_the_ID()),
             ]);
         }
@@ -355,5 +356,21 @@ class Enqueue
                 EXTEND_SITE_VERSION
             );
         }
+    }
+
+    private static function is_referral_lock_required(): bool
+    {
+        if (
+            !class_exists('\ExtendReferrals\Core\DisplayRules')
+            || !class_exists('\ExtendReferrals\Repository\AdsCache')
+        ) {
+            return false;
+        }
+
+        if (!\ExtendReferrals\Core\DisplayRules::should_display()) {
+            return false;
+        }
+
+        return !empty(\ExtendReferrals\Repository\AdsCache::get_ads());
     }
 }

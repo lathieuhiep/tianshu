@@ -74,6 +74,10 @@
             // TTL còn → ẩn quảng cáo, hiện content
             $box.prop('hidden', true);
             $content.prop('hidden', false);
+
+            setTimeout(function () {
+                $(document).trigger('extend_referrals_unlocked');
+            }, 0);
         }
     });
 

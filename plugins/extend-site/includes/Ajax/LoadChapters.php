@@ -3,6 +3,7 @@
 namespace ExtendSite\Ajax;
 
 use ExtendSite\Repositories\ChapterRepository;
+use ExtendSite\Repositories\StoryRepository;
 use WP_Query;
 use ExtendSite\PostType\ChapterPostType;
 
@@ -54,8 +55,14 @@ class LoadChapters
         bool $show_date = true
     ): string
     {
+        $page = max(1, $page);
+        $per_page = max(1, $per_page);
+        $chapter_total = StoryRepository::get_chapter_total($story_id);
+        $total_pages = $chapter_total > 0 ? (int) ceil($chapter_total / $per_page) : 1;
+
         $query = new WP_Query([
             'post_type' => ChapterPostType::SLUG,
+            'post_status' => 'publish',
             'meta_query' => [
                 [
                     'key' => ChapterPostType::META_STORY_ID,
@@ -67,19 +74,19 @@ class LoadChapters
             ],
             'posts_per_page' => $per_page,
             'paged' => $page,
-            'no_found_rows' => false,
-            'update_post_meta_cache' => false,
+            'no_found_rows' => true,
+            'update_post_meta_cache' => true,
             'update_post_term_cache' => false,
             'fields' => 'ids', // nếu chỉ cần ID để render sau
         ]);
 
-        return self::render_view($query, $page, $show_title, $show_date);
+        return self::render_view($query, $page, $total_pages, $show_title, $show_date);
     }
 
     /**
      * Render the HTML view for chapters
      */
-    private static function render_view(WP_Query $query, int $page, bool $show_title, bool $show_date): string
+    private static function render_view(WP_Query $query, int $page, int $total_pages, bool $show_title, bool $show_date): string
     {
         ob_start();
 
@@ -113,7 +120,7 @@ class LoadChapters
                     'base' => add_query_arg('chap_page', '%#%'),
                     'format' => '',
                     'current' => $page,
-                    'total' => $query->max_num_pages,
+                    'total' => $total_pages,
                     'prev_text' => '<i class="es-ic-mask es-ic-mask-angle-left"></i>',
                     'next_text' => '<i class="es-ic-mask es-ic-mask-angle-right"></i>',
                     'type' => 'plain',

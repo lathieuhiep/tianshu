@@ -7,6 +7,7 @@ use ExtendSite\PostType\StoryPostType;
 use ExtendSite\Repositories\ChapterRepository;
 use ExtendSite\Repositories\StoryRankingRepository;
 use ExtendSite\Views\ViewTracker;
+use ExtendSite\Services\RankingCache;
 use WP_Post;
 
 defined('ABSPATH') || exit;
@@ -41,7 +42,9 @@ final class LoadRanking
 
         // Kiểm tra dữ liệu
         if (empty($items)) {
-            wp_send_json_error(['message' => esc_html__('Không có dữ liệu hiển thị.', 'extend-site')]);
+            wp_send_json_error(['message' => RankingCache::is_busy()
+                ? esc_html__('Đang cập nhật bảng xếp hạng. Vui lòng thử lại sau ít giây.', 'extend-site')
+                : esc_html__('Không có dữ liệu hiển thị.', 'extend-site')]);
         }
 
         // Trả về kết quả
@@ -58,20 +61,30 @@ final class LoadRanking
     public static function render_view(array $items = [], string $type = 'story'): string
     {
         if ( empty( $items ) ) {
-            return esc_html__('Chưa có dữ liệu.', 'extend-site');
+            return RankingCache::is_busy()
+                ? esc_html__('Đang cập nhật bảng xếp hạng. Vui lòng tải lại sau ít giây.', 'extend-site')
+                : esc_html__('Chưa có dữ liệu.', 'extend-site');
+        }
+
+        // Cache nong van can prime post/meta anh va truyen theo batch truoc render.
+        _prime_post_caches(array_map('intval', wp_list_pluck($items, 'id')), true, true);
+        $images = array_filter(array_map('intval', wp_list_pluck($items, 'image')));
+        if ($images) {
+            _prime_post_caches($images, false, true);
         }
 
         $latest_chapters = [];
         if ($type === StoryPostType::SLUG) {
             $latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids(wp_list_pluck($items, 'id'));
+            $missing = array_values(array_diff(array_map('intval', wp_list_pluck($items, 'id')), array_keys($latest_chapters)));
+            if ($missing) {
+                $latest_chapters += self::fallback_chapters($missing);
+            }
         }
 
         ob_start();
             foreach ( $items as $index => $item ) :
                 $latest_chapter = $latest_chapters[$item['id']] ?? null;
-                if ($type === StoryPostType::SLUG && empty($latest_chapter)) {
-                    $latest_chapter = ChapterRepository::get_latest_chapter( $item['id'] );
-                }
         ?>
             <div class="ranking-item es-flex es-gap-3">
                 <div class="stt">
@@ -128,7 +141,7 @@ final class LoadRanking
 
                         <div class="item-meta es-flex es-flex-align-center es-gap-1">
                             <i class="es-ic-mask es-ic-mask-eye"></i>
-                            <span class="view"><?php echo esc_html( ViewTracker::format_short( $item['views'] ) ); ?></span>
+                            <span class="view"><?php echo esc_html( ViewTracker::format_short( (int) $item['views'] ) ); ?></span>
                         </div>
                     </div>
                 </div>
@@ -136,5 +149,38 @@ final class LoadRanking
         <?php
             endforeach;
         return ob_get_clean();
+    }
+
+    /** Mot SQL cho tat ca story thieu latest; prime chapter/meta truoc khi tao URL. */
+    private static function fallback_chapters(array $ids): array
+    {
+        global $wpdb;
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.ID AS story_id, (
+                SELECT p.ID FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} sm ON sm.post_id=p.ID AND sm.meta_key='_chapter_story_id'
+                INNER JOIN {$wpdb->postmeta} nm ON nm.post_id=p.ID AND nm.meta_key='_chapter_number'
+                WHERE p.post_type='chapter' AND p.post_status='publish' AND sm.meta_value=CAST(s.ID AS CHAR)
+                ORDER BY CAST(nm.meta_value AS UNSIGNED) DESC, p.ID DESC LIMIT 1
+             ) AS chapter_id FROM {$wpdb->posts} s WHERE s.ID IN ({$placeholders})",
+            ...$ids
+        ), ARRAY_A);
+        $chapter_ids = array_filter(array_map('intval', wp_list_pluck($rows ?: [], 'chapter_id')));
+        if ($chapter_ids) {
+            _prime_post_caches($chapter_ids, false, true);
+        }
+        $result = [];
+        foreach ($rows ?: [] as $row) {
+            $id = (int) $row['chapter_id'];
+            if (!$id) {
+                continue;
+            }
+            $result[(int) $row['story_id']] = [
+                'id' => $id, 'url' => get_permalink($id),
+                'number' => (int) get_post_meta($id, '_chapter_number', true),
+            ];
+        }
+        return $result;
     }
 }

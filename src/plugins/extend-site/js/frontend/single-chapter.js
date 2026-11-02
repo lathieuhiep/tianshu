@@ -40,12 +40,12 @@
     const viewTracker = async () => {
         const $chapter = $('.es-post');
         const chapterID = parseInt($chapter.data('chapter-id'), 10);
-        const chapterNumber = parseInt(esSingleChapterAjax.chapter_number || 0, 10);
+        const referralLockRequired = !!esSingleChapterAjax.referral_lock_required;
 
         if (!chapterID || viewTrackerScheduled) return;
 
-        // Chỉ bỏ qua khi TTL hết hạn & chương > 1
-        if (typeof esSingleChapterAjax.ttl_valid !== 'undefined' && !esSingleChapterAjax.ttl_valid && chapterNumber > 1) {
+        // Chỉ bỏ qua khi chương hiện tại bị referral lock và TTL chưa hợp lệ.
+        if (referralLockRequired && typeof esSingleChapterAjax.ttl_valid !== 'undefined' && !esSingleChapterAjax.ttl_valid) {
             return;
         }
 

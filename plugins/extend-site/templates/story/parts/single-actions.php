@@ -4,11 +4,13 @@
  */
 defined('ABSPATH') || exit;
 
+use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\Repositories\ChapterRepository;
 
 $story_id = (int)get_the_ID();
 $first_chapter = ChapterRepository::get_first_chapter($story_id);
-$latest_chapter = ChapterRepository::get_latest_chapter( $story_id );
+$latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids([$story_id]);
+$latest_chapter = $latest_chapters[$story_id] ?? ChapterRepository::get_latest_chapter($story_id);
 ?>
 <div class="es-story-actions es-row-gap-3 es-col-gap-3" role="navigation" aria-label="<?php esc_attr_e('Story quick actions', 'extend-site'); ?>">
     <?php if ( !empty( $first_chapter ) ): ?>
