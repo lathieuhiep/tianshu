@@ -14,6 +14,12 @@ defined('ABSPATH') || exit;
  */
 class LatestChapterTable {
 
+    /** @var array<int,bool> Story can dong bo lai o cuoi request. */
+    private static array $pending_resync = [];
+
+    /** @var array<int,int> Story cu truoc khi doi lien ket cua chapter. */
+    private static array $story_ids_before_meta_update = [];
+
     /**
      * Get table name with prefix.
      */
@@ -30,15 +36,28 @@ class LatestChapterTable {
         $table = self::get_table_name();
         $charset = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE IF NOT EXISTS $table (
-              story_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+        // dbDelta can add new columns only when using its canonical CREATE TABLE syntax.
+        $sql = "CREATE TABLE $table (
+              story_id BIGINT UNSIGNED NOT NULL,
+              first_chapter_id BIGINT UNSIGNED NULL,
               chapter_id BIGINT UNSIGNED NOT NULL,
               updated_at DATETIME NOT NULL,
+              PRIMARY KEY  (story_id),
+              KEY first_chapter_id (first_chapter_id),
+              KEY chapter_id (chapter_id),
               KEY updated_at (updated_at)
             ) ENGINE=InnoDB $charset;";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+    }
+
+    public static function has_first_chapter_column(): bool {
+        global $wpdb;
+
+        return (bool) $wpdb->get_var(
+            "SHOW COLUMNS FROM " . self::get_table_name() . " LIKE 'first_chapter_id'"
+        );
     }
 
     /**
@@ -227,9 +246,11 @@ class LatestChapterTable {
             return null;
         }
 
+        // Neu crawler/job da dong bo truc tiep thi khong lap lai luc shutdown.
+        unset(self::$pending_resync[$story_id]);
+
         $table = self::get_table_name();
-        $row = $wpdb->get_row($wpdb->prepare(
-            "
+        $base_sql = "
             SELECT p.ID AS chapter_id, p.post_date AS updated_at
             FROM {$wpdb->posts} p
             INNER JOIN {$wpdb->postmeta} story_meta
@@ -241,21 +262,29 @@ class LatestChapterTable {
                AND number_meta.meta_key = %s
             WHERE p.post_type = %s
               AND p.post_status = 'publish'
-            ORDER BY CAST(number_meta.meta_value AS UNSIGNED) DESC, p.ID DESC
-            LIMIT 1
-            ",
+        ";
+        $params = [
             ChapterPostType::META_STORY_ID,
             (string) $story_id,
             ChapterPostType::META_NUMBER,
-            ChapterPostType::SLUG
+            ChapterPostType::SLUG,
+        ];
+        $first_row = $wpdb->get_row($wpdb->prepare(
+            $base_sql . ' ORDER BY CAST(number_meta.meta_value AS UNSIGNED) ASC, p.ID ASC LIMIT 1',
+            ...$params
+        ), ARRAY_A);
+        $row = $wpdb->get_row($wpdb->prepare(
+            $base_sql . ' ORDER BY CAST(number_meta.meta_value AS UNSIGNED) DESC, p.ID DESC LIMIT 1',
+            ...$params
         ), ARRAY_A);
 
-        if (!$row) {
+        if (!$row || !$first_row) {
             $wpdb->delete($table, ['story_id' => $story_id], ['%d']);
 
             return null;
         }
 
+        $first_chapter_id = (int) $first_row['chapter_id'];
         $chapter_id = (int) $row['chapter_id'];
         $updated_at = (string) ($row['updated_at'] ?: current_time('mysql'));
 
@@ -263,17 +292,146 @@ class LatestChapterTable {
             $table,
             [
                 'story_id' => $story_id,
+                'first_chapter_id' => $first_chapter_id,
                 'chapter_id' => $chapter_id,
                 'updated_at' => $updated_at,
             ],
-            ['%d', '%d', '%s']
+            ['%d', '%d', '%d', '%s']
         );
 
         return [
             'story_id' => $story_id,
+            'first_chapter_id' => $first_chapter_id,
             'chapter_id' => $chapter_id,
             'updated_at' => $updated_at,
         ];
+    }
+
+    /**
+     * Lay chuong dau tu bang toi uu. Neu dong cu chua co du lieu thi tu dong
+     * dong bo mot lan, cac request sau khong can query lai bang postmeta.
+     */
+    public static function get_first_chapter(int $story_id): ?array {
+        global $wpdb;
+
+        if ($story_id <= 0) {
+            return null;
+        }
+
+        $chapter_id = (int) $wpdb->get_var($wpdb->prepare(
+            'SELECT first_chapter_id FROM ' . self::get_table_name() . ' WHERE story_id = %d',
+            $story_id
+        ));
+
+        if ($chapter_id <= 0) {
+            $edge = self::resync_story($story_id);
+            $chapter_id = (int) ($edge['first_chapter_id'] ?? 0);
+        }
+
+        if ($chapter_id <= 0) {
+            return null;
+        }
+
+        _prime_post_caches([$chapter_id], false, true);
+        $chapter = get_post($chapter_id);
+        if (!$chapter || $chapter->post_type !== ChapterPostType::SLUG || $chapter->post_status !== 'publish') {
+            return null;
+        }
+
+        return [
+            'id' => $chapter_id,
+            'url' => get_permalink($chapter_id),
+            'title' => get_the_title($chapter_id),
+            'number' => (int) get_post_meta($chapter_id, ChapterPostType::META_NUMBER, true),
+        ];
+    }
+
+    /** Dem so truyen co chuong publish nhung chua co first_chapter_id. */
+    public static function count_missing_first_chapters(): int {
+        global $wpdb;
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(DISTINCT CAST(sm.meta_value AS UNSIGNED))
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} sm ON sm.post_id = p.ID AND sm.meta_key = %s
+             LEFT JOIN " . self::get_table_name() . " edge ON edge.story_id = CAST(sm.meta_value AS UNSIGNED)
+             WHERE p.post_type = %s AND p.post_status = 'publish'
+               AND (edge.story_id IS NULL OR edge.first_chapter_id IS NULL OR edge.first_chapter_id = 0)",
+            ChapterPostType::META_STORY_ID,
+            ChapterPostType::SLUG
+        ));
+    }
+
+    /** Lay mot lo story con thieu de job xu ly. */
+    public static function get_missing_first_story_ids(int $limit = 100): array {
+        global $wpdb;
+
+        $ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT CAST(sm.meta_value AS UNSIGNED) AS story_id
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} sm ON sm.post_id = p.ID AND sm.meta_key = %s
+             LEFT JOIN " . self::get_table_name() . " edge ON edge.story_id = CAST(sm.meta_value AS UNSIGNED)
+             WHERE p.post_type = %s AND p.post_status = 'publish'
+               AND (edge.story_id IS NULL OR edge.first_chapter_id IS NULL OR edge.first_chapter_id = 0)
+             ORDER BY story_id ASC LIMIT %d",
+            ChapterPostType::META_STORY_ID,
+            ChapterPostType::SLUG,
+            max(1, $limit)
+        ));
+
+        return array_values(array_filter(array_map('absint', $ids ?: [])));
+    }
+
+    /** Danh dau story de gom nhieu thay doi chuong thanh mot lan dong bo. */
+    public static function queue_resync(int $story_id): void {
+        if ($story_id > 0) {
+            self::$pending_resync[$story_id] = true;
+        }
+    }
+
+    public static function queue_resync_on_save(int $post_id, WP_Post $post): void {
+        if ($post->post_type === ChapterPostType::SLUG) {
+            self::queue_resync((int) get_post_meta($post_id, ChapterPostType::META_STORY_ID, true));
+        }
+    }
+
+    public static function queue_resync_on_delete(int $post_id): void {
+        if (get_post_type($post_id) === ChapterPostType::SLUG) {
+            self::queue_resync((int) get_post_meta($post_id, ChapterPostType::META_STORY_ID, true));
+        }
+    }
+
+    public static function queue_resync_on_meta_change($meta_id, int $post_id, string $meta_key, $meta_value): void {
+        if (!in_array($meta_key, [ChapterPostType::META_STORY_ID, ChapterPostType::META_NUMBER], true)) {
+            return;
+        }
+
+        self::queue_resync((int) get_post_meta($post_id, ChapterPostType::META_STORY_ID, true));
+        if ($meta_key === ChapterPostType::META_STORY_ID) {
+            self::queue_resync(self::$story_ids_before_meta_update[$post_id] ?? 0);
+            unset(self::$story_ids_before_meta_update[$post_id]);
+            self::queue_resync((int) $meta_value);
+        }
+    }
+
+    public static function capture_story_before_meta_update($check, int $post_id, string $meta_key, $meta_value, $prev_value) {
+        if ($meta_key === ChapterPostType::META_STORY_ID && get_post_type($post_id) === ChapterPostType::SLUG) {
+            self::$story_ids_before_meta_update[$post_id] = (int) get_post_meta(
+                $post_id,
+                ChapterPostType::META_STORY_ID,
+                true
+            );
+        }
+
+        return $check;
+    }
+
+    public static function flush_pending_resync(): void {
+        $story_ids = array_keys(self::$pending_resync);
+        self::$pending_resync = [];
+        foreach ($story_ids as $story_id) {
+            self::resync_story((int) $story_id);
+        }
     }
 
     /**
@@ -428,16 +586,13 @@ class LatestChapterTable {
      * Register all hooks.
      */
     public static function register_hooks(): void {
-        add_action('save_post_chapter', [self::class, 'update_on_save_post'], 10, 2);
-
-        add_action('transition_post_status', function ($new, $old, $post) {
-            if ($post->post_type === 'chapter' && $new === 'publish') {
-                self::update_on_save_post($post->ID, $post);
-            }
-        }, 10, 3);
-
-        add_action('before_delete_post', [self::class, 'cleanup_on_delete']);
-        add_action('updated_post_meta', [self::class, 'fix_on_meta_change'], 10, 4);
+        add_action('save_post_chapter', [self::class, 'queue_resync_on_save'], 20, 2);
+        add_filter('update_post_metadata', [self::class, 'capture_story_before_meta_update'], 20, 5);
+        add_action('before_delete_post', [self::class, 'queue_resync_on_delete']);
+        add_action('updated_post_meta', [self::class, 'queue_resync_on_meta_change'], 20, 4);
+        add_action('added_post_meta', [self::class, 'queue_resync_on_meta_change'], 20, 4);
+        add_action('deleted_post_meta', [self::class, 'queue_resync_on_meta_change'], 20, 4);
+        add_action('shutdown', [self::class, 'flush_pending_resync'], 5);
     }
 
     /**

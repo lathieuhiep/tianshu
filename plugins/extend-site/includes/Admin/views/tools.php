@@ -14,6 +14,16 @@
         <div class="updated notice"><p><strong><?php echo esc_html($message); ?></strong></p></div>
     <?php endif; ?>
 
+    <h2 id="es-first-chapter-sync"><?php esc_html_e('Đồng bộ chương đầu', 'extend-site'); ?></h2>
+    <p><?php esc_html_e('Bổ sung chương đầu cho dữ liệu cũ theo _chapter_number. Job chạy từng lô 100 truyện và hiện tiến trình ở bảng bên dưới.', 'extend-site'); ?></p>
+    <form method="post" style="margin-bottom: 24px;">
+        <?php wp_nonce_field('create_first_chapter_backfill_job_action', 'create_first_chapter_backfill_job_nonce'); ?>
+        <input type="hidden" name="create_first_chapter_backfill_job" value="1" />
+        <button type="submit" class="button button-primary">
+            <?php esc_html_e('Tạo job đồng bộ chương đầu', 'extend-site'); ?>
+        </button>
+    </form>
+
     <h2><?php esc_html_e('Đồng bộ trạng thái chương', 'extend-site'); ?></h2>
     <form method="post" id="es-status-sync-form" style="margin-bottom: 24px;">
         <?php wp_nonce_field('create_status_sync_job_action', 'create_status_sync_job_nonce'); ?>

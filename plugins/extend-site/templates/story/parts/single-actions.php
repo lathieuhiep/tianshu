@@ -8,7 +8,7 @@ use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\Repositories\ChapterRepository;
 
 $story_id = (int)get_the_ID();
-$first_chapter = ChapterRepository::get_first_chapter($story_id);
+$first_chapter = LatestChapterTable::get_first_chapter($story_id);
 $latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids([$story_id]);
 $latest_chapter = $latest_chapters[$story_id] ?? ChapterRepository::get_latest_chapter($story_id);
 ?>

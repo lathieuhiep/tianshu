@@ -2,6 +2,7 @@
 namespace ExtendSite\Admin;
 
 use ExtendSite\Services\StoryChapterStatusSyncJob;
+use ExtendSite\Services\FirstChapterBackfillJob;
 use ExtendSite\Services\SystemJobQueue;
 use ExtendSite\Services\Tools\ChapterSyncTool;
 use ExtendSite\Services\Tools\SystemJobCleanupTool;
@@ -121,6 +122,14 @@ class MenuPage
 
     private static function handle_tools_submission(array $tools): ?string
     {
+        if (!empty($_POST['create_first_chapter_backfill_job'])) {
+            check_admin_referer('create_first_chapter_backfill_job_action', 'create_first_chapter_backfill_job_nonce');
+
+            $job_id = FirstChapterBackfillJob::create();
+
+            return sprintf(__('Da tao job dong bo chuong dau: %s', 'extend-site'), $job_id);
+        }
+
         if (!empty($_POST['create_status_sync_job'])) {
             check_admin_referer('create_status_sync_job_action', 'create_status_sync_job_nonce');
 

@@ -29,6 +29,7 @@ use ExtendSite\Search\AjaxHandler;
 use ExtendSite\Search\SearchController;
 use ExtendSite\Search\SearchShortcode;
 use ExtendSite\Services\StoryCloneService;
+use ExtendSite\Services\FirstChapterBackfillJob;
 use ExtendSite\Services\StoryChapterStatusSyncJob;
 use ExtendSite\Services\SystemJobQueue;
 use ExtendSite\Widgets\Register;
@@ -37,7 +38,7 @@ defined('ABSPATH') || exit;
 
 class Plugin
 {
-    private const DB_VERSION = '20261102_ranking_cache_table';
+    private const DB_VERSION = '20261102_first_chapter_edge';
 
     /**
      * Boot the plugin by initializing all components.
@@ -78,6 +79,7 @@ class Plugin
         \ExtendSite\Services\RankingCache::init();
         StoryCloneService::init();
         StoryChapterStatusSyncJob::init();
+        FirstChapterBackfillJob::init();
     }
 
     /**
@@ -95,6 +97,8 @@ class Plugin
 
     private static function maybe_run_db_updates(): void
     {
+        // DB version duoc cap nhat chi sau khi cac schema check ben duoi thanh cong.
+        // Vi vay request binh thuong chi can doc option, khong SHOW TABLE/COLUMNS moi lan.
         if (get_option('extend_site_db_version') === self::DB_VERSION) {
             return;
         }
@@ -103,11 +107,19 @@ class Plugin
         CrawlerTemplateTable::create();
         SystemJobTable::create();
         \ExtendSite\DB\DBInstaller::install();
+        if (LatestChapterTable::has_first_chapter_column()) {
+            if (LatestChapterTable::count_missing_first_chapters() > 0) {
+                update_option(FirstChapterBackfillJob::REQUIRED_OPTION, 1, false);
+            } else {
+                delete_option(FirstChapterBackfillJob::REQUIRED_OPTION);
+            }
+        }
         if (
             CrawlerLinkTable::has_story_hash_index()
             && CrawlerTemplateTable::has_template_key_index()
             && CrawlerTemplateTable::has_cleanup_selectors_column()
             && \ExtendSite\DB\RankingCacheTable::exists()
+            && LatestChapterTable::has_first_chapter_column()
         ) {
             update_option('extend_site_db_version', self::DB_VERSION, false);
         }

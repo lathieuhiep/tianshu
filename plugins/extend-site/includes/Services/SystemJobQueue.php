@@ -147,6 +147,7 @@ class SystemJobQueue
         $labels = [
             'clone_story_chapters' => __('Clone chương truyện', 'extend-site'),
             'sync_story_chapter_status' => __('Đồng bộ trạng thái chương', 'extend-site'),
+            'backfill_first_chapter' => __('Đồng bộ chương đầu', 'extend-site'),
         ];
 
         return $labels[$type] ?? $type;
