@@ -248,9 +248,9 @@ class StoryRepository
         $story_author_ids = [];
         $all_author_ids = [];
 
+        $batched_author_ids = self::get_author_ids_by_story_ids($story_ids);
         foreach ($story_ids as $story_id) {
-            $ids = self::get_author_ids($story_id);
-            $ids = array_values(array_unique(array_filter(array_map('absint', $ids))));
+            $ids = $batched_author_ids[$story_id] ?? [];
             $story_author_ids[$story_id] = $ids;
             $all_author_ids = array_merge($all_author_ids, $ids);
         }

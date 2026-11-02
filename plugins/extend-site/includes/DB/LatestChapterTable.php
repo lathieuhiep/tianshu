@@ -368,6 +368,63 @@ class LatestChapterTable {
     }
 
     /**
+     * Lay latest tu bang toi uu, fallback mot query cho cac story chua duoc dong bo.
+     *
+     * Fallback chi chay voi danh sach ID gioi han cua widget/request, khong query
+     * tung story trong vong lap.
+     */
+    public static function get_latest_chapters_with_fallback(array $story_ids): array
+    {
+        global $wpdb;
+
+        $story_ids = array_values(array_unique(array_filter(array_map('absint', $story_ids))));
+        $chapters = self::get_latest_chapters_by_story_ids($story_ids);
+        $missing = array_values(array_diff($story_ids, array_keys($chapters)));
+        if (!$missing) {
+            return $chapters;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($missing), '%d'));
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.ID AS story_id, (
+                SELECT p.ID FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} sm
+                    ON sm.post_id=p.ID AND sm.meta_key=%s
+                INNER JOIN {$wpdb->postmeta} nm
+                    ON nm.post_id=p.ID AND nm.meta_key=%s
+                WHERE p.post_type=%s AND p.post_status='publish'
+                  AND sm.meta_value=CAST(s.ID AS CHAR)
+                ORDER BY CAST(nm.meta_value AS UNSIGNED) DESC, p.ID DESC
+                LIMIT 1
+             ) AS chapter_id
+             FROM {$wpdb->posts} s WHERE s.ID IN ({$placeholders})",
+            ChapterPostType::META_STORY_ID,
+            ChapterPostType::META_NUMBER,
+            ChapterPostType::SLUG,
+            ...$missing
+        ), ARRAY_A);
+
+        $chapter_ids = array_values(array_filter(array_map('absint', wp_list_pluck($rows ?: [], 'chapter_id'))));
+        if ($chapter_ids) {
+            _prime_post_caches($chapter_ids, false, true);
+        }
+        foreach ($rows ?: [] as $row) {
+            $story_id = absint($row['story_id'] ?? 0);
+            $chapter_id = absint($row['chapter_id'] ?? 0);
+            if (!$story_id || !$chapter_id) {
+                continue;
+            }
+            $chapters[$story_id] = [
+                'id' => $chapter_id,
+                'url' => get_permalink($chapter_id),
+                'title' => get_the_title($chapter_id),
+                'number' => (int) get_post_meta($chapter_id, ChapterPostType::META_NUMBER, true),
+            ];
+        }
+        return $chapters;
+    }
+
+    /**
      * Register all hooks.
      */
     public static function register_hooks(): void {

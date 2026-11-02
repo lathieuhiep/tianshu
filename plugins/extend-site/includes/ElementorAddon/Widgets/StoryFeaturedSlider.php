@@ -230,6 +230,7 @@ class StoryFeaturedSlider extends Widget_Base
             // Query theo danh sách ID (giữ đúng thứ tự ranking)
             $args = [
                 'post_type'      => StoryPostType::SLUG,
+                'post_status'    => 'publish',
                 'post__in'       => $story_ids,
                 'orderby'        => 'post__in',
                 'posts_per_page' => count($story_ids),
@@ -267,6 +268,7 @@ class StoryFeaturedSlider extends Widget_Base
             // Query stories
             $args = [
                 'post_type'      => StoryPostType::SLUG,
+                'post_status'    => 'publish',
                 'posts_per_page' => $limit,
                 'order'          => $order,
                 'no_found_rows'  => true,
@@ -311,7 +313,7 @@ class StoryFeaturedSlider extends Widget_Base
                     $authors = $story_authors[$story_id] ?? [];
 
                     // Lấy excerpt với giới hạn từ
-                    $word_limit = (int) $settings['excerpt_words'] ?? 25;
+                    $word_limit = (int) ($settings['excerpt_words'] ?? 25);
 
                     $excerpt_raw = get_post_field( 'post_excerpt', $story_id );
                     $excerpt     = $excerpt_raw ?: get_post_field( 'post_content', $story_id );

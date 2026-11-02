@@ -262,13 +262,13 @@ class StoryLatestGrid extends Widget_Base
 
         // Get latest story
         $latestStories = LatestChapterTable::get_latest_stories($limit);
+        $story_ids = wp_list_pluck($latestStories, 'story_id');
 
-        if ( empty( $latestStories ) && empty( $story_ids ) ) {
+        if (empty($story_ids)) {
             echo '<p>' . esc_html__('Không có truyện phù hợp với điều kiện.', 'extend-site') . '</p>';
             return;
         }
 
-        $story_ids = wp_list_pluck($latestStories, 'story_id');
     ?>
         <div class="es-addon-story-grid" data-config='<?php echo wp_json_encode($config, JSON_UNESCAPED_UNICODE); ?>'>
             <div class="es-grid-layout story-latest-grid" data-story-grid>

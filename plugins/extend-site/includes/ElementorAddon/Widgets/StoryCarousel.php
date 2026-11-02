@@ -288,6 +288,7 @@ class StoryCarousel extends Widget_Base {
             // Query theo danh sách ID (giữ đúng thứ tự ranking)
             $args = [
                 'post_type'      => StoryPostType::SLUG,
+                'post_status'    => 'publish',
                 'post__in'       => $story_ids,
                 'orderby'        => 'post__in',
                 'posts_per_page' => count($story_ids),
@@ -325,6 +326,7 @@ class StoryCarousel extends Widget_Base {
             // Query stories
             $args = [
                 'post_type'      => StoryPostType::SLUG,
+                'post_status'    => 'publish',
                 'posts_per_page' => $limit,
                 'order'          => $order,
                 'no_found_rows'  => true,

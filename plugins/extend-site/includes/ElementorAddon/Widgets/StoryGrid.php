@@ -10,7 +10,6 @@ use ExtendSite\ElementorAddon\Traits\HasImageSizeControl;
 use ExtendSite\ElementorAddon\Traits\HasQueryControls;
 use ExtendSite\ElementorAddon\Traits\HasPostItemControls;
 use ExtendSite\PostType\StoryPostType;
-use ExtendSite\Repositories\ChapterRepository;
 use ExtendSite\Views\ViewTracker;
 
 defined('ABSPATH') || exit;
@@ -392,6 +391,7 @@ class StoryGrid extends Widget_Base
         // Query stories
         $args = [
             'post_type'      => StoryPostType::SLUG,
+            'post_status'    => 'publish',
             'posts_per_page' => $limit,
             'order'          => $order,
             'no_found_rows'  => true,
@@ -423,16 +423,13 @@ class StoryGrid extends Widget_Base
         }
 
         if ($query->have_posts()) :
-            $latest_chapters = LatestChapterTable::get_latest_chapters_by_story_ids(wp_list_pluck($query->posts, 'ID'));
+            $latest_chapters = LatestChapterTable::get_latest_chapters_with_fallback(wp_list_pluck($query->posts, 'ID'));
         ?>
             <div class="es-addon-story-grid es-grid-layout">
                 <?php
                 while ($query->have_posts()): $query->the_post();
                     $story_id = get_the_ID();
                     $latest_chapter = $latest_chapters[$story_id] ?? null;
-                    if (empty($latest_chapter)) {
-                        $latest_chapter = ChapterRepository::get_latest_chapter( $story_id );
-                    }
                     $story_views = ViewTracker::format_short( ViewTracker::get_story_views( $story_id ) );
                 ?>
                     <div class="item">
