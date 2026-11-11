@@ -1,0 +1,33 @@
+.home-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.6rem;
+  margin-bottom: 2rem;
+  padding-bottom: .8rem;
+  border-bottom: .1rem solid #e6dfd4;
+
+  &__title {
+    margin: 0;
+    font-size: 2.4rem;
+    text-transform: uppercase;
+  }
+
+  &__link {
+    flex: 0 0 auto;
+  }
+}
+
+.home-section-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .8rem 1.2rem;
+  border: .1rem solid #0d6efd;
+  border-radius: 2rem;
+  color: #0d6efd;
+  font-size: 1.8rem;
+  line-height: 1;
+  background: transparent;
+  cursor: pointer;
+}

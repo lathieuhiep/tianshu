@@ -292,3 +292,42 @@ if ( ! function_exists( 'tianshu_is_elementor' ) ) {
         return false;
     }
 }
+
+/**
+ * Normalize shared story-query settings used by front-page sections.
+ *
+ * @param array<string,mixed> $settings        Section settings.
+ * @param array<int,string>   $allowed_sources Allowed query sources.
+ * @param string              $default_source  Fallback query source.
+ * @return array<string,mixed>
+ */
+function tianshu_normalize_home_story_query_settings(
+	array $settings,
+	array $allowed_sources,
+	string $default_source
+): array {
+	$allowed_sources = array_values( array_unique( array_map( 'sanitize_key', $allowed_sources ) ) );
+	$default_source  = sanitize_key( $default_source );
+
+	if ( ! in_array( $default_source, $allowed_sources, true ) ) {
+		$default_source = $allowed_sources[0] ?? 'custom';
+	}
+
+	$query_source = sanitize_key( (string) ( $settings['query_source'] ?? '' ) );
+	$order_by     = (string) ( $settings['order_by'] ?? '' );
+	$order        = strtoupper( (string) ( $settings['order'] ?? '' ) );
+
+	$settings['query_source'] = in_array( $query_source, $allowed_sources, true )
+		? $query_source
+		: $default_source;
+	$settings['taxonomy'] = array_values( array_filter( array_map( 'absint', (array) ( $settings['taxonomy'] ?? array() ) ) ) );
+	$settings['status']   = array_values( array_filter( array_map( 'absint', (array) ( $settings['status'] ?? array() ) ) ) );
+	$settings['tag']      = array_values( array_filter( array_map( 'absint', (array) ( $settings['tag'] ?? array() ) ) ) );
+	$settings['limit']    = max( 1, min( 36, absint( $settings['limit'] ?? 1 ) ) );
+	$settings['order_by'] = in_array( $order_by, array( 'ID', 'title', 'date', 'views' ), true )
+		? $order_by
+		: 'ID';
+	$settings['order'] = in_array( $order, array( 'ASC', 'DESC' ), true ) ? $order : 'DESC';
+
+	return $settings;
+}

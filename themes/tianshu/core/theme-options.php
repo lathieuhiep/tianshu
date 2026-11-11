@@ -38,6 +38,7 @@ function tianshu_get_options_config(): array {
 // Tách hàm load các file tùy chọn
 function tianshu_load_options(): void {
     require get_template_directory() . '/core/theme-options/general-options.php';
+    require get_template_directory() . '/core/theme-options/home-options.php';
     require get_template_directory() . '/core/theme-options/menu-options.php';
     require get_template_directory() . '/core/theme-options/blog-options.php';
     require get_template_directory() . '/core/theme-options/social-network-options.php';

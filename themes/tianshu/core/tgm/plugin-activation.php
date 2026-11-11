@@ -20,13 +20,6 @@ function tianshu_register_required_plugins(): void {
 			'required'  =>  true,
 			'source' => 'https://github.com/Codestar/codestar-framework/archive/refs/heads/master.zip'
 		),
-
-		// This is an example of how to include a plugin from the WordPress Plugin Repository
-		array(
-			'name'      =>  'Elementor',
-			'slug'      =>  'elementor',
-			'required'  =>  true,
-		),
 	);
 
 	/**

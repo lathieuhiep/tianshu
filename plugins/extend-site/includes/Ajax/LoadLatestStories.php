@@ -2,6 +2,7 @@
 namespace ExtendSite\Ajax;
 
 use ExtendSite\DB\LatestChapterTable;
+use ExtendSite\PostType\StoryPostType;
 use ExtendSite\Views\ViewTracker;
 
 defined('ABSPATH') || exit;
@@ -38,6 +39,7 @@ class LoadLatestStories
 
         $story_ids = wp_list_pluck($rows, 'story_id');
         $html = self::render_view($story_ids, $image_size);
+        $items = self::get_items($story_ids, $image_size);
 
         // Kiểm tra xem còn dữ liệu tiếp không
         $count_rows = count($rows);
@@ -45,6 +47,7 @@ class LoadLatestStories
 
         wp_send_json_success([
             'html' => $html,
+            'items' => $items,
             'next' => $has_next,
         ]);
     }
@@ -146,5 +149,59 @@ class LoadLatestStories
         wp_reset_postdata();
 
         return trim(ob_get_clean());
+    }
+
+    /**
+     * Build portable story data for non-Elementor clients.
+     *
+     * @param array<int> $story_ids Story IDs.
+     * @param string     $image_size Registered image size.
+     * @return array<int,array<string,mixed>>
+     */
+    private static function get_items(array $story_ids, string $image_size): array
+    {
+        $story_ids = array_values(array_unique(array_filter(array_map('absint', $story_ids))));
+        if (!$story_ids) {
+            return [];
+        }
+
+        $latest_chapters = LatestChapterTable::get_latest_chapters_with_fallback($story_ids);
+        $query = new \WP_Query([
+            'post_type' => StoryPostType::SLUG,
+            'post_status' => 'publish',
+            'post__in' => $story_ids,
+            'orderby' => 'post__in',
+            'posts_per_page' => count($story_ids),
+            'no_found_rows' => true,
+        ]);
+
+        $items = [];
+        foreach ($query->posts as $story) {
+            $story_id = (int) $story->ID;
+            $story_title = get_the_title($story_id);
+            $thumbnail_id = get_post_thumbnail_id($story_id);
+            $image_url = $thumbnail_id ? wp_get_attachment_image_url($thumbnail_id, $image_size) : '';
+            $image_alt = $thumbnail_id ? get_post_meta($thumbnail_id, '_wp_attachment_image_alt', true) : '';
+            $modified_time = get_post_modified_time('U', true, $story_id);
+
+            $items[] = [
+                'id' => $story_id,
+                'url' => get_permalink($story_id),
+                'title' => $story_title,
+                'image_url' => $image_url ?: '',
+                'image_alt' => $image_alt ?: $story_title,
+                'views' => ViewTracker::format_short(ViewTracker::get_story_views($story_id)),
+                'chapter' => $latest_chapters[$story_id] ?? null,
+                'modified_iso' => get_post_modified_time('c', true, $story_id),
+                'modified_human' => $modified_time
+                    ? sprintf(
+                        esc_html__('%s trước', 'extend-site'),
+                        human_time_diff($modified_time, current_time('timestamp', true))
+                    )
+                    : '',
+            ];
+        }
+
+        return $items;
     }
 }

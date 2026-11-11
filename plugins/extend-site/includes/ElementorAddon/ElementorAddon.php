@@ -31,25 +31,11 @@ class ElementorAddon
     private static function register (): void
     {
         if ( ! did_action( 'elementor/loaded' ) ) {
-            add_action('admin_notices', [self::class, 'maybe_show_admin_notice']);
-        } else {
-            add_action('elementor/elements/categories_registered', [self::class, 'register_category']);
-            add_action('elementor/widgets/register', [self::class, 'register_widgets']);
+            return;
         }
-    }
 
-    /**
-     * Display an admin notice if Elementor is not active.
-     */
-    public static function maybe_show_admin_notice(): void
-    {
-    ?>
-        <div class="notice notice-warning">
-            <p>
-                <?php esc_html_e('Extend Site: Elementor is not active. Elementor-based widgets will be unavailable.', 'extend-site'); ?>
-            </p>
-        </div>
-    <?php
+        add_action('elementor/elements/categories_registered', [self::class, 'register_category']);
+        add_action('elementor/widgets/register', [self::class, 'register_widgets']);
     }
 
     /**

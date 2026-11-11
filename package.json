@@ -21,6 +21,7 @@
     "gulp-changed": "^5.0.2",
     "gulp-clean-css": "^4.3.0",
     "owl.carousel": "^2.3.4",
+    "swiper": "^14.4.0",
     "terser-webpack-plugin": "^5.3.14",
     "webpack": "^5.102.1",
     "webpack-stream": "^7.0.0"

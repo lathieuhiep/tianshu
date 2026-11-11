@@ -1,0 +1,22 @@
+@import "shared/scss/abstracts/abstracts";
+@import "../components/home/section-heading";
+@import "../components/home/featured-stories";
+@import "../components/home/hot-stories";
+@import "../components/home/latest-stories";
+@import "../components/home/completed-stories";
+@import "../components/home/story-collections";
+@import "../components/home/story-taxonomies";
+
+.front-page {
+  &__legacy-content:empty {
+    display: none;
+  }
+}
+
+.home-featured-stories,
+.home-hot-stories,
+.home-story-collections,
+.home-story-taxonomies {
+  margin-top: 3.2rem;
+  margin-bottom: 3.2rem;
+}

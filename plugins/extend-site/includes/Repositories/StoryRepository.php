@@ -9,6 +9,7 @@
 
 namespace ExtendSite\Repositories;
 
+use ExtendSite\DB\LatestChapterTable;
 use ExtendSite\PostType\AuthorPostType;
 use ExtendSite\PostType\StoryPostType;
 use WP_Query;
@@ -18,6 +19,210 @@ use WP_Query;
  */
 class StoryRepository
 {
+    /**
+     * Query published stories for featured story displays.
+     *
+     * @param array<string,mixed> $options Query options.
+     * @return WP_Query
+     */
+    public static function get_featured(array $options = []): WP_Query
+    {
+        $options = wp_parse_args($options, [
+            'query_source' => 'custom',
+            'taxonomy' => [],
+            'status' => [],
+            'tag' => [],
+            'limit' => 18,
+            'order_by' => 'ID',
+            'order' => 'DESC',
+        ]);
+
+        $limit = max(1, min(36, absint($options['limit'])));
+
+        if (in_array($options['query_source'], ['top_week', 'top_month'], true)) {
+            $ranked = 'top_month' === $options['query_source']
+                ? StoryRankingRepository::top_30_days($limit)
+                : StoryRankingRepository::top_7_days($limit);
+            $story_ids = array_values(array_filter(array_map(
+                'absint',
+                wp_list_pluck($ranked, 'story_id')
+            )));
+
+            if (!$story_ids) {
+                return new WP_Query();
+            }
+
+            return new WP_Query([
+                'post_type' => StoryPostType::SLUG,
+                'post_status' => 'publish',
+                'post__in' => $story_ids,
+                'orderby' => 'post__in',
+                'posts_per_page' => count($story_ids),
+                'no_found_rows' => true,
+            ]);
+        }
+
+        $order_by = sanitize_key((string) $options['order_by']);
+        $allowed_order_by = ['ID', 'title', 'date', 'views'];
+        if (!in_array($order_by, $allowed_order_by, true)) {
+            $order_by = 'ID';
+        }
+
+        $order = strtoupper((string) $options['order']);
+        $order = in_array($order, ['ASC', 'DESC'], true) ? $order : 'DESC';
+
+        $args = [
+            'post_type' => StoryPostType::SLUG,
+            'post_status' => 'publish',
+            'posts_per_page' => $limit,
+            'order' => $order,
+            'no_found_rows' => true,
+        ];
+
+        if ('views' === $order_by) {
+            $args['meta_key'] = StoryPostType::META_STORY_VIEWS;
+            $args['meta_type'] = 'NUMERIC';
+            $args['orderby'] = 'meta_value_num';
+        } else {
+            $args['orderby'] = $order_by;
+        }
+
+        $tax_query = [];
+        $taxonomy_ids = array_values(array_filter(array_map('absint', (array) $options['taxonomy'])));
+        if ($taxonomy_ids) {
+            $tax_query[] = [
+                'taxonomy' => StoryPostType::TAX_SLUG,
+                'field' => 'term_id',
+                'terms' => $taxonomy_ids,
+                'operator' => 'IN',
+            ];
+        }
+
+        $tag_ids = array_values(array_filter(array_map('absint', (array) $options['tag'])));
+        if ($tag_ids) {
+            $tax_query[] = [
+                'taxonomy' => StoryPostType::TAG_SLUG,
+                'field' => 'term_id',
+                'terms' => $tag_ids,
+                'operator' => 'IN',
+            ];
+        }
+
+        $status_ids = array_values(array_filter(array_map('absint', (array) $options['status'])));
+        if ($status_ids) {
+            $tax_query[] = [
+                'taxonomy' => StoryPostType::STATUS_TAX,
+                'field' => 'term_id',
+                'terms' => $status_ids,
+                'operator' => 'IN',
+            ];
+        }
+
+        if ($tax_query) {
+            if (count($tax_query) > 1) {
+                $tax_query = array_merge(['relation' => 'AND'], $tax_query);
+            }
+            $args['tax_query'] = $tax_query;
+        }
+
+        return new WP_Query($args);
+    }
+
+    /**
+     * Query published stories for the story carousel.
+     *
+     * @param array<string,mixed> $options Query options.
+     * @return WP_Query
+     */
+    public static function get_carousel(array $options = []): WP_Query
+    {
+        return self::get_featured(wp_parse_args($options, [
+            'query_source' => 'top_month',
+            'limit' => 12,
+        ]));
+    }
+
+    /**
+     * Query published stories for grid displays.
+     *
+     * @param array<string,mixed> $options Query options.
+     * @return WP_Query
+     */
+    public static function get_grid(array $options = []): WP_Query
+    {
+        return self::get_featured($options);
+    }
+
+    /**
+     * Query stories ordered by their latest chapter update.
+     *
+     * @param int $limit Maximum number of stories.
+     * @return WP_Query
+     */
+    public static function get_latest(int $limit = 12): WP_Query
+    {
+        $limit = max(1, min(36, $limit));
+        $rows = LatestChapterTable::get_latest_stories($limit);
+        $story_ids = array_values(array_filter(array_map(
+            'absint',
+            wp_list_pluck($rows, 'story_id')
+        )));
+
+        if (!$story_ids) {
+            return new WP_Query();
+        }
+
+        return new WP_Query([
+            'post_type' => StoryPostType::SLUG,
+            'post_status' => 'publish',
+            'post__in' => $story_ids,
+            'orderby' => 'post__in',
+            'posts_per_page' => count($story_ids),
+            'no_found_rows' => true,
+        ]);
+    }
+
+    /**
+     * Get the latest published chapter for multiple stories.
+     *
+     * @param array<int> $story_ids Story IDs.
+     * @return array<int,array{id:int,url:string,title:string,number:int}>
+     */
+    public static function get_latest_chapters(array $story_ids): array
+    {
+        return LatestChapterTable::get_latest_chapters_with_fallback($story_ids);
+    }
+
+    /**
+     * Get terms from a supported story taxonomy.
+     *
+     * @param string $taxonomy  Taxonomy slug.
+     * @param bool   $hide_empty Whether to exclude unused terms.
+     * @return array<int,\WP_Term>
+     */
+    public static function get_taxonomy_terms(string $taxonomy, bool $hide_empty = true): array
+    {
+        $allowed_taxonomies = [
+            StoryPostType::TAX_SLUG,
+            StoryPostType::STATUS_TAX,
+            StoryPostType::TAG_SLUG,
+        ];
+        $taxonomy = sanitize_key($taxonomy);
+
+        if (!in_array($taxonomy, $allowed_taxonomies, true) || !taxonomy_exists($taxonomy)) {
+            return [];
+        }
+
+        $terms = get_terms([
+            'taxonomy' => $taxonomy,
+            'hide_empty' => $hide_empty,
+            'orderby' => 'name',
+            'order' => 'ASC',
+        ]);
+
+        return is_wp_error($terms) ? [] : $terms;
+    }
+
     /**
      * Check if a story is active (published).
      *

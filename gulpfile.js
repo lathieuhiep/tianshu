@@ -185,6 +185,21 @@ const buildJSCustomBootstrap = () => {
         .pipe(browserSync.stream())
 }
 
+// Swiper ships production-ready bundles. Copy them unchanged so native CSS
+// nesting is not rewritten by Sass/cleanCSS.
+const buildSwiperVendor = () => {
+    return src([
+        `${paths.node_modules}swiper/swiper-bundle.min.css`,
+        `${paths.node_modules}swiper/swiper-bundle.min.js`
+    ], {
+        base: `${paths.node_modules}swiper`,
+        allowEmpty: false
+    })
+        .pipe(dest(`${paths.output.theme.root}vendors/swiper/`))
+        .pipe(browserSync.stream())
+}
+exports.buildSwiperVendor = buildSwiperVendor
+
 // Task build style theme
 const buildStyleTheme = () => {
     return src(`${paths.theme.scss}main.scss`)
@@ -260,6 +275,53 @@ const buildJSTheme = () => {
         .pipe(dest(`${paths.output.theme.js}`))
         .pipe(browserSync.stream())
 }
+exports.buildJSTheme = buildJSTheme
+
+const buildJSFrontPage = () => {
+    return src(`${paths.theme.js}page-templates/front-page.js`, {allowEmpty: true})
+        .pipe(plumber({
+            errorHandler: function (err) {
+                console.error('Error in front-page JS build:', err.message);
+                this.emit('end');
+            }
+        }))
+        .pipe(webpackStream({
+            mode: 'production',
+            output: {
+                filename: 'front-page.min.js'
+            },
+            module: {
+                rules: [
+                    {
+                        test: /\.m?js$/,
+                        exclude: /node_modules/,
+                        use: {
+                            loader: 'babel-loader',
+                            options: {
+                                presets: ['@babel/preset-env']
+                            }
+                        }
+                    }
+                ]
+            },
+            optimization: {
+                minimize: true,
+                minimizer: [
+                    new TerserPlugin({
+                        extractComments: false,
+                        terserOptions: {
+                            format: {
+                                comments: false
+                            }
+                        }
+                    })
+                ]
+            }
+        }))
+        .pipe(dest(`${paths.output.theme.js}page-templates/`))
+        .pipe(browserSync.stream())
+}
+exports.buildJSFrontPage = buildJSFrontPage
 
 // Task build style custom post type
 const buildStyleCustomPostType = () => {
@@ -306,6 +368,7 @@ const buildStylePageTemplate = () => {
         .pipe(dest(`${paths.output.theme.css}page-templates/`))
         .pipe(browserSync.stream())
 }
+exports.buildStylePageTemplate = buildStylePageTemplate
 
 /*
 ** Plugin Extend Site
@@ -386,7 +449,9 @@ const buildProject = async () => {
         buildStyleCustomPostType(),
         buildStylePageTemplate(),
         buildJSCustomBootstrap(),
-        buildJSTheme()
+        buildSwiperVendor(),
+        buildJSTheme(),
+        buildJSFrontPage()
     ]);
 
     console.log("Dự án đã được xây dựng hoàn tất!");
@@ -460,6 +525,11 @@ const watchTask = () => {
     ], buildJSCustomBootstrap)
 
     watch([
+        'package.json',
+        'package-lock.json'
+    ], buildSwiperVendor)
+
+    watch([
         `${paths.theme.scss}base/*.scss`,
         `${paths.theme.scss}helpers/*.scss`,
         `${paths.theme.scss}utilities/*.scss`,
@@ -473,11 +543,16 @@ const watchTask = () => {
     ], buildJSTheme)
 
     watch([
+        `${paths.theme.js}page-templates/*.js`
+    ], buildJSFrontPage)
+
+    watch([
         `${paths.theme.scss}post-type/*/**.scss`
     ], buildStyleCustomPostType)
 
     watch([
-        `${paths.theme.scss}page-templates/*.scss`
+        `${paths.theme.scss}page-templates/*.scss`,
+        `${paths.theme.scss}components/home/*.scss`
     ], buildStylePageTemplate)
 }
 exports.watchTask = watchTask

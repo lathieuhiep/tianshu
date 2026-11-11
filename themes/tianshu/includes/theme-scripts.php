@@ -92,6 +92,52 @@ function tianshu_front_end_scripts(): void
         wp_enqueue_style('tianshu-page-404', get_theme_file_uri('/assets/css/page-templates/page-404.min.css'), array(), tianshu_get_version_theme());
     }
 
+    // Load the progressively migrated front-page sections.
+    if (is_front_page()) {
+        wp_enqueue_style(
+            'tianshu-swiper',
+            get_theme_file_uri('/assets/vendors/swiper/swiper-bundle.min.css'),
+            array(),
+            tianshu_get_version_theme()
+        );
+
+        wp_enqueue_style(
+            'tianshu-front-page',
+            get_theme_file_uri('/assets/css/page-templates/front-page.min.css'),
+            array('tianshu-swiper'),
+            tianshu_get_version_theme()
+        );
+
+        wp_enqueue_script(
+            'tianshu-swiper',
+            get_theme_file_uri('/assets/vendors/swiper/swiper-bundle.min.js'),
+            array(),
+            tianshu_get_version_theme(),
+            true
+        );
+
+        wp_enqueue_script(
+            'tianshu-front-page',
+            get_theme_file_uri('/assets/js/page-templates/front-page.min.js'),
+            array('jquery', 'tianshu-swiper'),
+            tianshu_get_version_theme(),
+            true
+        );
+
+        if (
+            class_exists('ExtendSite\\Ajax\\LoadLatestStories')
+            && defined('EXTEND_SITE_NONCE_ACTION')
+        ) {
+            wp_localize_script('tianshu-front-page', 'tianshuFrontPage', [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce(EXTEND_SITE_NONCE_ACTION),
+                'latestStoriesAction' => ExtendSite\Ajax\LoadLatestStories::ACTION,
+                'errorMessage' => esc_html__('Đã xảy ra lỗi khi tải dữ liệu, vui lòng thử lại.', 'tianshu'),
+                'chapterPrefix' => esc_html__('Chương', 'tianshu'),
+            ]);
+        }
+    }
+
     // load comment reply
     if (is_singular() && comments_open() && get_option('thread_comments')) {
         wp_enqueue_script('comment-reply');
